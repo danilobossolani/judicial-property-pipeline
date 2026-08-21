@@ -2,9 +2,7 @@ package br.com.bossolani.judicialpipeline.controller;
 
 import br.com.bossolani.judicialpipeline.model.Imovel;
 import br.com.bossolani.judicialpipeline.service.ImovelService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -21,5 +19,10 @@ public class ImovelController {
     @GetMapping
     public List<Imovel> listar() {
         return imovelService.listarTodos();
+    }
+
+    @PostMapping
+    public Imovel salvar(@RequestBody Imovel imovel) {
+        return imovelService.salvar(imovel);
     }
 }

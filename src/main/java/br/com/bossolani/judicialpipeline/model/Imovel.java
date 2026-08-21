@@ -75,4 +75,16 @@ public class Imovel {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    @ManyToOne
+    @JoinColumn(name = "processo_id")
+    private Processo processo;
+
+    public Processo getProcesso() {
+        return processo;
+    }
+
+    public void setProcesso(Processo processo) {
+        this.processo = processo;
+    }
 }   
