@@ -24,4 +24,13 @@ public class GlobalExceptionHandler {
                 .badRequest()
                 .body(Map.of("erro", mensagem));
     }
-}
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> tratarRegraNegocio(
+            IllegalArgumentException exception) {
+
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of("erro", exception.getMessage()));
+    }
+}       

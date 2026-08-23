@@ -11,26 +11,52 @@ public class Imovel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Dados do imóvel
     private String tipo;
 
-    private String cidade;
-
+    // Localização
+    private String endereco;
+    private String numero;
+    private String complemento;
     private String bairro;
+    private String cidade;
+    private String cep;
 
+    // Dados financeiros e status
     private Double valorAvaliacao;
-
     private String status;
+
+    // Relacionamento com o processo
+    @NotNull(message = "O Processo é obrigatório")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "processo_id", nullable = false)
+    private Processo processo;
 
     public Imovel() {
     }
 
-    public Imovel(String tipo, String cidade, String bairro,
-                  Double valorAvaliacao, String status) {
+    public Imovel(
+            String tipo,
+            String endereco,
+            String numero,
+            String complemento,
+            String bairro,
+            String cidade,
+            String cep,
+            Double valorAvaliacao,
+            String status,
+            Processo processo
+    ) {
         this.tipo = tipo;
-        this.cidade = cidade;
+        this.endereco = endereco;
+        this.numero = numero;
+        this.complemento = complemento;
         this.bairro = bairro;
+        this.cidade = cidade;
+        this.cep = cep;
         this.valorAvaliacao = valorAvaliacao;
         this.status = status;
+        this.processo = processo;
     }
 
     public Long getId() {
@@ -45,12 +71,28 @@ public class Imovel {
         this.tipo = tipo;
     }
 
-    public String getCidade() {
-        return cidade;
+    public String getEndereco() {
+        return endereco;
     }
 
-    public void setCidade(String cidade) {
-        this.cidade = cidade;
+    public void setEndereco(String endereco) {
+        this.endereco = endereco;
+    }
+
+    public String getNumero() {
+        return numero;
+    }
+
+    public void setNumero(String numero) {
+        this.numero = numero;
+    }
+
+    public String getComplemento() {
+        return complemento;
+    }
+
+    public void setComplemento(String complemento) {
+        this.complemento = complemento;
     }
 
     public String getBairro() {
@@ -59,6 +101,22 @@ public class Imovel {
 
     public void setBairro(String bairro) {
         this.bairro = bairro;
+    }
+
+    public String getCidade() {
+        return cidade;
+    }
+
+    public void setCidade(String cidade) {
+        this.cidade = cidade;
+    }
+
+    public String getCep() {
+        return cep;
+    }
+
+    public void setCep(String cep) {
+        this.cep = cep;
     }
 
     public Double getValorAvaliacao() {
@@ -77,11 +135,6 @@ public class Imovel {
         this.status = status;
     }
 
-    @NotNull(message = "O Processo é obrigatório")
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "processo_id", nullable = false)
-    private Processo processo;
-
     public Processo getProcesso() {
         return processo;
     }
@@ -89,4 +142,4 @@ public class Imovel {
     public void setProcesso(Processo processo) {
         this.processo = processo;
     }
-}   
+}
