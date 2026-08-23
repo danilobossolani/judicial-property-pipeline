@@ -1,6 +1,7 @@
 package br.com.bossolani.judicialpipeline.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "imoveis")
@@ -76,8 +77,9 @@ public class Imovel {
         this.status = status;
     }
 
-    @ManyToOne
-    @JoinColumn(name = "processo_id")
+    @NotNull(message = "O Processo é obrigatório")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "processo_id", nullable = false)
     private Processo processo;
 
     public Processo getProcesso() {

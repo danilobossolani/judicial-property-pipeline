@@ -3,6 +3,7 @@ package br.com.bossolani.judicialpipeline.controller;
 import br.com.bossolani.judicialpipeline.model.Imovel;
 import br.com.bossolani.judicialpipeline.service.ImovelService;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class ImovelController {
     }
 
     @PostMapping
-    public Imovel salvar(@RequestBody Imovel imovel) {
+    public Imovel salvar(@Valid @RequestBody Imovel imovel) {
         return imovelService.salvar(imovel);
     }
 }
