@@ -11,3 +11,7 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+    datajud:
+      url: https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search
+      api-key: ${DATAJUD_API_KEY}
