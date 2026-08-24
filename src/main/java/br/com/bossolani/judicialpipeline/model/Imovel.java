@@ -22,9 +22,9 @@ public class Imovel {
     private String cidade;
     private String cep;
 
+
     // Dados financeiros e status
     private Double valorAvaliacao;
-    private String status;
 
     // Relacionamento com o processo
     @NotNull(message = "O Processo é obrigatório")
@@ -55,7 +55,6 @@ public class Imovel {
         this.cidade = cidade;
         this.cep = cep;
         this.valorAvaliacao = valorAvaliacao;
-        this.status = status;
         this.processo = processo;
     }
 
@@ -125,14 +124,6 @@ public class Imovel {
 
     public void setValorAvaliacao(Double valorAvaliacao) {
         this.valorAvaliacao = valorAvaliacao;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public Processo getProcesso() {
