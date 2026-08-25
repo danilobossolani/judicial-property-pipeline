@@ -1,5 +1,7 @@
 package br.com.bossolani.judicialpipeline.integration;
 
+import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcessoDTO;
+import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -24,7 +26,7 @@ public class DataJudClient {
         this.apiKey = apiKey;
     }
 
-    public String buscarProcesso(String numeroProcesso) {
+    public DataJudProcessoDTO buscarProcesso(String numeroProcesso) {
 
         String numeroLimpo = numeroProcesso
                 .replace(".", "")
@@ -38,12 +40,50 @@ public class DataJudClient {
                 )
         );
 
-        return restClient.post()
+        DataJudResponse resposta = restClient.post()
                 .header("Authorization", "APIKey " + apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
-                .body(String.class);
+                .body(DataJudResponse.class);
+
+        if (resposta == null
+                || resposta.hits() == null
+                || resposta.hits().hits() == null
+                || resposta.hits().hits().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Processo não encontrado no DataJud"
+            );
+        }
+
+        DataJudResponse.Source source =
+                resposta.hits().hits().get(0).source();
+
+        return new DataJudProcessoDTO(
+                source.numeroProcesso(),
+                source.tribunal(),
+                source.grau(),
+                source.dataAjuizamento(),
+
+                source.orgaoJulgador() != null
+                        ? source.orgaoJulgador().nome()
+                        : null,
+
+                source.classe() != null
+                        ? source.classe().nome()
+                        : null,
+
+                source.sistema() != null
+                        ? source.sistema().nome()
+                        : null,
+
+                source.formato() != null
+                        ? source.formato().nome()
+                        : null,
+
+                source.dataHoraUltimaAtualizacao()
+        );
     }
 }
