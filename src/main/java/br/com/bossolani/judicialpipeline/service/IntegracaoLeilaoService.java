@@ -31,13 +31,42 @@ public class IntegracaoLeilaoService {
         LoteLeilaoDTO lote =
                 sublimeScraper.extrairLote(pagina, url);
 
-        DataJudProcessoDTO processo =
-                dataJudClient.buscarProcesso(lote.getNumeroProcesso());
+        DataJudProcessoDTO processo = null;
+        boolean processoConfirmado = false;
+
+        try {
+
+            processo =
+                    dataJudClient.buscarProcesso(lote.getNumeroProcesso());
+
+            String numeroLeiloeiro =
+                    normalizarNumeroProcesso(lote.getNumeroProcesso());
+
+            String numeroDataJud =
+                    normalizarNumeroProcesso(processo.numeroProcesso());
+
+            processoConfirmado =
+                    numeroLeiloeiro.equals(numeroDataJud);
+
+        } catch (IllegalArgumentException exception) {
+
+            processo = null;
+            processoConfirmado = false;
+        }
 
         return new LoteEnriquecidoDTO(
                 lote,
                 processo,
-                true
+                processoConfirmado
         );
+    }
+
+    private String normalizarNumeroProcesso(String numeroProcesso) {
+
+        if (numeroProcesso == null) {
+            return "";
+        }
+
+        return numeroProcesso.replaceAll("\\D", "");
     }
 }
