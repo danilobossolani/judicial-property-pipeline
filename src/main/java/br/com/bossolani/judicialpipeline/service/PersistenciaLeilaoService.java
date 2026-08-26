@@ -5,10 +5,7 @@ import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.DadosDinamico
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteEnriquecidoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteLeilaoDTO;
 import br.com.bossolani.judicialpipeline.model.*;
-import br.com.bossolani.judicialpipeline.repository.FonteRepository;
-import br.com.bossolani.judicialpipeline.repository.ImovelRepository;
-import br.com.bossolani.judicialpipeline.repository.LeilaoRepository;
-import br.com.bossolani.judicialpipeline.repository.ProcessoRepository;
+import br.com.bossolani.judicialpipeline.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,19 +19,25 @@ public class PersistenciaLeilaoService {
     private final ImovelRepository imovelRepository;
     private final LeilaoRepository leilaoRepository;
     private final FonteRepository fonteRepository;
+    private final AcompanhamentoRepository acompanhamentoRepository;
+    private final HistoricoAcompanhamentoRepository historicoAcompanhamentoRepository;
 
     public PersistenciaLeilaoService(
             IntegracaoLeilaoService integracaoLeilaoService,
             ProcessoRepository processoRepository,
             ImovelRepository imovelRepository,
             LeilaoRepository leilaoRepository,
-            FonteRepository fonteRepository
+            FonteRepository fonteRepository,
+            AcompanhamentoRepository acompanhamentoRepository,
+            HistoricoAcompanhamentoRepository historicoAcompanhamentoRepository
     ) {
         this.integracaoLeilaoService = integracaoLeilaoService;
         this.processoRepository = processoRepository;
         this.imovelRepository = imovelRepository;
         this.leilaoRepository = leilaoRepository;
         this.fonteRepository = fonteRepository;
+        this.acompanhamentoRepository = acompanhamentoRepository;
+        this.historicoAcompanhamentoRepository = historicoAcompanhamentoRepository;
     }
 
     @Transactional
@@ -47,15 +50,15 @@ public class PersistenciaLeilaoService {
         DadosDinamicosLeilaoDTO dadosLeilao = coleta.leilao();
         DataJudProcessoDTO dadosProcesso = coleta.processo();
 
-        /*
-         * Se essa URL já existe, não criamos outro imóvel/leilão.
-         * Atualizamos o conjunto existente.
-         */
         Fonte fonteExistente =
                 fonteRepository
                         .findByUrlOrigem(url)
                         .orElse(null);
 
+        /*
+         * URL já cadastrada:
+         * atualiza Processo, Imóvel, Leilão e Acompanhamento.
+         */
         if (fonteExistente != null) {
 
             atualizarExistente(
@@ -69,13 +72,15 @@ public class PersistenciaLeilaoService {
                     LocalDateTime.now()
             );
 
-            return fonteRepository.save(fonteExistente);
+            return fonteRepository.save(
+                    fonteExistente
+            );
         }
 
         /*
-         * Caso seja uma URL nova, procuramos primeiro
-         * se o processo já existe.
+         * URL nova.
          */
+
         String numeroProcesso =
                 normalizarNumeroProcesso(
                         lote.getNumeroProcesso()
@@ -93,11 +98,10 @@ public class PersistenciaLeilaoService {
         );
 
         processo =
-                processoRepository.save(processo);
+                processoRepository.save(
+                        processo
+                );
 
-        /*
-         * Criamos o imóvel.
-         */
         Imovel imovel = new Imovel();
 
         preencherImovel(
@@ -107,11 +111,10 @@ public class PersistenciaLeilaoService {
         );
 
         imovel =
-                imovelRepository.save(imovel);
+                imovelRepository.save(
+                        imovel
+                );
 
-        /*
-         * Criamos o leilão.
-         */
         Leilao leilao = new Leilao();
 
         preencherLeilao(
@@ -121,11 +124,19 @@ public class PersistenciaLeilaoService {
         );
 
         leilao =
-                leilaoRepository.save(leilao);
+                leilaoRepository.save(
+                        leilao
+                );
 
         /*
-         * Finalmente registramos a fonte.
+         * Cria/atualiza o estado atual do pipeline.
+         * Também registra histórico quando necessário.
          */
+        atualizarAcompanhamento(
+                imovel,
+                leilao
+        );
+
         Fonte fonte = new Fonte();
 
         fonte.setTipo(
@@ -144,7 +155,9 @@ public class PersistenciaLeilaoService {
 
         fonte.setLeilao(leilao);
 
-        return fonteRepository.save(fonte);
+        return fonteRepository.save(
+                fonte
+        );
     }
 
     private void atualizarExistente(
@@ -154,7 +167,8 @@ public class PersistenciaLeilaoService {
             DataJudProcessoDTO dadosProcesso
     ) {
 
-        Leilao leilao = fonte.getLeilao();
+        Leilao leilao =
+                fonte.getLeilao();
 
         if (leilao == null) {
             throw new IllegalStateException(
@@ -162,7 +176,8 @@ public class PersistenciaLeilaoService {
             );
         }
 
-        Imovel imovel = leilao.getImovel();
+        Imovel imovel =
+                leilao.getImovel();
 
         if (imovel == null) {
             throw new IllegalStateException(
@@ -170,7 +185,8 @@ public class PersistenciaLeilaoService {
             );
         }
 
-        Processo processo = imovel.getProcesso();
+        Processo processo =
+                imovel.getProcesso();
 
         if (processo == null) {
             throw new IllegalStateException(
@@ -196,9 +212,196 @@ public class PersistenciaLeilaoService {
                 imovel
         );
 
-        processoRepository.save(processo);
-        imovelRepository.save(imovel);
-        leilaoRepository.save(leilao);
+        processoRepository.save(
+                processo
+        );
+
+        imovelRepository.save(
+                imovel
+        );
+
+        leilaoRepository.save(
+                leilao
+        );
+
+        atualizarAcompanhamento(
+                imovel,
+                leilao
+        );
+    }
+
+    private void atualizarAcompanhamento(
+            Imovel imovel,
+            Leilao leilao
+    ) {
+
+        Acompanhamento acompanhamento =
+                acompanhamentoRepository
+                        .findByImovelId(
+                                imovel.getId()
+                        )
+                        .orElseGet(
+                                Acompanhamento::new
+                        );
+
+        LocalDateTime agora =
+                LocalDateTime.now();
+
+        boolean novoAcompanhamento =
+                acompanhamento.getId() == null;
+
+        /*
+         * Guardamos o estado anterior ANTES
+         * de alterar o acompanhamento.
+         */
+        StatusPipeline statusAnterior =
+                acompanhamento.getStatusPipeline();
+
+        if (novoAcompanhamento) {
+
+            acompanhamento.setImovel(
+                    imovel
+            );
+
+            acompanhamento.setDataIdentificacao(
+                    agora
+            );
+        }
+
+        StatusPipeline novoStatus =
+                definirStatusPipeline(
+                        leilao
+                );
+
+        acompanhamento.setStatusPipeline(
+                novoStatus
+        );
+
+        acompanhamento.setUltimaVerificacao(
+                agora
+        );
+
+        acompanhamento.setAtivo(
+                novoStatus != StatusPipeline.ENCERRADO
+                        && novoStatus != StatusPipeline.DESCARTADO
+        );
+
+        acompanhamento =
+                acompanhamentoRepository.save(
+                        acompanhamento
+                );
+
+        /*
+         * Verifica se já existe pelo menos
+         * uma linha de histórico.
+         */
+        boolean possuiHistorico =
+                historicoAcompanhamentoRepository
+                        .existsByAcompanhamentoId(
+                                acompanhamento.getId()
+                        );
+
+        /*
+         * Enum pode ser comparado com !=.
+         */
+        boolean statusMudou =
+                statusAnterior != novoStatus;
+
+        /*
+         * Registra histórico quando:
+         *
+         * 1. Ainda não existe nenhum histórico
+         * OU
+         * 2. O StatusPipeline realmente mudou.
+         *
+         * Apenas atualizar a data da coleta
+         * não cria lixo no histórico.
+         */
+        if (!possuiHistorico || statusMudou) {
+
+            registrarHistorico(
+                    acompanhamento,
+                    leilao,
+                    novoStatus
+            );
+        }
+    }
+
+    private void registrarHistorico(
+            Acompanhamento acompanhamento,
+            Leilao leilao,
+            StatusPipeline statusPipeline
+    ) {
+
+        HistoricoAcompanhamento historico =
+                new HistoricoAcompanhamento();
+
+        historico.setAcompanhamento(
+                acompanhamento
+        );
+
+        historico.setDataEvento(
+                LocalDateTime.now()
+        );
+
+        historico.setStatusPipeline(
+                statusPipeline
+        );
+
+        historico.setOrigem(
+                "Sublime Leilões"
+        );
+
+        String descricao =
+                "Leilão: "
+                        + leilao.getStatusLeilao()
+                        + " | Resultado: "
+                        + leilao.getResultadoLeilao();
+
+        historico.setDescricao(
+                descricao
+        );
+
+        historicoAcompanhamentoRepository.save(
+                historico
+        );
+    }
+
+    private StatusPipeline definirStatusPipeline(
+            Leilao leilao
+    ) {
+
+        if (leilao.getStatusLeilao()
+                == StatusLeilao.AGENDADO) {
+
+            return StatusPipeline.MONITORANDO_LEILAO;
+        }
+
+        if (leilao.getStatusLeilao()
+                == StatusLeilao.EM_ANDAMENTO) {
+
+            return StatusPipeline.MONITORANDO_LEILAO;
+        }
+
+        if (leilao.getStatusLeilao()
+                == StatusLeilao.ENCERRADO) {
+
+            if (leilao.getResultadoLeilao()
+                    == ResultadoLeilao.ARREMATADO) {
+
+                return StatusPipeline.ENCERRADO;
+            }
+
+            if (leilao.getResultadoLeilao()
+                    == ResultadoLeilao.DESCONHECIDO) {
+
+                return StatusPipeline.AGUARDANDO_RESULTADO;
+            }
+
+            return StatusPipeline.MONITORANDO_PROCESSO;
+        }
+
+        return StatusPipeline.IDENTIFICADO;
     }
 
     private void preencherProcesso(
@@ -338,7 +541,9 @@ public class PersistenciaLeilaoService {
                 )
         );
 
-        leilao.setImovel(imovel);
+        leilao.setImovel(
+                imovel
+        );
     }
 
     private StatusLeilao converterStatus(
