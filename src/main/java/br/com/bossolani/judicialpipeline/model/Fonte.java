@@ -13,18 +13,36 @@ public class Fonte {
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private FonteTipo tipo;
 
+    @Column(nullable = false)
     private String origemNome;
 
-    @Column(length = 2000)
+    @Column(
+            length = 2000,
+            unique = true
+    )
     private String urlOrigem;
 
+    @Column(nullable = false)
     private LocalDateTime dataCaptura;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "leilao_id", nullable = false)
+    /*
+     * Uma fonte pode estar relacionada a um leilão.
+     * Exemplo: Sublime Leilões.
+     */
+    @ManyToOne
+    @JoinColumn(name = "leilao_id")
     private Leilao leilao;
+
+    /*
+     * Ou diretamente a um processo.
+     * Exemplo: DataJud/CNJ.
+     */
+    @ManyToOne
+    @JoinColumn(name = "processo_id")
+    private Processo processo;
 
     public Fonte() {
     }
@@ -71,5 +89,13 @@ public class Fonte {
 
     public void setLeilao(Leilao leilao) {
         this.leilao = leilao;
+    }
+
+    public Processo getProcesso() {
+        return processo;
+    }
+
+    public void setProcesso(Processo processo) {
+        this.processo = processo;
     }
 }

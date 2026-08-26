@@ -3,6 +3,8 @@ package br.com.bossolani.judicialpipeline.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "imoveis")
 public class Imovel {
@@ -11,25 +13,34 @@ public class Imovel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Dados do imóvel
     private String tipo;
 
-    // Localização
+    @Column(length = 1000)
     private String endereco;
+
     private String numero;
+
     private String complemento;
+
     private String bairro;
+
     private String cidade;
+
     private String cep;
 
+    @Column(
+            name = "valor_avaliacao",
+            precision = 15,
+            scale = 2
+    )
+    private BigDecimal valorAvaliacao;
 
-    // Dados financeiros e status
-    private Double valorAvaliacao;
-
-    // Relacionamento com o processo
-    @NotNull(message = "O Processo é obrigatório")
+    @NotNull(message = "O processo é obrigatório")
     @ManyToOne(optional = false)
-    @JoinColumn(name = "processo_id", nullable = false)
+    @JoinColumn(
+            name = "processo_id",
+            nullable = false
+    )
     private Processo processo;
 
     public Imovel() {
@@ -43,8 +54,7 @@ public class Imovel {
             String bairro,
             String cidade,
             String cep,
-            Double valorAvaliacao,
-            String status,
+            BigDecimal valorAvaliacao,
             Processo processo
     ) {
         this.tipo = tipo;
@@ -118,11 +128,11 @@ public class Imovel {
         this.cep = cep;
     }
 
-    public Double getValorAvaliacao() {
+    public BigDecimal getValorAvaliacao() {
         return valorAvaliacao;
     }
 
-    public void setValorAvaliacao(Double valorAvaliacao) {
+    public void setValorAvaliacao(BigDecimal valorAvaliacao) {
         this.valorAvaliacao = valorAvaliacao;
     }
 

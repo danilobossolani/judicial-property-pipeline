@@ -1,7 +1,11 @@
 package br.com.bossolani.judicialpipeline.model;
 
 public enum StatusLeilao {
-    ATIVO,
-    DESERTO,
-    ALIENACAO_PARTICULAR
+
+    AGENDADO,
+    EM_ANDAMENTO,
+    ENCERRADO,
+    SUSPENSO,
+    CANCELADO,
+    DESCONHECIDO
 }
