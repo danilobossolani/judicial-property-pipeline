@@ -4,6 +4,7 @@ import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcesso
 
 public record LoteEnriquecidoDTO(
         LoteLeilaoDTO lote,
+        DadosDinamicosLeilaoDTO leilao,
         DataJudProcessoDTO processo,
         boolean processoConfirmado
 ) {

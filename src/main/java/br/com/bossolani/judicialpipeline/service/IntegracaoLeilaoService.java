@@ -2,8 +2,10 @@ package br.com.bossolani.judicialpipeline.service;
 
 import br.com.bossolani.judicialpipeline.integration.DataJudClient;
 import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcessoDTO;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.DadosDinamicosLeilaoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteEnriquecidoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteLeilaoDTO;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesBrowser;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesScraper;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
@@ -14,36 +16,55 @@ import java.io.IOException;
 public class IntegracaoLeilaoService {
 
     private final SublimeLeiloesScraper sublimeScraper;
+    private final SublimeLeiloesBrowser sublimeBrowser;
     private final DataJudClient dataJudClient;
 
     public IntegracaoLeilaoService(
             SublimeLeiloesScraper sublimeScraper,
+            SublimeLeiloesBrowser sublimeBrowser,
             DataJudClient dataJudClient
     ) {
         this.sublimeScraper = sublimeScraper;
+        this.sublimeBrowser = sublimeBrowser;
         this.dataJudClient = dataJudClient;
     }
 
     public LoteEnriquecidoDTO buscarLote(String url) throws IOException {
 
-        Document pagina = sublimeScraper.buscarPagina(url);
+        // 1. Dados estáticos do leiloeiro - Jsoup
+        Document pagina =
+                sublimeScraper.buscarPagina(url);
 
         LoteLeilaoDTO lote =
                 sublimeScraper.extrairLote(pagina, url);
 
+        // 2. Dados dinâmicos - Playwright
+        String textoRenderizado =
+                sublimeBrowser.buscarTextoRenderizado(url);
+
+        DadosDinamicosLeilaoDTO leilao =
+                sublimeBrowser.extrairDados(textoRenderizado);
+
+        // 3. Confirmação/complementação - DataJud
         DataJudProcessoDTO processo = null;
         boolean processoConfirmado = false;
 
         try {
 
             processo =
-                    dataJudClient.buscarProcesso(lote.getNumeroProcesso());
+                    dataJudClient.buscarProcesso(
+                            lote.getNumeroProcesso()
+                    );
 
             String numeroLeiloeiro =
-                    normalizarNumeroProcesso(lote.getNumeroProcesso());
+                    normalizarNumeroProcesso(
+                            lote.getNumeroProcesso()
+                    );
 
             String numeroDataJud =
-                    normalizarNumeroProcesso(processo.numeroProcesso());
+                    normalizarNumeroProcesso(
+                            processo.numeroProcesso()
+                    );
 
             processoConfirmado =
                     numeroLeiloeiro.equals(numeroDataJud);
@@ -56,12 +77,15 @@ public class IntegracaoLeilaoService {
 
         return new LoteEnriquecidoDTO(
                 lote,
+                leilao,
                 processo,
                 processoConfirmado
         );
     }
 
-    private String normalizarNumeroProcesso(String numeroProcesso) {
+    private String normalizarNumeroProcesso(
+            String numeroProcesso
+    ) {
 
         if (numeroProcesso == null) {
             return "";
