@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class PersistenciaLeilaoService {
@@ -46,9 +47,14 @@ public class PersistenciaLeilaoService {
         LoteEnriquecidoDTO coleta =
                 integracaoLeilaoService.buscarLote(url);
 
-        LoteLeilaoDTO lote = coleta.lote();
-        DadosDinamicosLeilaoDTO dadosLeilao = coleta.leilao();
-        DataJudProcessoDTO dadosProcesso = coleta.processo();
+        LoteLeilaoDTO lote =
+                coleta.lote();
+
+        DadosDinamicosLeilaoDTO dadosLeilao =
+                coleta.leilao();
+
+        DataJudProcessoDTO dadosProcesso =
+                coleta.processo();
 
         Fonte fonteExistente =
                 fonteRepository
@@ -56,8 +62,8 @@ public class PersistenciaLeilaoService {
                         .orElse(null);
 
         /*
-         * URL já cadastrada:
-         * atualiza Processo, Imóvel, Leilão e Acompanhamento.
+         * Se a URL já existe,
+         * atualizamos os dados existentes.
          */
         if (fonteExistente != null) {
 
@@ -102,7 +108,8 @@ public class PersistenciaLeilaoService {
                         processo
                 );
 
-        Imovel imovel = new Imovel();
+        Imovel imovel =
+                new Imovel();
 
         preencherImovel(
                 imovel,
@@ -115,7 +122,8 @@ public class PersistenciaLeilaoService {
                         imovel
                 );
 
-        Leilao leilao = new Leilao();
+        Leilao leilao =
+                new Leilao();
 
         preencherLeilao(
                 leilao,
@@ -128,16 +136,13 @@ public class PersistenciaLeilaoService {
                         leilao
                 );
 
-        /*
-         * Cria/atualiza o estado atual do pipeline.
-         * Também registra histórico quando necessário.
-         */
         atualizarAcompanhamento(
                 imovel,
                 leilao
         );
 
-        Fonte fonte = new Fonte();
+        Fonte fonte =
+                new Fonte();
 
         fonte.setTipo(
                 FonteTipo.LEILOEIRO_OFICIAL
@@ -147,13 +152,17 @@ public class PersistenciaLeilaoService {
                 "Sublime Leilões"
         );
 
-        fonte.setUrlOrigem(url);
+        fonte.setUrlOrigem(
+                url
+        );
 
         fonte.setDataCaptura(
                 LocalDateTime.now()
         );
 
-        fonte.setLeilao(leilao);
+        fonte.setLeilao(
+                leilao
+        );
 
         return fonteRepository.save(
                 fonte
@@ -250,13 +259,6 @@ public class PersistenciaLeilaoService {
         boolean novoAcompanhamento =
                 acompanhamento.getId() == null;
 
-        /*
-         * Guardamos o estado anterior ANTES
-         * de alterar o acompanhamento.
-         */
-        StatusPipeline statusAnterior =
-                acompanhamento.getStatusPipeline();
-
         if (novoAcompanhamento) {
 
             acompanhamento.setImovel(
@@ -268,13 +270,13 @@ public class PersistenciaLeilaoService {
             );
         }
 
-        StatusPipeline novoStatus =
+        StatusPipeline novoStatusPipeline =
                 definirStatusPipeline(
                         leilao
                 );
 
         acompanhamento.setStatusPipeline(
-                novoStatus
+                novoStatusPipeline
         );
 
         acompanhamento.setUltimaVerificacao(
@@ -282,8 +284,8 @@ public class PersistenciaLeilaoService {
         );
 
         acompanhamento.setAtivo(
-                novoStatus != StatusPipeline.ENCERRADO
-                        && novoStatus != StatusPipeline.DESCARTADO
+                novoStatusPipeline != StatusPipeline.ENCERRADO
+                        && novoStatusPipeline != StatusPipeline.DESCARTADO
         );
 
         acompanhamento =
@@ -291,38 +293,91 @@ public class PersistenciaLeilaoService {
                         acompanhamento
                 );
 
-        /*
-         * Verifica se já existe pelo menos
-         * uma linha de histórico.
-         */
-        boolean possuiHistorico =
+        verificarHistorico(
+                acompanhamento,
+                leilao,
+                novoStatusPipeline
+        );
+    }
+
+    private void verificarHistorico(
+            Acompanhamento acompanhamento,
+            Leilao leilao,
+            StatusPipeline statusPipelineAtual
+    ) {
+
+        Optional<HistoricoAcompanhamento> ultimoHistoricoOptional =
                 historicoAcompanhamentoRepository
-                        .existsByAcompanhamentoId(
+                        .findTopByAcompanhamentoIdOrderByDataEventoDesc(
                                 acompanhamento.getId()
                         );
 
         /*
-         * Enum pode ser comparado com !=.
+         * Primeiro histórico do imóvel.
          */
-        boolean statusMudou =
-                statusAnterior != novoStatus;
-
-        /*
-         * Registra histórico quando:
-         *
-         * 1. Ainda não existe nenhum histórico
-         * OU
-         * 2. O StatusPipeline realmente mudou.
-         *
-         * Apenas atualizar a data da coleta
-         * não cria lixo no histórico.
-         */
-        if (!possuiHistorico || statusMudou) {
+        if (ultimoHistoricoOptional.isEmpty()) {
 
             registrarHistorico(
                     acompanhamento,
                     leilao,
-                    novoStatus
+                    statusPipelineAtual
+            );
+
+            return;
+        }
+
+        HistoricoAcompanhamento ultimoHistorico =
+                ultimoHistoricoOptional.get();
+
+        /*
+         * Compatibilidade com o histórico que já existia
+         * antes de adicionarmos statusLeilao e resultadoLeilao.
+         *
+         * Em vez de criar uma linha nova artificial,
+         * completamos a linha existente.
+         */
+        if (ultimoHistorico.getStatusLeilao() == null
+                && ultimoHistorico.getResultadoLeilao() == null) {
+
+            ultimoHistorico.setStatusLeilao(
+                    leilao.getStatusLeilao()
+            );
+
+            ultimoHistorico.setResultadoLeilao(
+                    leilao.getResultadoLeilao()
+            );
+
+            historicoAcompanhamentoRepository.save(
+                    ultimoHistorico
+            );
+
+            return;
+        }
+
+        boolean mudouPipeline =
+                ultimoHistorico.getStatusPipeline()
+                        != statusPipelineAtual;
+
+        boolean mudouStatusLeilao =
+                ultimoHistorico.getStatusLeilao()
+                        != leilao.getStatusLeilao();
+
+        boolean mudouResultadoLeilao =
+                ultimoHistorico.getResultadoLeilao()
+                        != leilao.getResultadoLeilao();
+
+        /*
+         * Só cria um novo evento quando
+         * alguma informação relevante mudou.
+         */
+        if (mudouPipeline
+                || mudouStatusLeilao
+                || mudouResultadoLeilao) {
+
+            registrarHistorico(
+                    acompanhamento,
+                    leilao,
+                    statusPipelineAtual
             );
         }
     }
@@ -346,6 +401,14 @@ public class PersistenciaLeilaoService {
 
         historico.setStatusPipeline(
                 statusPipeline
+        );
+
+        historico.setStatusLeilao(
+                leilao.getStatusLeilao()
+        );
+
+        historico.setResultadoLeilao(
+                leilao.getResultadoLeilao()
         );
 
         historico.setOrigem(

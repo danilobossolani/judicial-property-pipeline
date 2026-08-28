@@ -26,6 +26,12 @@ public class HistoricoAcompanhamento {
     @Column(nullable = false)
     private StatusPipeline statusPipeline;
 
+    @Enumerated(EnumType.STRING)
+    private StatusLeilao statusLeilao;
+
+    @Enumerated(EnumType.STRING)
+    private ResultadoLeilao resultadoLeilao;
+
     @Column(nullable = false)
     private String origem;
 
@@ -67,6 +73,26 @@ public class HistoricoAcompanhamento {
             StatusPipeline statusPipeline
     ) {
         this.statusPipeline = statusPipeline;
+    }
+
+    public StatusLeilao getStatusLeilao() {
+        return statusLeilao;
+    }
+
+    public void setStatusLeilao(
+            StatusLeilao statusLeilao
+    ) {
+        this.statusLeilao = statusLeilao;
+    }
+
+    public ResultadoLeilao getResultadoLeilao() {
+        return resultadoLeilao;
+    }
+
+    public void setResultadoLeilao(
+            ResultadoLeilao resultadoLeilao
+    ) {
+        this.resultadoLeilao = resultadoLeilao;
     }
 
     public String getOrigem() {
