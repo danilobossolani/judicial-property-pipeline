@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 public class SublimeLeiloesScraper {
 
     public Document buscarPagina(String url) throws IOException {
+
         return Jsoup.connect(url)
                 .userAgent("Mozilla/5.0")
                 .timeout(10000)
@@ -24,11 +25,12 @@ public class SublimeLeiloesScraper {
 
         String textoPagina = pagina.text();
 
-        Pattern padraoProcesso = Pattern.compile(
+        Pattern pattern = Pattern.compile(
                 "\\d{7}-\\d{2}\\.\\d{4}\\.\\d\\.\\d{2}\\.\\d{4}"
         );
 
-        Matcher matcher = padraoProcesso.matcher(textoPagina);
+        Matcher matcher =
+                pattern.matcher(textoPagina);
 
         if (matcher.find()) {
             return matcher.group();
@@ -39,13 +41,12 @@ public class SublimeLeiloesScraper {
 
     public String extrairValorAvaliacao(Document pagina) {
 
-        String textoPagina = pagina.text();
-
-        Pattern padraoAvaliacao = Pattern.compile(
+        Pattern pattern = Pattern.compile(
                 "Avaliação:\\s*R\\$\\s*([\\d.,]+)"
         );
 
-        Matcher matcher = padraoAvaliacao.matcher(textoPagina);
+        Matcher matcher =
+                pattern.matcher(pagina.text());
 
         if (matcher.find()) {
             return matcher.group(1);
@@ -56,13 +57,12 @@ public class SublimeLeiloesScraper {
 
     public String extrairComarca(Document pagina) {
 
-        String textoPagina = pagina.text();
-
-        Pattern padraoComarca = Pattern.compile(
+        Pattern pattern = Pattern.compile(
                 "Comarca:\\s*(.*?)\\s+Vara:"
         );
 
-        Matcher matcher = padraoComarca.matcher(textoPagina);
+        Matcher matcher =
+                pattern.matcher(pagina.text());
 
         if (matcher.find()) {
             return matcher.group(1).trim();
@@ -73,13 +73,12 @@ public class SublimeLeiloesScraper {
 
     public String extrairVara(Document pagina) {
 
-        String textoPagina = pagina.text();
-
-        Pattern padraoVara = Pattern.compile(
+        Pattern pattern = Pattern.compile(
                 "Vara:\\s*(.*?)\\s+Autor:"
         );
 
-        Matcher matcher = padraoVara.matcher(textoPagina);
+        Matcher matcher =
+                pattern.matcher(pagina.text());
 
         if (matcher.find()) {
             return matcher.group(1).trim();
@@ -90,14 +89,13 @@ public class SublimeLeiloesScraper {
 
     public String extrairEndereco(Document pagina) {
 
-        String textoPagina = pagina.text();
-
-        Pattern padraoEndereco = Pattern.compile(
+        Pattern pattern = Pattern.compile(
                 "Localização\\s+(.*?)\\s+Receba as melhores ofertas",
                 Pattern.CASE_INSENSITIVE
         );
 
-        Matcher matcher = padraoEndereco.matcher(textoPagina);
+        Matcher matcher =
+                pattern.matcher(pagina.text());
 
         if (matcher.find()) {
             return matcher.group(1).trim();
@@ -106,29 +104,103 @@ public class SublimeLeiloesScraper {
         return null;
     }
 
-    private BigDecimal converterValorMonetario(String valor) {
+    public String extrairNumeroEndereco(
+            String endereco
+    ) {
+
+        if (endereco == null || endereco.isBlank()) {
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile(
+                ",\\s*(\\d+[A-Za-z]?)\\s*-"
+        );
+
+        Matcher matcher =
+                pattern.matcher(endereco);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        return null;
+    }
+
+    public String extrairBairro(
+            String endereco,
+            String cidade
+    ) {
+
+        if (endereco == null
+                || endereco.isBlank()
+                || cidade == null
+                || cidade.isBlank()) {
+
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile(
+                "-\\s*(.*?)\\s+"
+                        + Pattern.quote(cidade)
+                        + "\\s*-\\s*[A-Z]{2}$",
+                Pattern.CASE_INSENSITIVE
+        );
+
+        Matcher matcher =
+                pattern.matcher(endereco);
+
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        return null;
+    }
+
+    private BigDecimal converterValorMonetario(
+            String valor
+    ) {
 
         if (valor == null) {
             return null;
         }
 
-        String valorNormalizado = valor
-                .replace(".", "")
-                .replace(",", ".");
-
-        return new BigDecimal(valorNormalizado);
+        return new BigDecimal(
+                valor
+                        .replace(".", "")
+                        .replace(",", ".")
+        );
     }
 
-    public LoteLeilaoDTO extrairLote(Document pagina, String url) {
+    public LoteLeilaoDTO extrairLote(
+            Document pagina,
+            String url
+    ) {
 
-        String numeroProcesso = extrairNumeroProcesso(pagina);
-        String valorTexto = extrairValorAvaliacao(pagina);
+        String numeroProcesso =
+                extrairNumeroProcesso(pagina);
 
-        BigDecimal valorAvaliacao = converterValorMonetario(valorTexto);
+        BigDecimal valorAvaliacao =
+                converterValorMonetario(
+                        extrairValorAvaliacao(pagina)
+                );
 
-        String comarca = extrairComarca(pagina);
-        String vara = extrairVara(pagina);
-        String endereco = extrairEndereco(pagina);
+        String comarca =
+                extrairComarca(pagina);
+
+        String vara =
+                extrairVara(pagina);
+
+        String endereco =
+                extrairEndereco(pagina);
+
+        String numero =
+                extrairNumeroEndereco(endereco);
+
+        String bairro =
+                extrairBairro(
+                        endereco,
+                        comarca
+                );
 
         return new LoteLeilaoDTO(
                 numeroProcesso,
@@ -136,51 +208,34 @@ public class SublimeLeiloesScraper {
                 comarca,
                 vara,
                 endereco,
+                numero,
+                bairro,
                 url
         );
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(
+            String[] args
+    ) throws IOException {
 
-        SublimeLeiloesScraper scraper = new SublimeLeiloesScraper();
+        SublimeLeiloesScraper scraper =
+                new SublimeLeiloesScraper();
 
         String url =
                 "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/2351/";
 
-        Document pagina = scraper.buscarPagina(url);
+        Document pagina =
+                scraper.buscarPagina(url);
 
-        System.out.println("Título:");
-        System.out.println(pagina.title());
+        LoteLeilaoDTO lote =
+                scraper.extrairLote(
+                        pagina,
+                        url
+                );
 
-        System.out.println();
-
-        System.out.println("Processo encontrado:");
-        System.out.println(scraper.extrairNumeroProcesso(pagina));
-
-        System.out.println();
-
-        System.out.println("Avaliação encontrada:");
-        System.out.println(scraper.extrairValorAvaliacao(pagina));
-
-        System.out.println();
-
-        System.out.println("Comarca encontrada:");
-        System.out.println(scraper.extrairComarca(pagina));
-
-        System.out.println();
-
-        System.out.println("Vara encontrada:");
-        System.out.println(scraper.extrairVara(pagina));
-
-        System.out.println();
-
-        System.out.println("Endereço encontrado:");
-        System.out.println(scraper.extrairEndereco(pagina));
-
-        System.out.println();
-        System.out.println("=== LOTE COMPLETO ===");
-
-        LoteLeilaoDTO lote = scraper.extrairLote(pagina, url);
+        System.out.println(
+                "=== LOTE EXTRAÍDO ==="
+        );
 
         System.out.println(lote);
     }

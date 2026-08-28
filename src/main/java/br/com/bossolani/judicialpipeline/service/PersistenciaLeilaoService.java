@@ -61,10 +61,6 @@ public class PersistenciaLeilaoService {
                         .findByUrlOrigem(url)
                         .orElse(null);
 
-        /*
-         * Se a URL já existe,
-         * atualizamos os dados existentes.
-         */
         if (fonteExistente != null) {
 
             atualizarExistente(
@@ -82,10 +78,6 @@ public class PersistenciaLeilaoService {
                     fonteExistente
             );
         }
-
-        /*
-         * URL nova.
-         */
 
         String numeroProcesso =
                 normalizarNumeroProcesso(
@@ -312,9 +304,6 @@ public class PersistenciaLeilaoService {
                                 acompanhamento.getId()
                         );
 
-        /*
-         * Primeiro histórico do imóvel.
-         */
         if (ultimoHistoricoOptional.isEmpty()) {
 
             registrarHistorico(
@@ -329,13 +318,6 @@ public class PersistenciaLeilaoService {
         HistoricoAcompanhamento ultimoHistorico =
                 ultimoHistoricoOptional.get();
 
-        /*
-         * Compatibilidade com o histórico que já existia
-         * antes de adicionarmos statusLeilao e resultadoLeilao.
-         *
-         * Em vez de criar uma linha nova artificial,
-         * completamos a linha existente.
-         */
         if (ultimoHistorico.getStatusLeilao() == null
                 && ultimoHistorico.getResultadoLeilao() == null) {
 
@@ -366,10 +348,6 @@ public class PersistenciaLeilaoService {
                 ultimoHistorico.getResultadoLeilao()
                         != leilao.getResultadoLeilao();
 
-        /*
-         * Só cria um novo evento quando
-         * alguma informação relevante mudou.
-         */
         if (mudouPipeline
                 || mudouStatusLeilao
                 || mudouResultadoLeilao) {
@@ -531,6 +509,14 @@ public class PersistenciaLeilaoService {
 
         imovel.setEndereco(
                 lote.getEndereco()
+        );
+
+        imovel.setNumero(
+                lote.getNumero()
+        );
+
+        imovel.setBairro(
+                lote.getBairro()
         );
 
         imovel.setCidade(
