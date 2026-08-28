@@ -33,7 +33,8 @@
         }
 
         .stat-card,
-        .imovel-card {
+        .imovel-card,
+        .filtros-card {
             border: none;
             border-radius: 16px;
         }
@@ -52,6 +53,8 @@
 
         .processo {
             font-family: monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
             overflow-wrap: anywhere;
         }
 
@@ -61,6 +64,21 @@
 
         .imovel-card:hover {
             transform: translateY(-2px);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.65rem;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+        }
+
+        .resultado-filtro {
+            font-size: 0.9rem;
+            color: #6b7280;
         }
 
     </style>
@@ -108,6 +126,8 @@
 
 <main class="container py-4">
 
+    <!-- INDICADORES -->
+
     <div class="row g-3 mb-4">
 
         <div class="col-12 col-md-4">
@@ -121,6 +141,7 @@
                     </div>
 
                     <div
+                            id="totalImoveis"
                             class="display-6 fw-semibold"
                             th:text="${totalImoveis}"
                     >
@@ -145,6 +166,7 @@
                     </div>
 
                     <div
+                            id="totalMonitorando"
                             class="display-6 fw-semibold"
                             th:text="${totalMonitorando}"
                     >
@@ -169,6 +191,7 @@
                     </div>
 
                     <div
+                            id="totalSemLances"
                             class="display-6 fw-semibold"
                             th:text="${totalSemLances}"
                     >
@@ -184,6 +207,154 @@
     </div>
 
 
+    <!-- FILTROS -->
+
+    <div class="card filtros-card shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <div class="row g-3">
+
+                <div class="col-12 col-lg-4">
+
+                    <label
+                            for="filtroProcesso"
+                            class="form-label label"
+                    >
+                        Buscar processo
+                    </label>
+
+                    <input
+                            id="filtroProcesso"
+                            type="text"
+                            class="form-control"
+                            placeholder="Digite o número do processo"
+                    >
+
+                </div>
+
+
+                <div class="col-6 col-lg-2">
+
+                    <label
+                            for="filtroCidade"
+                            class="form-label label"
+                    >
+                        Cidade
+                    </label>
+
+                    <select
+                            id="filtroCidade"
+                            class="form-select"
+                    >
+                        <option value="">
+                            Todas
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="col-6 col-lg-2">
+
+                    <label
+                            for="filtroBairro"
+                            class="form-label label"
+                    >
+                        Bairro
+                    </label>
+
+                    <select
+                            id="filtroBairro"
+                            class="form-select"
+                    >
+                        <option value="">
+                            Todos
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="col-6 col-lg-2">
+
+                    <label
+                            for="filtroStatus"
+                            class="form-label label"
+                    >
+                        Status
+                    </label>
+
+                    <select
+                            id="filtroStatus"
+                            class="form-select"
+                    >
+                        <option value="">
+                            Todos
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="col-6 col-lg-2">
+
+                    <label
+                            for="filtroResultado"
+                            class="form-label label"
+                    >
+                        Resultado
+                    </label>
+
+                    <select
+                            id="filtroResultado"
+                            class="form-select"
+                    >
+                        <option value="">
+                            Todos
+                        </option>
+                    </select>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <div
+                            class="d-flex
+                                   justify-content-between
+                                   align-items-center
+                                   flex-wrap
+                                   gap-2"
+                    >
+
+                        <div
+                                id="resultadoFiltro"
+                                class="resultado-filtro"
+                        >
+                        </div>
+
+                        <button
+                                id="botaoLimpar"
+                                type="button"
+                                class="btn btn-outline-secondary btn-sm"
+                        >
+                            Limpar filtros
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TÍTULO -->
+
     <div class="mb-3">
 
         <h2 class="h4 mb-1">
@@ -197,6 +368,8 @@
     </div>
 
 
+    <!-- SEM IMÓVEIS NO BANCO -->
+
     <div
             class="alert alert-secondary"
             th:if="${#lists.isEmpty(imoveis)}"
@@ -205,20 +378,46 @@
     </div>
 
 
-    <div class="row g-3">
+    <!-- SEM RESULTADOS DOS FILTROS -->
+
+    <div
+            id="semResultados"
+            class="alert alert-secondary d-none"
+    >
+        Nenhum imóvel corresponde aos filtros selecionados.
+    </div>
+
+
+    <!-- LISTA -->
+
+    <div
+            id="listaImoveis"
+            class="row g-3"
+    >
 
         <div
-                class="col-12"
+                class="col-12 imovel-item"
                 th:each="imovel : ${imoveis}"
+
+                th:attr="
+                    data-processo=${imovel.numeroProcessoFormatado()},
+                    data-cidade=${imovel.cidade != null ? imovel.cidade : ''},
+                    data-bairro=${imovel.bairro != null ? imovel.bairro : ''},
+                    data-status=${imovel.statusPipelineFormatado()},
+                    data-resultado=${imovel.resultadoLeilaoFormatado()}
+                "
         >
 
             <div class="card imovel-card shadow-sm">
 
                 <div class="card-body p-4">
 
-                    <div class="row g-4">
+                    <div class="row g-4 align-items-start">
 
-                        <div class="col-12 col-lg-4">
+
+                        <!-- LOCALIZAÇÃO -->
+
+                        <div class="col-12 col-xl-3">
 
                             <div class="label">
                                 Localização
@@ -235,7 +434,9 @@
 
                             <div
                                     class="text-secondary"
-                                    th:text="${imovel.endereco}"
+                                    th:text="${imovel.endereco != null
+                                        ? imovel.endereco
+                                        : 'Endereço não informado'}"
                             >
                                 Endereço
                             </div>
@@ -252,25 +453,27 @@
                         </div>
 
 
-                        <div class="col-6 col-lg-2">
+                        <!-- PROCESSO -->
+
+                        <div class="col-12 col-md-6 col-xl-3">
 
                             <div class="label">
                                 Processo
                             </div>
 
                             <div
-                                    class="valor processo mt-1"
-                                    th:text="${imovel.numeroProcesso != null
-                                        ? imovel.numeroProcesso
-                                        : 'Não informado'}"
+                                    class="processo mt-1"
+                                    th:text="${imovel.numeroProcessoFormatado()}"
                             >
-                                Processo
+                                0050699-62.2005.8.26.0602
                             </div>
 
                         </div>
 
 
-                        <div class="col-6 col-lg-2">
+                        <!-- AVALIAÇÃO -->
+
+                        <div class="col-6 col-md-3 col-xl-2">
 
                             <div class="label">
                                 Avaliação
@@ -294,7 +497,9 @@
                         </div>
 
 
-                        <div class="col-6 col-lg-2">
+                        <!-- LANCE -->
+
+                        <div class="col-6 col-md-3 col-xl-2">
 
                             <div class="label">
                                 Lance mínimo
@@ -321,13 +526,15 @@
                                     th:text="${imovel.percentualDesconto
                                         + '% informado pela fonte'}"
                             >
-                                40%
+                                40% informado pela fonte
                             </small>
 
                         </div>
 
 
-                        <div class="col-6 col-lg-2">
+                        <!-- SITUAÇÃO -->
+
+                        <div class="col-12 col-xl-2">
 
                             <div class="label mb-2">
                                 Situação
@@ -336,12 +543,10 @@
                             <div class="mb-2">
 
                                 <span
-                                        class="badge text-bg-dark"
-                                        th:text="${imovel.statusPipeline != null
-                                            ? imovel.statusPipeline
-                                            : 'IDENTIFICADO'}"
+                                        class="badge text-bg-dark status-badge"
+                                        th:text="${imovel.statusPipelineFormatado()}"
                                 >
-                                    MONITORANDO_PROCESSO
+                                    Monitorando processo
                                 </span>
 
                             </div>
@@ -349,21 +554,17 @@
                             <div class="small text-secondary mb-3">
 
                                 <span
-                                        th:text="${imovel.statusLeilao != null
-                                            ? imovel.statusLeilao
-                                            : 'DESCONHECIDO'}"
+                                        th:text="${imovel.statusLeilaoFormatado()}"
                                 >
-                                    ENCERRADO
+                                    Encerrado
                                 </span>
 
                                 /
 
                                 <span
-                                        th:text="${imovel.resultadoLeilao != null
-                                            ? imovel.resultadoLeilao
-                                            : 'DESCONHECIDO'}"
+                                        th:text="${imovel.resultadoLeilaoFormatado()}"
                                 >
-                                    SEM_LANCES
+                                    Sem lances
                                 </span>
 
                             </div>
@@ -373,6 +574,7 @@
                                     th:href="${imovel.urlOrigem}"
                                     class="btn btn-outline-dark btn-sm"
                                     target="_blank"
+                                    rel="noopener noreferrer"
                             >
                                 Abrir fonte
                             </a>
@@ -390,6 +592,329 @@
     </div>
 
 </main>
+
+
+<script>
+
+    const filtroProcesso =
+        document.getElementById("filtroProcesso");
+
+    const filtroCidade =
+        document.getElementById("filtroCidade");
+
+    const filtroBairro =
+        document.getElementById("filtroBairro");
+
+    const filtroStatus =
+        document.getElementById("filtroStatus");
+
+    const filtroResultado =
+        document.getElementById("filtroResultado");
+
+    const botaoLimpar =
+        document.getElementById("botaoLimpar");
+
+    const semResultados =
+        document.getElementById("semResultados");
+
+    const resultadoFiltro =
+        document.getElementById("resultadoFiltro");
+
+    const cards =
+        Array.from(
+            document.querySelectorAll(".imovel-item")
+        );
+
+
+    function normalizarTexto(valor) {
+
+        if (!valor) {
+            return "";
+        }
+
+        return valor
+            .toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+    }
+
+
+    function normalizarProcesso(valor) {
+
+        if (!valor) {
+            return "";
+        }
+
+        return valor
+            .toString()
+            .replace(/\D/g, "");
+    }
+
+
+    function adicionarOpcao(
+        select,
+        valor
+    ) {
+
+        if (!valor) {
+            return;
+        }
+
+        const option =
+            document.createElement("option");
+
+        option.value = valor;
+        option.textContent = valor;
+
+        select.appendChild(option);
+    }
+
+
+    function carregarOpcoes() {
+
+        const cidades = new Set();
+        const bairros = new Set();
+        const statuses = new Set();
+        const resultados = new Set();
+
+        cards.forEach(card => {
+
+            if (card.dataset.cidade) {
+                cidades.add(card.dataset.cidade);
+            }
+
+            if (card.dataset.bairro) {
+                bairros.add(card.dataset.bairro);
+            }
+
+            if (card.dataset.status) {
+                statuses.add(card.dataset.status);
+            }
+
+            if (card.dataset.resultado) {
+                resultados.add(card.dataset.resultado);
+            }
+
+        });
+
+
+        Array.from(cidades)
+            .sort()
+            .forEach(valor =>
+                adicionarOpcao(
+                    filtroCidade,
+                    valor
+                )
+            );
+
+
+        Array.from(bairros)
+            .sort()
+            .forEach(valor =>
+                adicionarOpcao(
+                    filtroBairro,
+                    valor
+                )
+            );
+
+
+        Array.from(statuses)
+            .sort()
+            .forEach(valor =>
+                adicionarOpcao(
+                    filtroStatus,
+                    valor
+                )
+            );
+
+
+        Array.from(resultados)
+            .sort()
+            .forEach(valor =>
+                adicionarOpcao(
+                    filtroResultado,
+                    valor
+                )
+            );
+    }
+
+
+    function filtrarImoveis() {
+
+        const processoBuscado =
+            normalizarProcesso(
+                filtroProcesso.value
+            );
+
+        const cidadeBuscada =
+            normalizarTexto(
+                filtroCidade.value
+            );
+
+        const bairroBuscado =
+            normalizarTexto(
+                filtroBairro.value
+            );
+
+        const statusBuscado =
+            normalizarTexto(
+                filtroStatus.value
+            );
+
+        const resultadoBuscado =
+            normalizarTexto(
+                filtroResultado.value
+            );
+
+
+        let visiveis = 0;
+
+
+        cards.forEach(card => {
+
+            const processo =
+                normalizarProcesso(
+                    card.dataset.processo
+                );
+
+            const cidade =
+                normalizarTexto(
+                    card.dataset.cidade
+                );
+
+            const bairro =
+                normalizarTexto(
+                    card.dataset.bairro
+                );
+
+            const status =
+                normalizarTexto(
+                    card.dataset.status
+                );
+
+            const resultado =
+                normalizarTexto(
+                    card.dataset.resultado
+                );
+
+
+            const processoCorresponde =
+                processoBuscado === ""
+                || processo.includes(
+                    processoBuscado
+                );
+
+            const cidadeCorresponde =
+                cidadeBuscada === ""
+                || cidade === cidadeBuscada;
+
+            const bairroCorresponde =
+                bairroBuscado === ""
+                || bairro === bairroBuscado;
+
+            const statusCorresponde =
+                statusBuscado === ""
+                || status === statusBuscado;
+
+            const resultadoCorresponde =
+                resultadoBuscado === ""
+                || resultado === resultadoBuscado;
+
+
+            const mostrar =
+                processoCorresponde
+                && cidadeCorresponde
+                && bairroCorresponde
+                && statusCorresponde
+                && resultadoCorresponde;
+
+
+            card.classList.toggle(
+                "d-none",
+                !mostrar
+            );
+
+
+            if (mostrar) {
+                visiveis++;
+            }
+
+        });
+
+
+        if (cards.length > 0) {
+
+            resultadoFiltro.textContent =
+                visiveis
+                + " de "
+                + cards.length
+                + " imóvel(is) exibido(s)";
+
+        } else {
+
+            resultadoFiltro.textContent = "";
+
+        }
+
+
+        semResultados.classList.toggle(
+            "d-none",
+            visiveis !== 0
+            || cards.length === 0
+        );
+    }
+
+
+    function limparFiltros() {
+
+        filtroProcesso.value = "";
+        filtroCidade.value = "";
+        filtroBairro.value = "";
+        filtroStatus.value = "";
+        filtroResultado.value = "";
+
+        filtrarImoveis();
+    }
+
+
+    filtroProcesso.addEventListener(
+        "input",
+        filtrarImoveis
+    );
+
+    filtroCidade.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    filtroBairro.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    filtroStatus.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    filtroResultado.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    botaoLimpar.addEventListener(
+        "click",
+        limparFiltros
+    );
+
+
+    carregarOpcoes();
+
+    filtrarImoveis();
+
+</script>
 
 
 <script
