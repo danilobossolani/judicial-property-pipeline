@@ -9,6 +9,7 @@ public class LoteLeilaoDTO {
     private String comarca;
     private String vara;
 
+    private String tipo;
     private String endereco;
     private String numero;
     private String bairro;
@@ -20,6 +21,7 @@ public class LoteLeilaoDTO {
             BigDecimal valorAvaliacao,
             String comarca,
             String vara,
+            String tipo,
             String endereco,
             String numero,
             String bairro,
@@ -29,6 +31,7 @@ public class LoteLeilaoDTO {
         this.valorAvaliacao = valorAvaliacao;
         this.comarca = comarca;
         this.vara = vara;
+        this.tipo = tipo;
         this.endereco = endereco;
         this.numero = numero;
         this.bairro = bairro;
@@ -49,6 +52,10 @@ public class LoteLeilaoDTO {
 
     public String getVara() {
         return vara;
+    }
+
+    public String getTipo() {
+        return tipo;
     }
 
     public String getEndereco() {
@@ -74,6 +81,7 @@ public class LoteLeilaoDTO {
                 ", valorAvaliacao=" + valorAvaliacao +
                 ", comarca='" + comarca + '\'' +
                 ", vara='" + vara + '\'' +
+                ", tipo='" + tipo + '\'' +
                 ", endereco='" + endereco + '\'' +
                 ", numero='" + numero + '\'' +
                 ", bairro='" + bairro + '\'' +

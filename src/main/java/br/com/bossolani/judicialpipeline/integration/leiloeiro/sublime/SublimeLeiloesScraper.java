@@ -156,6 +156,34 @@ public class SublimeLeiloesScraper {
         return null;
     }
 
+    public String extrairTipoImovel(
+            Document pagina,
+            String cidade
+    ) {
+
+        if (cidade == null || cidade.isBlank()) {
+            return null;
+        }
+
+        String textoPagina =
+                pagina.text();
+
+        Pattern pattern = Pattern.compile(
+                "Home\\s+Residenciais\\s+(.*?)\\s+em\\s+"
+                        + Pattern.quote(cidade),
+                Pattern.CASE_INSENSITIVE
+        );
+
+        Matcher matcher =
+                pattern.matcher(textoPagina);
+
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        return null;
+    }
+
     private BigDecimal converterValorMonetario(
             String valor
     ) {
@@ -177,24 +205,42 @@ public class SublimeLeiloesScraper {
     ) {
 
         String numeroProcesso =
-                extrairNumeroProcesso(pagina);
+                extrairNumeroProcesso(
+                        pagina
+                );
 
         BigDecimal valorAvaliacao =
                 converterValorMonetario(
-                        extrairValorAvaliacao(pagina)
+                        extrairValorAvaliacao(
+                                pagina
+                        )
                 );
 
         String comarca =
-                extrairComarca(pagina);
+                extrairComarca(
+                        pagina
+                );
 
         String vara =
-                extrairVara(pagina);
+                extrairVara(
+                        pagina
+                );
+
+        String tipo =
+                extrairTipoImovel(
+                        pagina,
+                        comarca
+                );
 
         String endereco =
-                extrairEndereco(pagina);
+                extrairEndereco(
+                        pagina
+                );
 
         String numero =
-                extrairNumeroEndereco(endereco);
+                extrairNumeroEndereco(
+                        endereco
+                );
 
         String bairro =
                 extrairBairro(
@@ -207,6 +253,7 @@ public class SublimeLeiloesScraper {
                 valorAvaliacao,
                 comarca,
                 vara,
+                tipo,
                 endereco,
                 numero,
                 bairro,
@@ -225,7 +272,9 @@ public class SublimeLeiloesScraper {
                 "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/2351/";
 
         Document pagina =
-                scraper.buscarPagina(url);
+                scraper.buscarPagina(
+                        url
+                );
 
         LoteLeilaoDTO lote =
                 scraper.extrairLote(
@@ -237,6 +286,24 @@ public class SublimeLeiloesScraper {
                 "=== LOTE EXTRAÍDO ==="
         );
 
-        System.out.println(lote);
+        System.out.println(
+                "Tipo: " + lote.getTipo()
+        );
+
+        System.out.println(
+                "Número: " + lote.getNumero()
+        );
+
+        System.out.println(
+                "Bairro: " + lote.getBairro()
+        );
+
+        System.out.println(
+                "Cidade: " + lote.getComarca()
+        );
+
+        System.out.println(
+                "Avaliação: " + lote.getValorAvaliacao()
+        );
     }
 }

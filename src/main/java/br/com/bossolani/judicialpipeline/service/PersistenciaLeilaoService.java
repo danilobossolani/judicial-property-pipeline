@@ -248,10 +248,7 @@ public class PersistenciaLeilaoService {
         LocalDateTime agora =
                 LocalDateTime.now();
 
-        boolean novoAcompanhamento =
-                acompanhamento.getId() == null;
-
-        if (novoAcompanhamento) {
+        if (acompanhamento.getId() == null) {
 
             acompanhamento.setImovel(
                     imovel
@@ -506,6 +503,10 @@ public class PersistenciaLeilaoService {
             LoteLeilaoDTO lote,
             Processo processo
     ) {
+
+        imovel.setTipo(
+                lote.getTipo()
+        );
 
         imovel.setEndereco(
                 lote.getEndereco()
