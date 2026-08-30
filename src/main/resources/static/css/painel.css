@@ -1,0 +1,74 @@
+body {
+    background-color: #f4f5f7;
+    color: #1f2937;
+}
+
+.topbar {
+    background-color: #111827;
+    color: white;
+}
+
+.stat-card,
+.imovel-card,
+.filtros-card {
+    border: none;
+    border-radius: 16px;
+}
+
+.label {
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.valor {
+    font-weight: 600;
+}
+
+.processo {
+    font-family: monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.imovel-card {
+    transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+}
+
+.imovel-card:hover {
+    transform: translateY(-2px);
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.65rem;
+}
+
+.form-control,
+.form-select {
+    border-radius: 10px;
+}
+
+.resultado-filtro {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 767px) {
+
+    .topbar .container > div {
+        align-items: flex-start !important;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .topbar .text-end {
+        text-align: left !important;
+    }
+
+}
