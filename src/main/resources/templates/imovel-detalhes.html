@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="pt-BR"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Detalhes do Imóvel - Pipeline Judicial</title>
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
+    <link
+            rel="stylesheet"
+            th:href="@{/css/detalhes.css}"
+    >
+
+</head>
+
+<body>
+
+
+<!-- ========================================================= -->
+<!-- CABEÇALHO                                                 -->
+<!-- ========================================================= -->
+
+<header class="topbar py-4">
+
+    <div class="container">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    gap-3
+                    flex-wrap">
+
+            <div>
+
+                <a
+                        th:href="@{/}"
+                        class="voltar-link"
+                >
+                    ← Voltar ao painel
+                </a>
+
+                <h1 class="h3 mt-2 mb-1">
+                    Detalhes do imóvel
+                </h1>
+
+                <p class="mb-0 text-white-50">
+                    Análise e acompanhamento judicial
+                </p>
+
+            </div>
+
+
+            <div
+                    th:if="${detalhe.acompanhamento != null}"
+                    class="text-end"
+            >
+
+                <div class="small text-white-50 mb-1">
+                    Situação atual
+                </div>
+
+                <span
+                        class="badge bg-light text-dark status-principal"
+                        th:text="${detalhe.acompanhamento.statusPipelineFormatado()}"
+                >
+                    Monitorando processo
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- ========================================================= -->
+<!-- CONTEÚDO PRINCIPAL                                        -->
+<!-- ========================================================= -->
+
+<main class="container py-4">
+
+
+    <!-- ===================================================== -->
+    <!-- RESUMO DO IMÓVEL                                      -->
+    <!-- ===================================================== -->
+
+    <section class="card detalhe-card shadow-sm mb-4">
+
+        <div class="card-body p-4">
+
+            <div class="row g-4">
+
+                <!-- LOCALIZAÇÃO -->
+
+                <div class="col-12 col-lg-6">
+
+                    <div class="label">
+                        Localização
+                    </div>
+
+                    <h2
+                            class="h4 mt-1 mb-2"
+                            th:text="${detalhe.imovel.bairro != null
+                                ? detalhe.imovel.bairro + ' - ' + detalhe.imovel.cidade
+                                : detalhe.imovel.cidade}"
+                    >
+                        Vila Barão - Sorocaba
+                    </h2>
+
+                    <div
+                            class="text-secondary"
+                            th:text="${detalhe.imovel.endereco != null
+                                ? detalhe.imovel.endereco
+                                : 'Endereço não informado'}"
+                    >
+                        Endereço
+                    </div>
+
+                    <div class="mt-2">
+
+                        <span
+                                class="badge text-bg-secondary"
+                                th:text="${detalhe.imovel.tipo != null
+                                    ? detalhe.imovel.tipo
+                                    : 'Tipo não informado'}"
+                        >
+                            Casa
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- AVALIAÇÃO -->
+
+                <div class="col-6 col-lg-3">
+
+                    <div class="label">
+                        Avaliação
+                    </div>
+
+                    <div
+                            class="valor-destaque mt-1"
+                            th:text="${detalhe.imovel.valorAvaliacao != null
+                                ? 'R$ ' + #numbers.formatDecimal(
+                                    detalhe.imovel.valorAvaliacao,
+                                    1,
+                                    'POINT',
+                                    2,
+                                    'COMMA'
+                                )
+                                : 'Não informado'}"
+                    >
+                        R$ 0,00
+                    </div>
+
+                </div>
+
+
+                <!-- LANCE MÍNIMO -->
+
+                <div
+                        class="col-6 col-lg-3"
+                        th:if="${detalhe.leilao != null}"
+                >
+
+                    <div class="label">
+                        Lance mínimo
+                    </div>
+
+                    <div
+                            class="valor-destaque mt-1"
+                            th:text="${detalhe.leilao.lanceMinimo != null
+                                ? 'R$ ' + #numbers.formatDecimal(
+                                    detalhe.leilao.lanceMinimo,
+                                    1,
+                                    'POINT',
+                                    2,
+                                    'COMMA'
+                                )
+                                : 'Não informado'}"
+                    >
+                        R$ 0,00
+                    </div>
+
+                    <small
+                            class="text-secondary"
+                            th:if="${detalhe.leilao.percentualDescontoFonte != null}"
+                            th:text="${detalhe.leilao.percentualDescontoFonte
+                                + '% informado pela fonte'}"
+                    >
+                        40% informado pela fonte
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- GRID PRINCIPAL                                        -->
+    <!-- ===================================================== -->
+
+    <div class="row g-4">
+
+
+        <!-- ================================================= -->
+        <!-- COLUNA ESQUERDA                                   -->
+        <!-- ================================================= -->
+
+        <div class="col-12 col-xl-8">
+
+
+            <!-- ============================================= -->
+            <!-- PROCESSO JUDICIAL                             -->
+            <!-- ============================================= -->
+
+            <section class="card detalhe-card shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <div class="label">
+                                Processo judicial
+                            </div>
+
+                            <h2 class="h5 mb-0 mt-1">
+                                Informações processuais
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-4 mt-1">
+
+
+                        <!-- NÚMERO -->
+
+                        <div class="col-12 col-md-6">
+
+                            <div class="campo-label">
+                                Número do processo
+                            </div>
+
+                            <div
+                                    class="processo"
+                                    th:text="${detalhe.processo.numeroProcessoFormatado()}"
+                            >
+                                0050699-62.2005.8.26.0602
+                            </div>
+
+                        </div>
+
+
+                        <!-- COMARCA -->
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="campo-label">
+                                Comarca
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.comarca != null
+                                        ? detalhe.processo.comarca
+                                        : 'Não informado'}"
+                            >
+                                Sorocaba
+                            </div>
+
+                        </div>
+
+
+                        <!-- VARA -->
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="campo-label">
+                                Vara
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.vara != null
+                                        ? detalhe.processo.vara
+                                        : 'Não informado'}"
+                            >
+                                5ª Vara Cível
+                            </div>
+
+                        </div>
+
+
+                        <!-- CLASSE -->
+
+                        <div class="col-12 col-md-6">
+
+                            <div class="campo-label">
+                                Classe
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.classe != null
+                                        ? detalhe.processo.classe
+                                        : 'Não informado'}"
+                            >
+                                Classe
+                            </div>
+
+                        </div>
+
+
+                        <!-- ÓRGÃO JULGADOR -->
+
+                        <div class="col-12 col-md-6">
+
+                            <div class="campo-label">
+                                Órgão julgador
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.orgaoJulgador != null
+                                        ? detalhe.processo.orgaoJulgador
+                                        : 'Não informado'}"
+                            >
+                                Órgão julgador
+                            </div>
+
+                        </div>
+
+
+                        <!-- TRIBUNAL -->
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="campo-label">
+                                Tribunal
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.tribunal != null
+                                        ? detalhe.processo.tribunal
+                                        : 'Não informado'}"
+                            >
+                                TJSP
+                            </div>
+
+                        </div>
+
+
+                        <!-- GRAU -->
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="campo-label">
+                                Grau
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.grau != null
+                                        ? detalhe.processo.grau
+                                        : 'Não informado'}"
+                            >
+                                G1
+                            </div>
+
+                        </div>
+
+
+                        <!-- SISTEMA -->
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="campo-label">
+                                Sistema
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.sistema != null
+                                        ? detalhe.processo.sistema
+                                        : 'Não informado'}"
+                            >
+                                SAJ
+                            </div>
+
+                        </div>
+
+
+                        <!-- FORMATO -->
+
+                        <div class="col-6 col-md-3">
+
+                            <div class="campo-label">
+                                Formato
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.formato != null
+                                        ? detalhe.processo.formato
+                                        : 'Não informado'}"
+                            >
+                                Eletrônico
+                            </div>
+
+                        </div>
+
+
+                        <!-- DATA AJUIZAMENTO -->
+
+                        <div class="col-12 col-md-6">
+
+                            <div class="campo-label">
+                                Data de ajuizamento
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.dataAjuizamentoFormatada()}"
+                            >
+                                29/11/2005 14:04
+                            </div>
+
+                        </div>
+
+
+                        <!-- ÚLTIMA ATUALIZAÇÃO -->
+
+                        <div class="col-12 col-md-6">
+
+                            <div class="campo-label">
+                                Última atualização DataJud
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.processo.ultimaAtualizacaoFormatada()}"
+                            >
+                                03/06/2026 00:49
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ============================================= -->
+            <!-- LEILÃO                                       -->
+            <!-- ============================================= -->
+
+            <section
+                    class="card detalhe-card shadow-sm mb-4"
+                    th:if="${detalhe.leilao != null}"
+            >
+
+                <div class="card-body p-4">
+
+                    <div class="section-header">
+
+                        <div>
+
+                            <div class="label">
+                                Leilão judicial
+                            </div>
+
+                            <h2 class="h5 mb-0 mt-1">
+                                Praças e valores
+                            </h2>
+
+                        </div>
+
+
+                        <div>
+
+                            <span
+                                    class="badge text-bg-dark me-1"
+                                    th:text="${detalhe.leilao.statusLeilaoFormatado()}"
+                            >
+                                Encerrado
+                            </span>
+
+                            <span
+                                    class="badge text-bg-secondary"
+                                    th:text="${detalhe.leilao.resultadoLeilaoFormatado()}"
+                            >
+                                Sem lances
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- 1ª PRAÇA -->
+
+                    <div class="praca mt-4">
+
+                        <h3 class="h6 mb-3">
+                            1ª Praça
+                        </h3>
+
+                        <div class="row g-3">
+
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="campo-label">
+                                    Abertura
+                                </div>
+
+                                <div
+                                        th:text="${detalhe.leilao.abertura1PracaFormatada()}"
+                                >
+                                    Data
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="campo-label">
+                                    Encerramento
+                                </div>
+
+                                <div
+                                        th:text="${detalhe.leilao.fechamento1PracaFormatada()}"
+                                >
+                                    Data
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="campo-label">
+                                    Lance inicial
+                                </div>
+
+                                <div
+                                        th:text="${detalhe.leilao.lanceInicial1Praca != null
+                                            ? 'R$ ' + #numbers.formatDecimal(
+                                                detalhe.leilao.lanceInicial1Praca,
+                                                1,
+                                                'POINT',
+                                                2,
+                                                'COMMA'
+                                            )
+                                            : 'Não informado'}"
+                                >
+                                    R$ 0,00
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <hr>
+
+
+                    <!-- 2ª PRAÇA -->
+
+                    <div class="praca">
+
+                        <h3 class="h6 mb-3">
+                            2ª Praça
+                        </h3>
+
+                        <div class="row g-3">
+
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="campo-label">
+                                    Abertura
+                                </div>
+
+                                <div
+                                        th:text="${detalhe.leilao.abertura2PracaFormatada()}"
+                                >
+                                    Data
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="campo-label">
+                                    Encerramento
+                                </div>
+
+                                <div
+                                        th:text="${detalhe.leilao.fechamento2PracaFormatada()}"
+                                >
+                                    Data
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-12 col-md-4">
+
+                                <div class="campo-label">
+                                    Lance inicial
+                                </div>
+
+                                <div
+                                        th:text="${detalhe.leilao.lanceInicial2Praca != null
+                                            ? 'R$ ' + #numbers.formatDecimal(
+                                                detalhe.leilao.lanceInicial2Praca,
+                                                1,
+                                                'POINT',
+                                                2,
+                                                'COMMA'
+                                            )
+                                            : 'Não informado'}"
+                                >
+                                    R$ 0,00
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <hr>
+
+
+                    <!-- VALORES COMPLEMENTARES -->
+
+                    <div class="row g-3">
+
+
+                        <!-- LANCE MÍNIMO -->
+
+                        <div class="col-6 col-md-4">
+
+                            <div class="campo-label">
+                                Lance mínimo atual
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.leilao.lanceMinimo != null
+                                        ? 'R$ ' + #numbers.formatDecimal(
+                                            detalhe.leilao.lanceMinimo,
+                                            1,
+                                            'POINT',
+                                            2,
+                                            'COMMA'
+                                        )
+                                        : 'Não informado'}"
+                            >
+                                R$ 0,00
+                            </div>
+
+                        </div>
+
+
+                        <!-- INCREMENTO -->
+
+                        <div class="col-6 col-md-4">
+
+                            <div class="campo-label">
+                                Incremento
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.leilao.incremento != null
+                                        ? 'R$ ' + #numbers.formatDecimal(
+                                            detalhe.leilao.incremento,
+                                            1,
+                                            'POINT',
+                                            2,
+                                            'COMMA'
+                                        )
+                                        : 'Não informado'}"
+                            >
+                                R$ 0,00
+                            </div>
+
+                        </div>
+
+
+                        <!-- COMISSÃO -->
+
+                        <div class="col-6 col-md-4">
+
+                            <div class="campo-label">
+                                Comissão
+                            </div>
+
+                            <div
+                                    th:text="${detalhe.leilao.comissaoPercentual != null
+                                        ? #numbers.formatDecimal(
+                                            detalhe.leilao.comissaoPercentual,
+                                            1,
+                                            'POINT',
+                                            2,
+                                            'COMMA'
+                                        ) + '%'
+                                        : 'Não informado'}"
+                            >
+                                5%
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- SEM LEILÃO -->
+
+            <div
+                    class="alert alert-secondary"
+                    th:if="${detalhe.leilao == null}"
+            >
+                Nenhum leilão vinculado a este imóvel.
+            </div>
+
+
+            <!-- ============================================= -->
+            <!-- HISTÓRICO                                     -->
+            <!-- ============================================= -->
+
+            <section class="card detalhe-card shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <div class="label">
+                        Acompanhamento
+                    </div>
+
+                    <h2 class="h5 mt-1 mb-4">
+                        Histórico
+                    </h2>
+
+
+                    <!-- HISTÓRICO VAZIO -->
+
+                    <div
+                            th:if="${#lists.isEmpty(detalhe.historico)}"
+                            class="text-secondary"
+                    >
+                        Nenhum evento registrado até o momento.
+                    </div>
+
+
+                    <!-- TIMELINE -->
+
+                    <div
+                            class="timeline"
+                            th:if="${!#lists.isEmpty(detalhe.historico)}"
+                    >
+
+                        <div
+                                class="timeline-item"
+                                th:each="evento : ${detalhe.historico}"
+                        >
+
+                            <div class="timeline-marker"></div>
+
+
+                            <div class="timeline-content">
+
+                                <!-- CABEÇALHO DO EVENTO -->
+
+                                <div class="d-flex
+                                            justify-content-between
+                                            gap-3
+                                            flex-wrap">
+
+                                    <strong
+                                            th:text="${evento.statusPipelineFormatado()}"
+                                    >
+                                        Monitorando processo
+                                    </strong>
+
+
+                                    <small
+                                            class="text-secondary"
+                                            th:text="${evento.dataEventoFormatada()}"
+                                    >
+                                        28/08/2026 18:00
+                                    </small>
+
+                                </div>
+
+
+                                <!-- STATUS DO LEILÃO -->
+
+                                <div class="small text-secondary mt-1">
+
+                                    <span
+                                            th:text="${evento.statusLeilaoFormatado()}"
+                                    >
+                                        Encerrado
+                                    </span>
+
+                                    <span> / </span>
+
+                                    <span
+                                            th:text="${evento.resultadoLeilaoFormatado()}"
+                                    >
+                                        Sem lances
+                                    </span>
+
+                                </div>
+
+
+                                <!-- DESCRIÇÃO -->
+
+                                <div
+                                        class="mt-2"
+                                        th:if="${evento.descricao != null
+                                            and !#strings.isEmpty(evento.descricao)}"
+                                        th:text="${evento.descricaoFormatada()}"
+                                >
+                                    Leilão: Encerrado | Resultado: Sem lances
+                                </div>
+
+
+                                <!-- ORIGEM -->
+
+                                <div
+                                        class="small text-secondary mt-2"
+                                        th:if="${evento.origem != null}"
+                                >
+
+                                    Fonte:
+
+                                    <span th:text="${evento.origem}">
+                                        Sublime Leilões
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- COLUNA DIREITA                                    -->
+        <!-- ================================================= -->
+
+        <div class="col-12 col-xl-4">
+
+
+            <!-- ============================================= -->
+            <!-- ACOMPANHAMENTO                                -->
+            <!-- ============================================= -->
+
+            <section
+                    class="card detalhe-card shadow-sm mb-4"
+                    th:if="${detalhe.acompanhamento != null}"
+            >
+
+                <div class="card-body p-4">
+
+                    <div class="label">
+                        Pipeline
+                    </div>
+
+                    <h2 class="h5 mt-1 mb-3">
+                        Acompanhamento
+                    </h2>
+
+
+                    <!-- STATUS ATUAL -->
+
+                    <div class="mb-4">
+
+                        <span
+                                class="badge text-bg-dark status-principal"
+                                th:text="${detalhe.acompanhamento.statusPipelineFormatado()}"
+                        >
+                            Monitorando processo
+                        </span>
+
+                    </div>
+
+
+                    <!-- IDENTIFICAÇÃO -->
+
+                    <div class="campo-bloco">
+
+                        <div class="campo-label">
+                            Identificado em
+                        </div>
+
+                        <div
+                                th:text="${detalhe.acompanhamento.dataIdentificacaoFormatada()}"
+                        >
+                            Data
+                        </div>
+
+                    </div>
+
+
+                    <!-- ÚLTIMA VERIFICAÇÃO -->
+
+                    <div class="campo-bloco">
+
+                        <div class="campo-label">
+                            Última verificação
+                        </div>
+
+                        <div
+                                th:text="${detalhe.acompanhamento.ultimaVerificacaoFormatada()}"
+                        >
+                            Data
+                        </div>
+
+                    </div>
+
+
+                    <!-- OBSERVAÇÃO -->
+
+                    <div class="campo-bloco">
+
+                        <div class="campo-label">
+                            Observação
+                        </div>
+
+                        <div
+                                class="observacao"
+                                th:text="${detalhe.acompanhamento.observacao != null
+                                    ? detalhe.acompanhamento.observacao
+                                    : 'Nenhuma observação registrada.'}"
+                        >
+                            Observação
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ============================================= -->
+            <!-- FONTES                                        -->
+            <!-- ============================================= -->
+
+            <section class="card detalhe-card shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <div class="label">
+                        Evidências
+                    </div>
+
+                    <h2 class="h5 mt-1 mb-3">
+                        Fontes
+                    </h2>
+
+
+                    <!-- SEM FONTES -->
+
+                    <div
+                            th:if="${#lists.isEmpty(detalhe.fontes)}"
+                            class="text-secondary"
+                    >
+                        Nenhuma fonte vinculada.
+                    </div>
+
+
+                    <!-- LISTA DE FONTES -->
+
+                    <div
+                            th:each="fonte : ${detalhe.fontes}"
+                            class="fonte-item"
+                    >
+
+                        <div>
+
+                            <strong
+                                    th:text="${fonte.origemNome != null
+                                        ? fonte.origemNome
+                                        : fonte.tipoFormatado()}"
+                            >
+                                Sublime Leilões
+                            </strong>
+
+
+                            <div
+                                    class="small text-secondary"
+                                    th:text="${fonte.tipoFormatado()}"
+                            >
+                                Leiloeiro oficial
+                            </div>
+
+
+                            <div
+                                    class="small text-secondary mt-1"
+                                    th:text="${'Capturado em '
+                                        + fonte.dataCapturaFormatada()}"
+                            >
+                                Capturado em 28/08/2026
+                            </div>
+
+                        </div>
+
+
+                        <a
+                                th:if="${fonte.urlOrigem != null}"
+                                th:href="${fonte.urlOrigem}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn btn-outline-dark btn-sm mt-3"
+                        >
+                            Abrir fonte
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>
