@@ -93,6 +93,20 @@
 
 
     <!-- ===================================================== -->
+    <!-- MENSAGEM DE SUCESSO                                   -->
+    <!-- ===================================================== -->
+
+    <div
+            th:if="${mensagemSucesso != null}"
+            class="alert alert-success shadow-sm"
+            role="alert"
+            th:text="${mensagemSucesso}"
+    >
+        Acompanhamento atualizado com sucesso.
+    </div>
+
+
+    <!-- ===================================================== -->
     <!-- RESUMO DO IMÓVEL                                      -->
     <!-- ===================================================== -->
 
@@ -101,6 +115,7 @@
         <div class="card-body p-4">
 
             <div class="row g-4">
+
 
                 <!-- LOCALIZAÇÃO -->
 
@@ -752,7 +767,7 @@
 
 
             <!-- ============================================= -->
-            <!-- HISTÓRICO                                     -->
+            <!-- HISTÓRICO                                    -->
             <!-- ============================================= -->
 
             <section class="card detalhe-card shadow-sm mb-4">
@@ -795,6 +810,7 @@
 
                             <div class="timeline-content">
 
+
                                 <!-- CABEÇALHO DO EVENTO -->
 
                                 <div class="d-flex
@@ -813,13 +829,13 @@
                                             class="text-secondary"
                                             th:text="${evento.dataEventoFormatada()}"
                                     >
-                                        28/08/2026 18:00
+                                        30/08/2026 20:00
                                     </small>
 
                                 </div>
 
 
-                                <!-- STATUS DO LEILÃO -->
+                                <!-- SITUAÇÃO FACTUAL DO LEILÃO -->
 
                                 <div class="small text-secondary mt-1">
 
@@ -848,7 +864,7 @@
                                             and !#strings.isEmpty(evento.descricao)}"
                                         th:text="${evento.descricaoFormatada()}"
                                 >
-                                    Leilão: Encerrado | Resultado: Sem lances
+                                    Descrição
                                 </div>
 
 
@@ -859,10 +875,10 @@
                                         th:if="${evento.origem != null}"
                                 >
 
-                                    Fonte:
+                                    Origem:
 
                                     <span th:text="${evento.origem}">
-                                        Sublime Leilões
+                                        Atualização manual
                                     </span>
 
                                 </div>
@@ -888,7 +904,7 @@
 
 
             <!-- ============================================= -->
-            <!-- ACOMPANHAMENTO                                -->
+            <!-- ACOMPANHAMENTO OPERACIONAL                    -->
             <!-- ============================================= -->
 
             <section
@@ -897,6 +913,7 @@
             >
 
                 <div class="card-body p-4">
+
 
                     <div class="label">
                         Pipeline
@@ -911,6 +928,10 @@
 
                     <div class="mb-4">
 
+                        <div class="campo-label">
+                            Status atual
+                        </div>
+
                         <span
                                 class="badge text-bg-dark status-principal"
                                 th:text="${detalhe.acompanhamento.statusPipelineFormatado()}"
@@ -921,7 +942,7 @@
                     </div>
 
 
-                    <!-- IDENTIFICAÇÃO -->
+                    <!-- DADOS DO ACOMPANHAMENTO -->
 
                     <div class="campo-bloco">
 
@@ -938,12 +959,10 @@
                     </div>
 
 
-                    <!-- ÚLTIMA VERIFICAÇÃO -->
-
                     <div class="campo-bloco">
 
                         <div class="campo-label">
-                            Última verificação
+                            Última verificação automática
                         </div>
 
                         <div
@@ -955,22 +974,148 @@
                     </div>
 
 
-                    <!-- OBSERVAÇÃO -->
+                    <!-- FORMULÁRIO OPERACIONAL -->
 
                     <div class="campo-bloco">
 
-                        <div class="campo-label">
-                            Observação
+                        <div class="label mb-2">
+                            Atualização manual
                         </div>
 
-                        <div
-                                class="observacao"
-                                th:text="${detalhe.acompanhamento.observacao != null
-                                    ? detalhe.acompanhamento.observacao
-                                    : 'Nenhuma observação registrada.'}"
+                        <form
+                                th:action="@{/imoveis/{id}/acompanhamento(id=${detalhe.imovel.id})}"
+                                method="post"
                         >
-                            Observação
-                        </div>
+
+
+                            <!-- STATUS -->
+
+                            <div class="mb-3">
+
+                                <label
+                                        for="statusPipeline"
+                                        class="form-label campo-label"
+                                >
+                                    Status do pipeline
+                                </label>
+
+
+                                <select
+                                        id="statusPipeline"
+                                        name="statusPipeline"
+                                        class="form-select"
+                                        required
+                                >
+
+                                    <option
+                                            value="MONITORANDO_LEILAO"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).MONITORANDO_LEILAO}"
+                                    >
+                                        Monitorando leilão
+                                    </option>
+
+
+                                    <option
+                                            value="AGUARDANDO_RESULTADO"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).AGUARDANDO_RESULTADO}"
+                                    >
+                                        Aguardando resultado
+                                    </option>
+
+
+                                    <option
+                                            value="MONITORANDO_PROCESSO"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).MONITORANDO_PROCESSO}"
+                                    >
+                                        Monitorando processo
+                                    </option>
+
+
+                                    <option
+                                            value="EM_ANALISE"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).EM_ANALISE}"
+                                    >
+                                        Em análise
+                                    </option>
+
+
+                                    <option
+                                            value="OPORTUNIDADE"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).OPORTUNIDADE}"
+                                    >
+                                        Oportunidade
+                                    </option>
+
+
+                                    <option
+                                            value="DESCARTADO"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).DESCARTADO}"
+                                    >
+                                        Descartado
+                                    </option>
+
+
+                                    <option
+                                            value="ENCERRADO"
+                                            th:selected="${detalhe.acompanhamento.statusPipeline
+                                                == T(br.com.bossolani.judicialpipeline.model.StatusPipeline).ENCERRADO}"
+                                    >
+                                        Encerrado
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <!-- OBSERVAÇÃO -->
+
+                            <div class="mb-3">
+
+                                <label
+                                        for="observacao"
+                                        class="form-label campo-label"
+                                >
+                                    Observação
+                                </label>
+
+                                <textarea
+                                        id="observacao"
+                                        name="observacao"
+                                        class="form-control"
+                                        rows="5"
+                                        maxlength="2000"
+                                        placeholder="Ex.: verificar matrícula, ocupação, débitos, andamento do processo..."
+                                        th:text="${detalhe.acompanhamento.observacao}"
+                                ></textarea>
+
+                                <div class="form-text">
+                                    Máximo de 2.000 caracteres.
+                                </div>
+
+                            </div>
+
+
+                            <!-- BOTÃO -->
+
+                            <div class="d-grid">
+
+                                <button
+                                        type="submit"
+                                        class="btn btn-dark"
+                                >
+                                    Salvar acompanhamento
+                                </button>
+
+                            </div>
+
+                        </form>
 
                     </div>
 
