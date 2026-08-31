@@ -25,6 +25,9 @@ Descobrir, organizar e acompanhar lotes de imóveis judiciais com rastreabilidad
 - Interface responsiva, com temas claro e escuro.
 - Testes unitários, de persistência e de inicialização da aplicação.
 - Integração contínua no GitHub para testar e empacotar cada alteração.
+- Endpoint de saúde sem exposição de detalhes internos.
+- Perfil de produção com validação do esquema e logs SQL reduzidos.
+- `open-in-view` desativado e telas validadas com PostgreSQL real.
 
 ## Portões obrigatórios de qualidade
 
@@ -44,10 +47,11 @@ Antes de integrar qualquer mudança ao branch `main`:
 
 ### 1. Confiabilidade operacional
 
-- Adotar migrações versionadas de banco de dados antes do primeiro deploy público.
-- Desativar `open-in-view` e validar que todas as telas carregam seus dados explicitamente.
-- Reduzir logs SQL no ambiente de produção.
-- Adicionar endpoint de saúde e métricas operacionais.
+- [x] Desativar `open-in-view` e validar que todas as telas carregam seus dados explicitamente.
+- [x] Reduzir logs SQL no ambiente de produção.
+- [x] Adicionar endpoint de saúde básico e seguro.
+- [ ] Adotar migrações versionadas de banco de dados antes do primeiro deploy público.
+- [ ] Adicionar métricas operacionais sem expor dados sensíveis.
 - Implementar retentativas com espera progressiva para falhas transitórias das fontes.
 - Definir política de timeout, limite de requisições e retenção do histórico.
 
