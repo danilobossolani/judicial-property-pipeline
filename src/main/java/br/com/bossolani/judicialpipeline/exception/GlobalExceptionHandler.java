@@ -1,5 +1,6 @@
 package br.com.bossolani.judicialpipeline.exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,7 +13,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> tratarValidacao(
-            MethodArgumentNotValidException exception) {
+            MethodArgumentNotValidException exception
+    ) {
 
         String mensagem = exception
                 .getBindingResult()
@@ -20,17 +22,46 @@ public class GlobalExceptionHandler {
                 .getFirst()
                 .getDefaultMessage();
 
+
         return ResponseEntity
                 .badRequest()
-                .body(Map.of("erro", mensagem));
+                .body(
+                        Map.of(
+                                "erro",
+                                mensagem
+                        )
+                );
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> tratarRegraNegocio(
-            IllegalArgumentException exception) {
+            IllegalArgumentException exception
+    ) {
 
         return ResponseEntity
                 .badRequest()
-                .body(Map.of("erro", exception.getMessage()));
+                .body(
+                        Map.of(
+                                "erro",
+                                exception.getMessage()
+                        )
+                );
     }
-}       
+
+    @ExceptionHandler(DescobertaEmAndamentoException.class)
+    public ResponseEntity<Map<String, String>> tratarDescobertaEmAndamento(
+            DescobertaEmAndamentoException exception
+    ) {
+
+        return ResponseEntity
+                .status(
+                        HttpStatus.CONFLICT
+                )
+                .body(
+                        Map.of(
+                                "erro",
+                                exception.getMessage()
+                        )
+                );
+    }
+}

@@ -1,6 +1,7 @@
 package br.com.bossolani.judicialpipeline.repository;
 
 import br.com.bossolani.judicialpipeline.model.HistoricoAcompanhamento;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -18,4 +19,12 @@ public interface HistoricoAcompanhamentoRepository
     findByAcompanhamentoIdOrderByDataEventoDesc(
             Long acompanhamentoId
     );
+
+    @EntityGraph(attributePaths = {
+            "acompanhamento",
+            "acompanhamento.imovel",
+            "acompanhamento.imovel.processo"
+    })
+    List<HistoricoAcompanhamento>
+    findTop200ByOrderByDataEventoDesc();
 }

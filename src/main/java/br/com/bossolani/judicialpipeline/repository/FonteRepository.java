@@ -13,6 +13,14 @@ public interface FonteRepository
             String urlOrigem
     );
 
+    boolean existsByUrlOrigem(
+            String urlOrigem
+    );
+
+    long countByLeilaoImovelId(
+            Long imovelId
+    );
+
     List<Fonte> findByLeilaoIdOrderByDataCapturaDesc(
             Long leilaoId
     );

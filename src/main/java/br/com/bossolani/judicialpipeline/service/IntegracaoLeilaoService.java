@@ -15,65 +15,93 @@ import java.io.IOException;
 @Service
 public class IntegracaoLeilaoService {
 
+    private static final int TAMANHO_NUMERO_PROCESSO_CNJ = 20;
+
     private final SublimeLeiloesScraper sublimeScraper;
     private final SublimeLeiloesBrowser sublimeBrowser;
     private final DataJudClient dataJudClient;
+
 
     public IntegracaoLeilaoService(
             SublimeLeiloesScraper sublimeScraper,
             SublimeLeiloesBrowser sublimeBrowser,
             DataJudClient dataJudClient
     ) {
+
         this.sublimeScraper = sublimeScraper;
         this.sublimeBrowser = sublimeBrowser;
         this.dataJudClient = dataJudClient;
     }
 
-    public LoteEnriquecidoDTO buscarLote(String url) throws IOException {
 
-        // 1. Dados estáticos do leiloeiro - Jsoup
+    public LoteEnriquecidoDTO buscarLote(
+            String url
+    ) throws IOException {
+
         Document pagina =
-                sublimeScraper.buscarPagina(url);
+                sublimeScraper.buscarPagina(
+                        url
+                );
+
 
         LoteLeilaoDTO lote =
-                sublimeScraper.extrairLote(pagina, url);
+                sublimeScraper.extrairLote(
+                        pagina,
+                        url
+                );
 
-        // 2. Dados dinâmicos - Playwright
+
         String textoRenderizado =
-                sublimeBrowser.buscarTextoRenderizado(url);
+                sublimeBrowser.buscarTextoRenderizado(
+                        url
+                );
+
 
         DadosDinamicosLeilaoDTO leilao =
-                sublimeBrowser.extrairDados(textoRenderizado);
+                sublimeBrowser.extrairDados(
+                        textoRenderizado
+                );
 
-        // 3. Confirmação/complementação - DataJud
+
         DataJudProcessoDTO processo = null;
         boolean processoConfirmado = false;
 
-        try {
 
-            processo =
-                    dataJudClient.buscarProcesso(
-                            lote.getNumeroProcesso()
-                    );
+        String numeroLeiloeiro =
+                normalizarNumeroProcesso(
+                        lote.getNumeroProcesso()
+                );
 
-            String numeroLeiloeiro =
-                    normalizarNumeroProcesso(
-                            lote.getNumeroProcesso()
-                    );
 
-            String numeroDataJud =
-                    normalizarNumeroProcesso(
-                            processo.numeroProcesso()
-                    );
+        if (numeroLeiloeiro.length()
+                == TAMANHO_NUMERO_PROCESSO_CNJ) {
 
-            processoConfirmado =
-                    numeroLeiloeiro.equals(numeroDataJud);
+            try {
 
-        } catch (IllegalArgumentException exception) {
+                processo =
+                        dataJudClient.buscarProcesso(
+                                numeroLeiloeiro
+                        );
 
-            processo = null;
-            processoConfirmado = false;
+
+                String numeroDataJud =
+                        normalizarNumeroProcesso(
+                                processo.numeroProcesso()
+                        );
+
+
+                processoConfirmado =
+                        numeroLeiloeiro.equals(
+                                numeroDataJud
+                        );
+
+            } catch (IllegalArgumentException exception) {
+
+                processo = null;
+                processoConfirmado = false;
+            }
         }
+
 
         return new LoteEnriquecidoDTO(
                 lote,
@@ -83,6 +111,7 @@ public class IntegracaoLeilaoService {
         );
     }
 
+
     private String normalizarNumeroProcesso(
             String numeroProcesso
     ) {
@@ -91,6 +120,10 @@ public class IntegracaoLeilaoService {
             return "";
         }
 
-        return numeroProcesso.replaceAll("\\D", "");
+
+        return numeroProcesso.replaceAll(
+                "\\D",
+                ""
+        );
     }
 }

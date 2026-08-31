@@ -4,8 +4,22 @@ import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcesso
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.DadosDinamicosLeilaoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteEnriquecidoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteLeilaoDTO;
-import br.com.bossolani.judicialpipeline.model.*;
-import br.com.bossolani.judicialpipeline.repository.*;
+import br.com.bossolani.judicialpipeline.model.Acompanhamento;
+import br.com.bossolani.judicialpipeline.model.Fonte;
+import br.com.bossolani.judicialpipeline.model.FonteTipo;
+import br.com.bossolani.judicialpipeline.model.HistoricoAcompanhamento;
+import br.com.bossolani.judicialpipeline.model.Imovel;
+import br.com.bossolani.judicialpipeline.model.Leilao;
+import br.com.bossolani.judicialpipeline.model.Processo;
+import br.com.bossolani.judicialpipeline.model.ResultadoLeilao;
+import br.com.bossolani.judicialpipeline.model.StatusLeilao;
+import br.com.bossolani.judicialpipeline.model.StatusPipeline;
+import br.com.bossolani.judicialpipeline.repository.AcompanhamentoRepository;
+import br.com.bossolani.judicialpipeline.repository.FonteRepository;
+import br.com.bossolani.judicialpipeline.repository.HistoricoAcompanhamentoRepository;
+import br.com.bossolani.judicialpipeline.repository.ImovelRepository;
+import br.com.bossolani.judicialpipeline.repository.LeilaoRepository;
+import br.com.bossolani.judicialpipeline.repository.ProcessoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +29,8 @@ import java.util.Optional;
 @Service
 public class PersistenciaLeilaoService {
 
+    private static final int TAMANHO_NUMERO_PROCESSO_CNJ = 20;
+
     private final IntegracaoLeilaoService integracaoLeilaoService;
     private final ProcessoRepository processoRepository;
     private final ImovelRepository imovelRepository;
@@ -22,6 +38,7 @@ public class PersistenciaLeilaoService {
     private final FonteRepository fonteRepository;
     private final AcompanhamentoRepository acompanhamentoRepository;
     private final HistoricoAcompanhamentoRepository historicoAcompanhamentoRepository;
+    private final TriagemLoteService triagemLoteService;
 
 
     public PersistenciaLeilaoService(
@@ -31,7 +48,8 @@ public class PersistenciaLeilaoService {
             LeilaoRepository leilaoRepository,
             FonteRepository fonteRepository,
             AcompanhamentoRepository acompanhamentoRepository,
-            HistoricoAcompanhamentoRepository historicoAcompanhamentoRepository
+            HistoricoAcompanhamentoRepository historicoAcompanhamentoRepository,
+            TriagemLoteService triagemLoteService
     ) {
 
         this.integracaoLeilaoService = integracaoLeilaoService;
@@ -42,6 +60,7 @@ public class PersistenciaLeilaoService {
         this.acompanhamentoRepository = acompanhamentoRepository;
         this.historicoAcompanhamentoRepository =
                 historicoAcompanhamentoRepository;
+        this.triagemLoteService = triagemLoteService;
     }
 
 
@@ -50,9 +69,15 @@ public class PersistenciaLeilaoService {
             String url
     ) throws Exception {
 
+        String urlNormalizada =
+                triagemLoteService.normalizarUrl(
+                        url
+                );
+
+
         LoteEnriquecidoDTO coleta =
                 integracaoLeilaoService.buscarLote(
-                        url
+                        urlNormalizada
                 );
 
 
@@ -68,17 +93,23 @@ public class PersistenciaLeilaoService {
                 coleta.processo();
 
 
+        validarColeta(
+                lote,
+                dadosLeilao
+        );
+
+
         Fonte fonteExistente =
                 fonteRepository
-                        .findByUrlOrigem(url)
+                        .findByUrlOrigem(
+                                urlNormalizada
+                        )
                         .orElse(null);
 
 
         /*
-         * Se a fonte já existe, atualizamos o mesmo conjunto
-         * Processo -> Imóvel -> Leilão -> Acompanhamento.
-         *
-         * Dessa forma uma nova coleta não cria duplicatas.
+         * Deduplicação primária por URL canônica.
+         * Uma nova captura atualiza o mesmo conjunto existente.
          */
         if (fonteExistente != null) {
 
@@ -101,21 +132,21 @@ public class PersistenciaLeilaoService {
         }
 
 
-        /*
-         * NOVA COLETA
-         */
-
         String numeroProcesso =
-                normalizarNumeroProcesso(
+                normalizarEValidarNumeroProcesso(
                         lote.getNumeroProcesso()
                 );
 
 
-        Processo processo =
+        Optional<Processo> processoExistente =
                 processoRepository
                         .findByNumeroProcesso(
                                 numeroProcesso
-                        )
+                        );
+
+
+        Processo processo =
+                processoExistente
                         .orElseGet(
                                 Processo::new
                         );
@@ -135,11 +166,22 @@ public class PersistenciaLeilaoService {
 
 
         /*
-         * IMÓVEL
+         * Deduplicação secundária por processo.
+         * Se outra URL apontar para o processo já cadastrado,
+         * ela vira uma nova fonte do mesmo imóvel/leilão.
          */
+        Optional<Imovel> imovelExistente =
+                imovelRepository
+                        .findFirstByProcessoIdOrderByIdAsc(
+                                processo.getId()
+                        );
+
 
         Imovel imovel =
-                new Imovel();
+                imovelExistente
+                        .orElseGet(
+                                Imovel::new
+                        );
 
 
         preencherImovel(
@@ -155,12 +197,20 @@ public class PersistenciaLeilaoService {
                 );
 
 
-        /*
-         * LEILÃO
-         */
+        Optional<Leilao> leilaoExistente =
+                imovelExistente.isPresent()
+                        ? leilaoRepository
+                        .findTopByImovelIdOrderByIdDesc(
+                                imovel.getId()
+                        )
+                        : Optional.empty();
+
 
         Leilao leilao =
-                new Leilao();
+                leilaoExistente
+                        .orElseGet(
+                                Leilao::new
+                        );
 
 
         preencherLeilao(
@@ -176,19 +226,11 @@ public class PersistenciaLeilaoService {
                 );
 
 
-        /*
-         * PIPELINE
-         */
-
         atualizarAcompanhamento(
                 imovel,
                 leilao
         );
 
-
-        /*
-         * FONTE
-         */
 
         Fonte fonte =
                 new Fonte();
@@ -205,7 +247,7 @@ public class PersistenciaLeilaoService {
 
 
         fonte.setUrlOrigem(
-                url
+                urlNormalizada
         );
 
 
@@ -225,11 +267,32 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * ATUALIZAÇÃO DE UMA COLETA EXISTENTE
-     * =========================================================
-     */
+    private void validarColeta(
+            LoteLeilaoDTO lote,
+            DadosDinamicosLeilaoDTO dadosLeilao
+    ) {
+
+        if (lote == null) {
+
+            throw new IllegalArgumentException(
+                    "A Sublime não retornou os dados do lote"
+            );
+        }
+
+
+        if (dadosLeilao == null) {
+
+            throw new IllegalArgumentException(
+                    "A Sublime não retornou os dados do leilão"
+            );
+        }
+
+
+        normalizarEValidarNumeroProcesso(
+                lote.getNumeroProcesso()
+        );
+    }
+
 
     private void atualizarExistente(
             Fonte fonte,
@@ -317,12 +380,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * ACOMPANHAMENTO / PIPELINE
-     * =========================================================
-     */
-
     private void atualizarAcompanhamento(
             Imovel imovel,
             Leilao leilao
@@ -359,31 +416,12 @@ public class PersistenciaLeilaoService {
         }
 
 
-        /*
-         * Este é o status que a coleta sugeriria
-         * automaticamente com base nos fatos do leilão.
-         */
         StatusPipeline statusAutomatico =
                 definirStatusPipeline(
                         leilao
                 );
 
 
-        /*
-         * Aqui protegemos decisões humanas.
-         *
-         * Exemplo:
-         *
-         * OPORTUNIDADE
-         *      ↓
-         * nova coleta
-         *      ↓
-         * continua OPORTUNIDADE
-         *
-         * Porém, se o imóvel for posteriormente ARREMATADO,
-         * ele deve ser encerrado mesmo que estivesse em análise
-         * ou marcado como oportunidade.
-         */
         StatusPipeline statusFinal =
                 resolverStatusPipeline(
                         acompanhamento,
@@ -413,11 +451,6 @@ public class PersistenciaLeilaoService {
                 );
 
 
-        /*
-         * Mesmo se o status operacional estiver protegido,
-         * alterações factuais do leilão continuam entrando
-         * normalmente no histórico.
-         */
         verificarHistorico(
                 acompanhamento,
                 leilao,
@@ -426,10 +459,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * Decide se a coleta automática pode ou não
-     * modificar o status operacional atual.
-     */
     private StatusPipeline resolverStatusPipeline(
             Acompanhamento acompanhamento,
             StatusPipeline statusAutomatico
@@ -439,22 +468,11 @@ public class PersistenciaLeilaoService {
                 acompanhamento.getStatusPipeline();
 
 
-        /*
-         * Acompanhamento ainda sem status.
-         */
         if (statusAtual == null) {
-
             return statusAutomatico;
         }
 
 
-        /*
-         * Se descobrirmos que houve arrematação,
-         * o imóvel deixa de ser oportunidade para nós.
-         *
-         * EM_ANALISE e OPORTUNIDADE podem ser encerrados
-         * automaticamente nesse caso.
-         */
         if (statusAutomatico == StatusPipeline.ENCERRADO
                 && (
                 statusAtual == StatusPipeline.EM_ANALISE
@@ -465,10 +483,6 @@ public class PersistenciaLeilaoService {
         }
 
 
-        /*
-         * Decisões humanas são protegidas contra
-         * atualizações automáticas comuns.
-         */
         if (statusOperacionalProtegido(
                 statusAtual
         )) {
@@ -477,16 +491,10 @@ public class PersistenciaLeilaoService {
         }
 
 
-        /*
-         * Status ainda controlado automaticamente.
-         */
         return statusAutomatico;
     }
 
 
-    /*
-     * Status considerados decisões operacionais humanas.
-     */
     private boolean statusOperacionalProtegido(
             StatusPipeline status
     ) {
@@ -508,12 +516,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * HISTÓRICO
-     * =========================================================
-     */
-
     private void verificarHistorico(
             Acompanhamento acompanhamento,
             Leilao leilao,
@@ -527,9 +529,6 @@ public class PersistenciaLeilaoService {
                         );
 
 
-        /*
-         * Primeiro evento.
-         */
         if (ultimoHistoricoOptional.isEmpty()) {
 
             registrarHistorico(
@@ -537,6 +536,7 @@ public class PersistenciaLeilaoService {
                     leilao,
                     statusPipelineAtual
             );
+
 
             return;
         }
@@ -546,11 +546,6 @@ public class PersistenciaLeilaoService {
                 ultimoHistoricoOptional.get();
 
 
-        /*
-         * Compatibilidade com registros antigos criados
-         * antes de statusLeilao e resultadoLeilao existirem
-         * no histórico.
-         */
         if (ultimoHistorico.getStatusLeilao() == null
                 && ultimoHistorico.getResultadoLeilao() == null) {
 
@@ -588,9 +583,6 @@ public class PersistenciaLeilaoService {
                         != leilao.getResultadoLeilao();
 
 
-        /*
-         * Não criamos histórico novo sem mudança real.
-         */
         if (mudouPipeline
                 || mudouStatusLeilao
                 || mudouResultadoLeilao) {
@@ -662,19 +654,10 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * DEFINIÇÃO AUTOMÁTICA DO PIPELINE
-     * =========================================================
-     */
-
     private StatusPipeline definirStatusPipeline(
             Leilao leilao
     ) {
 
-        /*
-         * Leilão ainda vai acontecer.
-         */
         if (leilao.getStatusLeilao()
                 == StatusLeilao.AGENDADO) {
 
@@ -682,9 +665,6 @@ public class PersistenciaLeilaoService {
         }
 
 
-        /*
-         * Leilão acontecendo.
-         */
         if (leilao.getStatusLeilao()
                 == StatusLeilao.EM_ANDAMENTO) {
 
@@ -692,16 +672,9 @@ public class PersistenciaLeilaoService {
         }
 
 
-        /*
-         * Leilão finalizado.
-         */
         if (leilao.getStatusLeilao()
                 == StatusLeilao.ENCERRADO) {
 
-
-            /*
-             * Já foi comprado por alguém.
-             */
             if (leilao.getResultadoLeilao()
                     == ResultadoLeilao.ARREMATADO) {
 
@@ -709,9 +682,6 @@ public class PersistenciaLeilaoService {
             }
 
 
-            /*
-             * Terminou, mas ainda não sabemos o resultado.
-             */
             if (leilao.getResultadoLeilao()
                     == ResultadoLeilao.DESCONHECIDO) {
 
@@ -719,13 +689,6 @@ public class PersistenciaLeilaoService {
             }
 
 
-            /*
-             * Sem arrematação confirmada.
-             *
-             * A partir daqui acompanhamos o processo judicial,
-             * mas ainda NÃO chamamos automaticamente de
-             * oportunidade.
-             */
             return StatusPipeline.MONITORANDO_PROCESSO;
         }
 
@@ -734,12 +697,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * PROCESSO
-     * =========================================================
-     */
-
     private void preencherProcesso(
             Processo processo,
             LoteLeilaoDTO lote,
@@ -747,7 +704,7 @@ public class PersistenciaLeilaoService {
     ) {
 
         processo.setNumeroProcesso(
-                normalizarNumeroProcesso(
+                normalizarEValidarNumeroProcesso(
                         lote.getNumeroProcesso()
                 )
         );
@@ -807,12 +764,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * IMÓVEL
-     * =========================================================
-     */
-
     private void preencherImovel(
             Imovel imovel,
             LoteLeilaoDTO lote,
@@ -839,14 +790,6 @@ public class PersistenciaLeilaoService {
         );
 
 
-        /*
-         * Hoje o scraper da Sublime usa a comarca como cidade.
-         *
-         * Para Sorocaba/Votorantim isso funciona nos casos
-         * atuais, mas futuramente devemos extrair a cidade
-         * diretamente do endereço quando adicionarmos outras
-         * fontes.
-         */
         imovel.setCidade(
                 lote.getComarca()
         );
@@ -862,12 +805,6 @@ public class PersistenciaLeilaoService {
         );
     }
 
-
-    /*
-     * =========================================================
-     * LEILÃO
-     * =========================================================
-     */
 
     private void preencherLeilao(
             Leilao leilao,
@@ -945,12 +882,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * CONVERSÃO DO STATUS DA FONTE
-     * =========================================================
-     */
-
     private StatusLeilao converterStatus(
             String status
     ) {
@@ -995,6 +926,12 @@ public class PersistenciaLeilaoService {
         )
                 || normalizado.contains(
                 "EM BREVE"
+        )
+                || normalizado.contains(
+                "AGUARDANDO INÍCIO"
+        )
+                || normalizado.contains(
+                "AGUARDANDO INICIO"
         )) {
 
             return StatusLeilao.AGENDADO;
@@ -1016,12 +953,6 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * CONVERSÃO DO RESULTADO
-     * =========================================================
-     */
-
     private ResultadoLeilao converterResultado(
             String resultado
     ) {
@@ -1037,12 +968,6 @@ public class PersistenciaLeilaoService {
                 resultado.toUpperCase();
 
 
-        /*
-         * A ordem é importante.
-         *
-         * "SEM LANCES" contém a palavra "LANCES", então
-         * precisa ser verificado antes de "COM LANCES".
-         */
         if (normalizado.contains(
                 "SEM LANCES"
         )) {
@@ -1079,24 +1004,28 @@ public class PersistenciaLeilaoService {
     }
 
 
-    /*
-     * =========================================================
-     * PROCESSO CNJ
-     * =========================================================
-     */
-
-    private String normalizarNumeroProcesso(
+    private String normalizarEValidarNumeroProcesso(
             String numeroProcesso
     ) {
 
-        if (numeroProcesso == null) {
-            return "";
+        String numeroNormalizado =
+                numeroProcesso == null
+                        ? ""
+                        : numeroProcesso.replaceAll(
+                                "\\D",
+                                ""
+                        );
+
+
+        if (numeroNormalizado.length()
+                != TAMANHO_NUMERO_PROCESSO_CNJ) {
+
+            throw new IllegalArgumentException(
+                    "Lote sem número de processo CNJ válido"
+            );
         }
 
 
-        return numeroProcesso.replaceAll(
-                "\\D",
-                ""
-        );
+        return numeroNormalizado;
     }
 }

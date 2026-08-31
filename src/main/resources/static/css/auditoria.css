@@ -1,0 +1,630 @@
+body {
+    background-color: var(--fundo-pagina);
+    color: var(--texto-principal);
+}
+
+.topbar {
+    background-color: var(--topbar);
+    color: var(--topbar-texto);
+}
+
+.voltar-link {
+    color: var(--topbar-secundario);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.voltar-link:hover {
+    color: var(--topbar-texto);
+}
+
+.marca-auditoria {
+    align-items: center;
+    background: #16a34a;
+    border-radius: 8px;
+    color: #ffffff;
+    display: inline-flex;
+    font-size: 0.85rem;
+    font-weight: 800;
+    height: 28px;
+    justify-content: center;
+    width: 28px;
+}
+
+.metrica-card,
+.filtros-card,
+.evento-auditoria,
+.estado-vazio,
+.ultima-execucao-card,
+.indicador-descoberta,
+.execucao-descoberta {
+    background-color: var(--fundo-card);
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+}
+
+.descoberta-automatica {
+    scroll-margin-top: 1rem;
+}
+
+.execucao-manual {
+    max-width: 320px;
+    text-align: right;
+}
+
+.feedback-descoberta {
+    color: var(--texto-secundario);
+    font-size: 0.78rem;
+    min-height: 1.2rem;
+}
+
+.feedback-descoberta.feedback-sucesso {
+    color: #15803d;
+}
+
+.feedback-descoberta.feedback-erro {
+    color: #b91c1c;
+}
+
+.ultima-execucao-card {
+    border-left: 4px solid #2563eb;
+}
+
+.resumo-contadores {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.resumo-contadores > div {
+    background: var(--fundo-secundario);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    min-width: 0;
+    padding: 12px;
+}
+
+.resumo-contadores span {
+    color: var(--texto-secundario);
+    display: block;
+    font-size: 0.72rem;
+}
+
+.resumo-contadores strong {
+    display: block;
+    font-size: 1.3rem;
+    margin-top: 2px;
+}
+
+.indicador-descoberta {
+    border-top: 3px solid #64748b;
+}
+
+.indicador-descoberta strong {
+    display: block;
+    font-size: 1.65rem;
+    margin-top: 6px;
+}
+
+.indicador-importado {
+    border-top-color: #16a34a;
+}
+
+.indicador-duplicado {
+    border-top-color: #2563eb;
+}
+
+.indicador-descartado {
+    border-top-color: #d97706;
+}
+
+.indicador-falha {
+    border-top-color: #dc2626;
+}
+
+.status-descoberta,
+.decisao-lote {
+    border: 1px solid transparent;
+    font-size: 0.7rem;
+    padding: 0.45rem 0.6rem;
+}
+
+.status-descoberta-em-execucao {
+    background: rgba(37, 99, 235, 0.12);
+    border-color: rgba(37, 99, 235, 0.3);
+    color: #1d4ed8;
+}
+
+.status-descoberta-concluida {
+    background: rgba(22, 163, 74, 0.12);
+    border-color: rgba(22, 163, 74, 0.3);
+    color: #15803d;
+}
+
+.status-descoberta-concluida-com-falhas {
+    background: rgba(217, 119, 6, 0.12);
+    border-color: rgba(217, 119, 6, 0.3);
+    color: #b45309;
+}
+
+.status-descoberta-falhou {
+    background: rgba(220, 38, 38, 0.12);
+    border-color: rgba(220, 38, 38, 0.3);
+    color: #b91c1c;
+}
+
+.historico-descoberta {
+    display: grid;
+    gap: 12px;
+}
+
+.execucao-descoberta {
+    overflow: hidden;
+}
+
+.execucao-descoberta > summary {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    list-style: none;
+    padding: 18px 20px;
+}
+
+.execucao-descoberta > summary::-webkit-details-marker {
+    display: none;
+}
+
+.execucao-descoberta > summary::after {
+    color: var(--texto-secundario);
+    content: "+";
+    flex: 0 0 auto;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.execucao-descoberta[open] > summary::after {
+    content: "−";
+}
+
+.execucao-descoberta > summary:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.45);
+    outline-offset: -3px;
+}
+
+.execucao-identificacao,
+.execucao-resumo {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.execucao-resumo {
+    align-items: flex-end;
+    margin-left: auto;
+}
+
+.execucao-corpo {
+    border-top: 1px solid var(--borda);
+    padding: 20px;
+}
+
+.metadados-execucao {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin: 0 0 20px;
+}
+
+.metadados-execucao > div {
+    min-width: 0;
+}
+
+.metadados-execucao dt {
+    color: var(--texto-secundario);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.metadados-execucao dd {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin: 3px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.lista-lotes-descoberta {
+    display: grid;
+    gap: 12px;
+}
+
+.lote-descoberta {
+    background: var(--fundo-secundario);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    min-width: 0;
+    padding: 16px;
+}
+
+.lote-cabecalho {
+    align-items: flex-start;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.min-width-0 {
+    min-width: 0;
+}
+
+.decisao-lote-importado {
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+}
+
+.decisao-lote-duplicado {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+
+.decisao-lote-descartado {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+}
+
+.decisao-lote-falha {
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+}
+
+.lote-detalhes {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lote-detalhes > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.url-lote {
+    color: inherit;
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
+}
+
+code.url-lote {
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 6px;
+    padding: 5px 7px;
+}
+
+.estado-lotes-vazio {
+    background: var(--fundo-secundario);
+    border: 1px dashed var(--borda);
+    border-radius: 12px;
+    font-size: 0.86rem;
+    padding: 18px;
+    text-align: center;
+}
+
+.estado-vazio-icone-descoberta {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+}
+
+.separador-secoes {
+    border-color: var(--borda);
+    opacity: 1;
+}
+
+.label,
+.campo-label {
+    color: var(--texto-secundario);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+}
+
+.metrica-icone {
+    align-items: center;
+    border-radius: 10px;
+    display: inline-flex;
+    font-size: 1.15rem;
+    font-weight: 700;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+}
+
+.metrica-icone-total {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+}
+
+.metrica-icone-manual {
+    background: rgba(124, 58, 237, 0.12);
+    color: #7c3aed;
+}
+
+.metrica-icone-automatica {
+    background: rgba(14, 116, 144, 0.12);
+    color: #0e7490;
+}
+
+.metrica-icone-imoveis {
+    background: rgba(22, 163, 74, 0.12);
+    color: #16a34a;
+}
+
+.form-control,
+.form-select {
+    border-radius: 10px;
+}
+
+.resultado-filtro {
+    color: var(--texto-secundario);
+    font-size: 0.9rem;
+}
+
+.trilha-auditoria {
+    display: grid;
+    gap: 12px;
+}
+
+.evento-auditoria {
+    overflow: hidden;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.evento-auditoria:hover {
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+.evento-tempo,
+.evento-conteudo,
+.evento-estado {
+    padding: 20px;
+}
+
+.evento-tempo {
+    background: var(--fundo-secundario);
+    border-right: 1px solid var(--borda);
+    color: var(--texto-secundario);
+    display: flex;
+    flex-direction: column;
+    font-size: 0.78rem;
+}
+
+.evento-categoria {
+    align-self: flex-start;
+    border-radius: 999px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 4px 8px;
+    text-transform: uppercase;
+}
+
+.evento-categoria-manual {
+    background: rgba(124, 58, 237, 0.12);
+    color: #7c3aed;
+}
+
+.evento-categoria-automatica {
+    background: rgba(14, 116, 144, 0.12);
+    color: #0e7490;
+}
+
+.evento-conteudo {
+    border-right: 1px solid var(--borda);
+}
+
+.tipo-imovel {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+.separador {
+    color: var(--borda);
+}
+
+.processo {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.94rem;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+.evento-descricao {
+    line-height: 1.55;
+}
+
+.evento-estado {
+    background: var(--fundo-secundario);
+}
+
+.status-pipeline {
+    background: var(--texto-principal);
+    color: var(--fundo-card);
+    font-size: 0.72rem;
+    padding: 0.5rem 0.65rem;
+}
+
+.estado-factual {
+    display: grid;
+    gap: 8px;
+}
+
+.estado-factual > div {
+    align-items: center;
+    display: flex;
+    font-size: 0.78rem;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.estado-factual span {
+    color: var(--texto-secundario);
+}
+
+.estado-factual strong {
+    font-weight: 600;
+    text-align: right;
+}
+
+.estado-vazio-icone {
+    align-items: center;
+    background: rgba(22, 163, 74, 0.12);
+    border-radius: 999px;
+    color: #16a34a;
+    display: inline-flex;
+    font-size: 1.4rem;
+    font-weight: 800;
+    height: 54px;
+    justify-content: center;
+    width: 54px;
+}
+
+.text-white-50 {
+    color: var(--topbar-secundario) !important;
+}
+
+html[data-theme="dark"] .evento-categoria-manual {
+    background: rgba(167, 139, 250, 0.15);
+    color: #c4b5fd;
+}
+
+html[data-theme="dark"] .evento-categoria-automatica {
+    background: rgba(34, 211, 238, 0.12);
+    color: #67e8f9;
+}
+
+html[data-theme="dark"] .metrica-icone-total {
+    color: #93c5fd;
+}
+
+html[data-theme="dark"] .metrica-icone-manual {
+    color: #c4b5fd;
+}
+
+html[data-theme="dark"] .metrica-icone-automatica {
+    color: #67e8f9;
+}
+
+html[data-theme="dark"] .metrica-icone-imoveis {
+    color: #86efac;
+}
+
+html[data-theme="dark"] .feedback-descoberta.feedback-sucesso,
+html[data-theme="dark"] .status-descoberta-concluida,
+html[data-theme="dark"] .decisao-lote-importado {
+    color: #86efac;
+}
+
+html[data-theme="dark"] .status-descoberta-em-execucao,
+html[data-theme="dark"] .decisao-lote-duplicado {
+    color: #93c5fd;
+}
+
+html[data-theme="dark"] .status-descoberta-concluida-com-falhas,
+html[data-theme="dark"] .decisao-lote-descartado {
+    color: #fcd34d;
+}
+
+html[data-theme="dark"] .feedback-descoberta.feedback-erro,
+html[data-theme="dark"] .status-descoberta-falhou,
+html[data-theme="dark"] .decisao-lote-falha {
+    color: #fca5a5;
+}
+
+@media (max-width: 991px) {
+
+    .resumo-contadores,
+    .metadados-execucao {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .evento-tempo,
+    .evento-conteudo {
+        border-bottom: 1px solid var(--borda);
+        border-right: 0;
+    }
+
+    .evento-tempo {
+        align-items: center;
+        flex-direction: row;
+        gap: 10px;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 575px) {
+
+    .execucao-manual {
+        max-width: none;
+        text-align: left;
+        width: 100%;
+    }
+
+    .execucao-manual .btn {
+        width: 100%;
+    }
+
+    .resumo-contadores,
+    .metadados-execucao,
+    .lote-detalhes {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .execucao-descoberta > summary {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 16px;
+    }
+
+    .execucao-resumo {
+        align-items: flex-start;
+        margin-left: 0;
+        order: 3;
+        width: calc(100% - 32px);
+    }
+
+    .execucao-corpo {
+        padding: 16px;
+    }
+
+    .lote-cabecalho {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .evento-tempo,
+    .evento-conteudo,
+    .evento-estado {
+        padding: 16px;
+    }
+
+    .evento-tempo {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .display-6 {
+        font-size: 2rem;
+    }
+}

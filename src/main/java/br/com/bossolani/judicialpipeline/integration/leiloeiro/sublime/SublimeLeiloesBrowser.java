@@ -18,64 +18,110 @@ import java.util.regex.Pattern;
 public class SublimeLeiloesBrowser {
 
     private static final DateTimeFormatter FORMATO_DATA =
-            DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm");
+            DateTimeFormatter.ofPattern(
+                    "dd/MM/yyyy - HH:mm"
+            );
 
-    public String buscarTextoRenderizado(String url) {
+
+    public String buscarTextoRenderizado(
+            String url
+    ) {
 
         try (Playwright playwright = Playwright.create()) {
 
-            Browser browser = playwright.chromium().launch(
-                    new BrowserType.LaunchOptions()
-                            .setHeadless(true)
-            );
+            Browser browser =
+                    playwright.chromium().launch(
+                            new BrowserType.LaunchOptions()
+                                    .setHeadless(true)
+                    );
 
-            Page page = browser.newPage();
 
-            page.navigate(
-                    url,
-                    new Page.NavigateOptions()
-                            .setWaitUntil(WaitUntilState.NETWORKIDLE)
-            );
+            try {
 
-            String textoPagina = page.locator("body").innerText();
+                Page page = browser.newPage();
 
-            browser.close();
 
-            return textoPagina;
+                page.navigate(
+                        url,
+                        new Page.NavigateOptions()
+                                .setWaitUntil(
+                                        WaitUntilState.NETWORKIDLE
+                                )
+                );
+
+
+                return page.locator("body")
+                        .innerText();
+
+            } finally {
+
+                browser.close();
+            }
         }
     }
 
-    public DadosDinamicosLeilaoDTO extrairDados(String texto) {
 
-        String bloco1Praca = extrairBloco(
-                texto,
-                "1º Praça",
-                "2º Praça"
-        );
+    public DadosDinamicosLeilaoDTO extrairDados(
+            String texto
+    ) {
 
-        String bloco2Praca = extrairBloco(
-                texto,
-                "2º Praça",
-                "Informações"
-        );
+        String bloco1Praca =
+                extrairBloco(
+                        texto,
+                        "1º Praça",
+                        "2º Praça"
+                );
+
+
+        String bloco2Praca =
+                extrairBloco(
+                        texto,
+                        "2º Praça",
+                        "Informações"
+                );
+
 
         LocalDateTime abertura1 =
-                extrairData(bloco1Praca, "Abertura:");
+                extrairData(
+                        bloco1Praca,
+                        "Abertura:"
+                );
+
 
         LocalDateTime fechamento1 =
-                extrairData(bloco1Praca, "Fechamento:");
+                extrairData(
+                        bloco1Praca,
+                        "Fechamento:"
+                );
+
 
         BigDecimal lanceInicial1 =
-                extrairDinheiro(bloco1Praca, "Lance Inicial:");
+                extrairDinheiro(
+                        bloco1Praca,
+                        "Lance Inicial:"
+                );
+
 
         LocalDateTime abertura2 =
-                extrairData(bloco2Praca, "Abertura");
+                extrairData(
+                        bloco2Praca,
+                        "Abertura"
+                );
+
 
         LocalDateTime fechamento2 =
-                extrairData(bloco2Praca, "Fechamento");
+                extrairData(
+                        bloco2Praca,
+                        "Fechamento"
+                );
+
 
         BigDecimal lanceInicial2 =
-                extrairDinheiro(bloco2Praca, "Lance Inicial:");
+                extrairDinheiro(
+                        bloco2Praca,
+                        "Lance Inicial:"
+                );
+
 
         Integer percentualDesconto =
                 extrairInteiro(
@@ -83,29 +129,39 @@ public class SublimeLeiloesBrowser {
                         "\\((\\d+)% de desconto\\)"
                 );
 
-        String status = null;
 
-        if (texto.contains("LEILÃO ENCERRADO")) {
-            status = "LEILÃO ENCERRADO";
-        }
+        String status =
+                extrairStatus(
+                        texto
+                );
 
-        String resultado = null;
 
-        if (texto.contains("Sem Lances")) {
-            resultado = "SEM LANCES";
-        }
+        String resultado =
+                extrairResultado(
+                        texto
+                );
+
 
         BigDecimal lanceMinimo =
-                extrairDinheiro(texto, "Lance Mínimo:");
+                extrairDinheiro(
+                        texto,
+                        "Lance Mínimo:"
+                );
+
 
         BigDecimal incremento =
-                extrairDinheiro(texto, "Incremento:");
+                extrairDinheiro(
+                        texto,
+                        "Incremento:"
+                );
+
 
         BigDecimal comissaoPercentual =
                 extrairPercentual(
                         texto,
                         "Comissão do Leiloeiro:"
                 );
+
 
         return new DadosDinamicosLeilaoDTO(
                 abertura1,
@@ -123,17 +179,131 @@ public class SublimeLeiloesBrowser {
         );
     }
 
+
+    private String extrairStatus(
+            String texto
+    ) {
+
+        String textoNormalizado =
+                texto.toUpperCase();
+
+
+        if (textoNormalizado.contains(
+                "LEILÃO ENCERRADO"
+        )) {
+
+            return "LEILÃO ENCERRADO";
+        }
+
+
+        if (textoNormalizado.contains(
+                "LEILÃO SUSPENSO"
+        )
+                || textoNormalizado.contains(
+                "LOTE SUSPENSO"
+        )) {
+
+            return "LEILÃO SUSPENSO";
+        }
+
+
+        if (textoNormalizado.contains(
+                "LEILÃO CANCELADO"
+        )
+                || textoNormalizado.contains(
+                "LOTE CANCELADO"
+        )) {
+
+            return "LEILÃO CANCELADO";
+        }
+
+
+        if (textoNormalizado.contains(
+                "ABERTO PARA LANCE"
+        )
+                || textoNormalizado.contains(
+                "ABERTO PARA LANCES"
+        )) {
+
+            return "ABERTO PARA LANCES";
+        }
+
+
+        if (textoNormalizado.contains(
+                "AGUARDANDO INÍCIO"
+        )
+                || textoNormalizado.contains(
+                "AGUARDANDO INICIO"
+        )) {
+
+            return "AGUARDANDO INÍCIO";
+        }
+
+
+        return null;
+    }
+
+
+    private String extrairResultado(
+            String texto
+    ) {
+
+        String textoNormalizado =
+                texto.toUpperCase();
+
+
+        if (textoNormalizado.contains(
+                "SEM LANCES"
+        )) {
+
+            return "SEM LANCES";
+        }
+
+
+        if (textoNormalizado.contains(
+                "ARREMATADO"
+        )) {
+
+            return "ARREMATADO";
+        }
+
+
+        if (textoNormalizado.contains(
+                "DESERTO"
+        )) {
+
+            return "DESERTO";
+        }
+
+
+        if (textoNormalizado.contains(
+                "COM LANCES"
+        )) {
+
+            return "COM LANCES";
+        }
+
+
+        return null;
+    }
+
+
     private String extrairBloco(
             String texto,
             String inicio,
             String fim
     ) {
 
-        int indiceInicio = texto.indexOf(inicio);
+        int indiceInicio =
+                texto.indexOf(
+                        inicio
+                );
+
 
         if (indiceInicio == -1) {
             return "";
         }
+
 
         int indiceFim =
                 texto.indexOf(
@@ -141,9 +311,11 @@ public class SublimeLeiloesBrowser {
                         indiceInicio + inicio.length()
                 );
 
+
         if (indiceFim == -1) {
             indiceFim = texto.length();
         }
+
 
         return texto.substring(
                 indiceInicio,
@@ -151,18 +323,27 @@ public class SublimeLeiloesBrowser {
         );
     }
 
+
     private LocalDateTime extrairData(
             String texto,
             String campo
     ) {
 
-        Pattern pattern = Pattern.compile(
-                Pattern.quote(campo)
-                        + "\\s*:?\\s*"
-                        + "(\\d{2}/\\d{2}/\\d{4}\\s*-\\s*\\d{2}:\\d{2})"
-        );
+        Pattern pattern =
+                Pattern.compile(
+                        Pattern.quote(
+                                campo
+                        )
+                                + "\\s*:?\\s*"
+                                + "(\\d{2}/\\d{2}/\\d{4}\\s*-\\s*\\d{2}:\\d{2})"
+                );
 
-        Matcher matcher = pattern.matcher(texto);
+
+        Matcher matcher =
+                pattern.matcher(
+                        texto
+                );
+
 
         if (matcher.find()) {
 
@@ -172,104 +353,168 @@ public class SublimeLeiloesBrowser {
             );
         }
 
+
         return null;
     }
+
 
     private BigDecimal extrairDinheiro(
             String texto,
             String campo
     ) {
 
-        Pattern pattern = Pattern.compile(
-                Pattern.quote(campo)
-                        + "\\s*R\\$\\s*([\\d.,]+)"
-        );
+        Pattern pattern =
+                Pattern.compile(
+                        Pattern.quote(
+                                campo
+                        )
+                                + "\\s*R\\$\\s*([\\d.,]+)"
+                );
 
-        Matcher matcher = pattern.matcher(texto);
+
+        Matcher matcher =
+                pattern.matcher(
+                        texto
+                );
+
 
         if (matcher.find()) {
+
             return converterDinheiro(
                     matcher.group(1)
             );
         }
 
+
         return null;
     }
+
 
     private BigDecimal extrairPercentual(
             String texto,
             String campo
     ) {
 
-        Pattern pattern = Pattern.compile(
-                Pattern.quote(campo)
-                        + "\\s*([\\d.,]+)%"
-        );
+        Pattern pattern =
+                Pattern.compile(
+                        Pattern.quote(
+                                campo
+                        )
+                                + "\\s*([\\d.,]+)%"
+                );
 
-        Matcher matcher = pattern.matcher(texto);
+
+        Matcher matcher =
+                pattern.matcher(
+                        texto
+                );
+
 
         if (matcher.find()) {
 
-            String valor = matcher.group(1)
-                    .replace(".", "")
-                    .replace(",", ".");
+            String valor =
+                    matcher.group(1)
+                            .replace(
+                                    ".",
+                                    ""
+                            )
+                            .replace(
+                                    ",",
+                                    "."
+                            );
 
-            return new BigDecimal(valor);
+
+            return new BigDecimal(
+                    valor
+            );
         }
+
 
         return null;
     }
+
 
     private Integer extrairInteiro(
             String texto,
             String regex
     ) {
 
-        Pattern pattern = Pattern.compile(regex);
+        Pattern pattern =
+                Pattern.compile(
+                        regex
+                );
+
 
         Matcher matcher =
-                pattern.matcher(texto);
+                pattern.matcher(
+                        texto
+                );
+
 
         if (matcher.find()) {
+
             return Integer.parseInt(
                     matcher.group(1)
             );
         }
 
+
         return null;
     }
+
 
     private BigDecimal converterDinheiro(
             String valor
     ) {
 
-        String valorNormalizado = valor
-                .replace(".", "")
-                .replace(",", ".");
+        String valorNormalizado =
+                valor.replace(
+                                ".",
+                                ""
+                        )
+                        .replace(
+                                ",",
+                                "."
+                        );
+
 
         return new BigDecimal(
                 valorNormalizado
         );
     }
 
-    public static void main(String[] args) {
+
+    public static void main(
+            String[] args
+    ) {
 
         SublimeLeiloesBrowser browser =
                 new SublimeLeiloesBrowser();
 
+
         String url =
                 "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/2351/";
 
+
         String texto =
-                browser.buscarTextoRenderizado(url);
+                browser.buscarTextoRenderizado(
+                        url
+                );
+
 
         DadosDinamicosLeilaoDTO dados =
-                browser.extrairDados(texto);
+                browser.extrairDados(
+                        texto
+                );
+
 
         System.out.println(
                 "=== DADOS DINÂMICOS ==="
         );
 
-        System.out.println(dados);
+
+        System.out.println(
+                dados
+        );
     }
 }

@@ -1,154 +1,272 @@
-(() => {
+document.addEventListener("DOMContentLoaded", () => {
 
-    const CHAVE_TEMA =
-        "pipelineJudicialTema";
+    const filtroProcesso =
+        document.getElementById("filtroProcesso");
+
+    const filtroCidade =
+        document.getElementById("filtroCidade");
+
+    const filtroBairro =
+        document.getElementById("filtroBairro");
+
+    const filtroStatus =
+        document.getElementById("filtroStatus");
+
+    const filtroResultado =
+        document.getElementById("filtroResultado");
+
+    const botaoLimpar =
+        document.getElementById("botaoLimpar");
+
+    const semResultados =
+        document.getElementById("semResultados");
+
+    const resultadoFiltro =
+        document.getElementById("resultadoFiltro");
+
+    const cards =
+        Array.from(
+            document.querySelectorAll(".imovel-item")
+        );
 
 
-    function temaSalvo() {
+    function normalizarTexto(valor) {
 
-        const tema =
-            localStorage.getItem(
-                CHAVE_TEMA
-            );
-
-        if (tema === "dark"
-            || tema === "light") {
-
-            return tema;
-        }
-
-        return null;
+        return (valor || "")
+            .toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
     }
 
 
-    function temaInicial() {
+    function normalizarProcesso(valor) {
 
-        const salvo =
-            temaSalvo();
-
-        if (salvo) {
-            return salvo;
-        }
-
-
-        /*
-         * Na primeira utilização respeitamos
-         * a preferência do próprio Windows.
-         */
-        const sistemaEscuro =
-            window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches;
-
-
-        return sistemaEscuro
-            ? "dark"
-            : "light";
+        return (valor || "")
+            .toString()
+            .replace(/\D/g, "");
     }
 
 
-    function aplicarTema(
-        tema
+    function adicionarOpcao(
+        select,
+        valor
     ) {
 
-        document.documentElement.setAttribute(
-            "data-theme",
-            tema
-        );
+        if (!select
+            || !valor) {
+
+            return;
+        }
+
+
+        const opcao =
+            document.createElement("option");
+
+        opcao.value = valor;
+        opcao.textContent = valor;
+
+        select.appendChild(opcao);
     }
 
 
-    /*
-     * Executa imediatamente para reduzir o clarão
-     * branco antes de a página terminar de carregar.
-     */
-    aplicarTema(
-        temaInicial()
-    );
+    function carregarOpcoes(
+        select,
+        campo
+    ) {
 
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
-
-            const botao =
-                document.getElementById(
-                    "botaoTema"
-                );
-
-
-            if (!botao) {
-                return;
-            }
-
-
-            function atualizarBotao() {
-
-                const temaAtual =
-                    document.documentElement
-                        .getAttribute(
-                            "data-theme"
-                        );
-
-
-                if (temaAtual === "dark") {
-
-                    botao.innerHTML =
-                        "<span>☀</span><span>Modo claro</span>";
-
-                    botao.setAttribute(
-                        "aria-label",
-                        "Ativar modo claro"
-                    );
-
-                } else {
-
-                    botao.innerHTML =
-                        "<span>🌙</span><span>Modo escuro</span>";
-
-                    botao.setAttribute(
-                        "aria-label",
-                        "Ativar modo escuro"
-                    );
-                }
-            }
-
-
-            botao.addEventListener(
-                "click",
-                () => {
-
-                    const temaAtual =
-                        document.documentElement
-                            .getAttribute(
-                                "data-theme"
-                            );
-
-
-                    const novoTema =
-                        temaAtual === "dark"
-                            ? "light"
-                            : "dark";
-
-
-                    aplicarTema(
-                        novoTema
-                    );
-
-
-                    localStorage.setItem(
-                        CHAVE_TEMA,
-                        novoTema
-                    );
-
-
-                    atualizarBotao();
-                }
+        const valores =
+            new Set(
+                cards
+                    .map(card => card.dataset[campo])
+                    .filter(Boolean)
             );
 
 
-            atualizarBotao();
+        Array.from(valores)
+            .sort((a, b) =>
+                a.localeCompare(
+                    b,
+                    "pt-BR"
+                )
+            )
+            .forEach(valor =>
+                adicionarOpcao(
+                    select,
+                    valor
+                )
+            );
+    }
+
+
+    function filtrarImoveis() {
+
+        if (!filtroProcesso
+            || !filtroCidade
+            || !filtroBairro
+            || !filtroStatus
+            || !filtroResultado) {
+
+            return;
         }
+
+
+        const processoBuscado =
+            normalizarProcesso(
+                filtroProcesso.value
+            );
+
+        const cidadeBuscada =
+            normalizarTexto(
+                filtroCidade.value
+            );
+
+        const bairroBuscado =
+            normalizarTexto(
+                filtroBairro.value
+            );
+
+        const statusBuscado =
+            normalizarTexto(
+                filtroStatus.value
+            );
+
+        const resultadoBuscado =
+            normalizarTexto(
+                filtroResultado.value
+            );
+
+
+        let visiveis = 0;
+
+
+        cards.forEach(card => {
+
+            const mostrar =
+                (!processoBuscado
+                    || normalizarProcesso(card.dataset.processo)
+                        .includes(processoBuscado))
+                && (!cidadeBuscada
+                    || normalizarTexto(card.dataset.cidade)
+                    === cidadeBuscada)
+                && (!bairroBuscado
+                    || normalizarTexto(card.dataset.bairro)
+                    === bairroBuscado)
+                && (!statusBuscado
+                    || normalizarTexto(card.dataset.status)
+                    === statusBuscado)
+                && (!resultadoBuscado
+                    || normalizarTexto(card.dataset.resultado)
+                    === resultadoBuscado);
+
+
+            card.classList.toggle(
+                "d-none",
+                !mostrar
+            );
+
+
+            if (mostrar) {
+                visiveis++;
+            }
+        });
+
+
+        if (resultadoFiltro) {
+
+            resultadoFiltro.textContent =
+                cards.length === 0
+                    ? ""
+                    : `${visiveis} de ${cards.length} imóvel(is) exibido(s)`;
+        }
+
+
+        if (semResultados) {
+
+            semResultados.classList.toggle(
+                "d-none",
+                visiveis !== 0
+                || cards.length === 0
+            );
+        }
+    }
+
+
+    function limparFiltros() {
+
+        if (!filtroProcesso
+            || !filtroCidade
+            || !filtroBairro
+            || !filtroStatus
+            || !filtroResultado) {
+
+            return;
+        }
+
+
+        filtroProcesso.value = "";
+        filtroCidade.value = "";
+        filtroBairro.value = "";
+        filtroStatus.value = "";
+        filtroResultado.value = "";
+
+        filtrarImoveis();
+        filtroProcesso.focus();
+    }
+
+
+    filtroProcesso?.addEventListener(
+        "input",
+        filtrarImoveis
     );
 
-})();
+    filtroCidade?.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    filtroBairro?.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    filtroStatus?.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    filtroResultado?.addEventListener(
+        "change",
+        filtrarImoveis
+    );
+
+    botaoLimpar?.addEventListener(
+        "click",
+        limparFiltros
+    );
+
+
+    carregarOpcoes(
+        filtroCidade,
+        "cidade"
+    );
+
+    carregarOpcoes(
+        filtroBairro,
+        "bairro"
+    );
+
+    carregarOpcoes(
+        filtroStatus,
+        "status"
+    );
+
+    carregarOpcoes(
+        filtroResultado,
+        "resultado"
+    );
+
+
+    filtrarImoveis();
+});

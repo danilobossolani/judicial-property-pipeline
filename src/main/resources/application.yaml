@@ -15,3 +15,8 @@ spring:
 datajud:
   url: https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search
   api-key: ${DATAJUD_API_KEY}
+
+descoberta:
+  sublime:
+    atraso-inicial-ms: 120000
+    intervalo-ms: 21600000

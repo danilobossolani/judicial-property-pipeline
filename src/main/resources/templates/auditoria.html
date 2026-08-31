@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="pt-BR"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Central de Auditoria - Pipeline Judicial</title>
+
+    <script th:src="@{/js/tema.js}"></script>
+
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
+    <link
+            rel="stylesheet"
+            th:href="@{/css/tema.css}"
+    >
+
+    <link
+            rel="stylesheet"
+            th:href="@{/css/auditoria.css}"
+    >
+
+</head>
+
+<body>
+
+
+<header class="topbar py-4">
+
+    <div class="container">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-center
+                    gap-3
+                    flex-wrap">
+
+            <div>
+
+                <a
+                        th:href="@{/}"
+                        class="voltar-link"
+                >
+                    ← Voltar ao painel
+                </a>
+
+                <div class="d-flex align-items-center gap-2 mt-2 mb-1">
+
+                    <span class="marca-auditoria" aria-hidden="true">
+                        ✓
+                    </span>
+
+                    <h1 class="h3 mb-0">
+                        Central de auditoria
+                    </h1>
+
+                </div>
+
+                <p class="mb-0 text-white-50">
+                    Rastreabilidade das decisões e coletas do pipeline
+                </p>
+
+            </div>
+
+
+            <div class="d-flex
+                        align-items-center
+                        gap-3
+                        flex-wrap
+                        justify-content-end">
+
+                <div class="text-end d-none d-md-block">
+
+                    <div class="small text-white-50">
+                        Última atividade
+                    </div>
+
+                    <div
+                            class="small fw-semibold"
+                            th:text="${central.ultimaAtividadeFormatada()}"
+                    >
+                        Nenhuma atividade registrada
+                    </div>
+
+                </div>
+
+
+                <button
+                        id="botaoTema"
+                        data-theme-toggle
+                        type="button"
+                        class="botao-tema"
+                        aria-label="Alterar tema"
+                >
+                    🌙 Modo escuro
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="container py-4">
+
+
+    <section class="descoberta-automatica mb-5" aria-labelledby="tituloDescobertaAutomatica">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-start
+                    gap-3
+                    flex-wrap
+                    mb-3">
+
+            <div>
+
+                <div class="label">
+                    Coleta rastreável
+                </div>
+
+                <h2 id="tituloDescobertaAutomatica" class="h4 mb-1 mt-1">
+                    Descoberta automática
+                </h2>
+
+                <p class="text-secondary mb-0">
+                    Execuções da busca de imóveis da Sublime Leilões em Sorocaba e Votorantim.
+                </p>
+
+            </div>
+
+
+            <div class="execucao-manual">
+
+                <button
+                        id="botaoExecutarDescoberta"
+                        type="button"
+                        class="btn btn-dark"
+                        th:disabled="${descobertaEmExecucao}"
+                        th:attr="data-em-execucao=${descobertaEmExecucao}"
+                >
+                    <span
+                            id="spinnerDescoberta"
+                            class="spinner-border spinner-border-sm me-2 d-none"
+                            aria-hidden="true"
+                    ></span>
+
+                    <span id="textoBotaoDescoberta"
+                          th:text="${descobertaEmExecucao ? 'Descoberta em execução' : 'Executar agora'}">
+                        Executar agora
+                    </span>
+                </button>
+
+                <div
+                        id="feedbackDescoberta"
+                        class="feedback-descoberta mt-2"
+                        role="status"
+                        aria-live="polite"
+                        th:text="${descobertaEmExecucao ? 'Uma execução já está em andamento. Esta página será atualizada após a conclusão iniciada aqui.' : ''}"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <div
+                th:if="${central.descoberta.possuiErroCarregamento()}"
+                class="alert alert-danger"
+                role="alert"
+                th:text="${central.descoberta.erroCarregamento}"
+        >
+            Não foi possível carregar o histórico da descoberta automática.
+        </div>
+
+
+        <div
+                th:if="${central.descoberta.ultimaExecucao != null}"
+                class="card ultima-execucao-card mb-3"
+        >
+
+            <div class="card-body p-4">
+
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+
+                    <div>
+
+                        <div class="label">
+                            Última execução
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-wrap mt-2">
+
+                            <span
+                                    class="badge status-descoberta"
+                                    th:classappend="${' status-descoberta-' + central.descoberta.ultimaExecucao.statusCss()}"
+                                    th:text="${central.descoberta.ultimaExecucao.statusFormatado()}"
+                            >
+                                Concluída
+                            </span>
+
+                            <span class="text-secondary small"
+                                  th:text="${'#' + central.descoberta.ultimaExecucao.id + ' · ' + central.descoberta.ultimaExecucao.origemFormatada()}">
+                                #1 · Manual
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="text-md-end">
+
+                        <div class="fw-semibold"
+                             th:text="${central.descoberta.ultimaExecucao.inicioFormatado()}">
+                            Início
+                        </div>
+
+                        <div class="small text-secondary mt-1"
+                             th:text="${'Duração: ' + central.descoberta.ultimaExecucao.duracaoFormatada()}">
+                            Duração
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="resumo-contadores mt-4">
+
+                    <div>
+                        <span>Encontrados</span>
+                        <strong th:text="${central.descoberta.ultimaExecucao.totalEncontrado}">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Elegíveis</span>
+                        <strong th:text="${central.descoberta.ultimaExecucao.totalElegivel}">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Importados</span>
+                        <strong th:text="${central.descoberta.ultimaExecucao.totalImportado}">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Duplicados</span>
+                        <strong th:text="${central.descoberta.ultimaExecucao.totalDuplicado}">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Descartados</span>
+                        <strong th:text="${central.descoberta.ultimaExecucao.totalDescartado}">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Falhas</span>
+                        <strong th:text="${central.descoberta.ultimaExecucao.totalFalha}">0</strong>
+                    </div>
+
+                </div>
+
+
+                <div
+                        th:if="${central.descoberta.ultimaExecucao.erroResumo != null}"
+                        class="alert alert-warning mb-0 mt-3"
+                        role="alert"
+                >
+                    <strong>Resumo da falha:</strong>
+                    <span th:text="${central.descoberta.ultimaExecucao.erroResumo}">
+                        Mensagem resumida
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="row g-3 mb-4" aria-label="Indicadores das últimas vinte execuções">
+
+            <div class="col-6 col-lg">
+                <div class="card indicador-descoberta h-100">
+                    <div class="card-body p-3">
+                        <div class="campo-label">Execuções</div>
+                        <strong th:text="${central.descoberta.totalExecucoes}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg">
+                <div class="card indicador-descoberta h-100 indicador-importado">
+                    <div class="card-body p-3">
+                        <div class="campo-label">Importados</div>
+                        <strong th:text="${central.descoberta.totalImportados}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg">
+                <div class="card indicador-descoberta h-100 indicador-duplicado">
+                    <div class="card-body p-3">
+                        <div class="campo-label">Duplicados</div>
+                        <strong th:text="${central.descoberta.totalDuplicados}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg">
+                <div class="card indicador-descoberta h-100 indicador-descartado">
+                    <div class="card-body p-3">
+                        <div class="campo-label">Descartados</div>
+                        <strong th:text="${central.descoberta.totalDescartados}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg">
+                <div class="card indicador-descoberta h-100 indicador-falha">
+                    <div class="card-body p-3">
+                        <div class="campo-label">Falhas</div>
+                        <strong th:text="${central.descoberta.totalFalhas}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div
+                th:if="${#lists.isEmpty(central.descoberta.execucoes) and !central.descoberta.possuiErroCarregamento()}"
+                class="card estado-vazio estado-vazio-descoberta"
+        >
+
+            <div class="card-body p-5 text-center">
+
+                <div class="estado-vazio-icone estado-vazio-icone-descoberta" aria-hidden="true">
+                    ↻
+                </div>
+
+                <h3 class="h5 mt-3">
+                    Nenhuma descoberta foi executada
+                </h3>
+
+                <p class="text-secondary mb-0">
+                    Use “Executar agora” ou aguarde a próxima execução agendada para iniciar o histórico.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div th:if="${!#lists.isEmpty(central.descoberta.execucoes)}">
+
+            <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap mb-3">
+
+                <div>
+                    <div class="label">Últimas 20 execuções</div>
+                    <h3 class="h5 mb-0 mt-1">Histórico e decisões por lote</h3>
+                </div>
+
+                <div id="resultadoLotesDescoberta" class="resultado-filtro" aria-live="polite"></div>
+
+            </div>
+
+
+            <div class="card filtros-card filtros-descoberta mb-3">
+
+                <div class="card-body p-3 p-md-4">
+
+                    <div class="row g-3 align-items-end">
+
+                        <div class="col-12 col-md-7">
+                            <label for="filtroBuscaDescoberta" class="form-label campo-label">
+                                Título, cidade, processo, URL ou motivo
+                            </label>
+                            <input
+                                    id="filtroBuscaDescoberta"
+                                    type="search"
+                                    class="form-control"
+                                    placeholder="Busque nos lotes analisados"
+                                    autocomplete="off"
+                            >
+                        </div>
+
+                        <div class="col-8 col-md-3">
+                            <label for="filtroDecisaoDescoberta" class="form-label campo-label">
+                                Decisão
+                            </label>
+                            <select id="filtroDecisaoDescoberta" class="form-select">
+                                <option value="">Todas</option>
+                                <option value="importado">Importado</option>
+                                <option value="duplicado">Duplicado</option>
+                                <option value="descartado">Descartado</option>
+                                <option value="falha">Falha</option>
+                            </select>
+                        </div>
+
+                        <div class="col-4 col-md-2 d-grid">
+                            <button id="botaoLimparDescoberta"
+                                    type="button"
+                                    class="btn btn-outline-secondary">
+                                Limpar
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div id="semResultadosDescoberta" class="alert alert-secondary d-none">
+                Nenhum lote corresponde aos filtros selecionados.
+            </div>
+
+
+            <div id="historicoDescoberta" class="historico-descoberta">
+
+                <details
+                        class="execucao-descoberta"
+                        th:each="execucao, iteracao : ${central.descoberta.execucoes}"
+                        th:open="${iteracao.first}"
+                >
+
+                    <summary>
+
+                        <span class="execucao-identificacao">
+                            <span class="fw-semibold" th:text="${'Execução #' + execucao.id}">Execução #1</span>
+                            <span class="text-secondary small" th:text="${execucao.inicioFormatado()}">Data</span>
+                        </span>
+
+                        <span class="execucao-resumo">
+                            <span class="badge status-descoberta"
+                                  th:classappend="${' status-descoberta-' + execucao.statusCss()}"
+                                  th:text="${execucao.statusFormatado()}">
+                                Concluída
+                            </span>
+                            <span class="small text-secondary"
+                                  th:text="${execucao.totalProcessado() + ' lote(s) processado(s)'}">
+                                0 lotes processados
+                            </span>
+                        </span>
+
+                    </summary>
+
+
+                    <div class="execucao-corpo">
+
+                        <dl class="metadados-execucao">
+                            <div><dt>Fonte</dt><dd th:text="${execucao.fonte}">Sublime Leilões</dd></div>
+                            <div><dt>Origem</dt><dd th:text="${execucao.origemFormatada()}">Manual</dd></div>
+                            <div><dt>Término</dt><dd th:text="${execucao.terminoFormatado()}">Término</dd></div>
+                            <div><dt>Duração</dt><dd th:text="${execucao.duracaoFormatada()}">Duração</dd></div>
+                            <div><dt>Encontrados</dt><dd th:text="${execucao.totalEncontrado}">0</dd></div>
+                            <div><dt>Elegíveis</dt><dd th:text="${execucao.totalElegivel}">0</dd></div>
+                        </dl>
+
+
+                        <div
+                                th:if="${execucao.erroResumo != null}"
+                                class="alert alert-warning"
+                                role="alert"
+                        >
+                            <strong>Erro resumido:</strong>
+                            <span th:text="${execucao.erroResumo}">Mensagem</span>
+                        </div>
+
+
+                        <div th:if="${#lists.isEmpty(execucao.lotes)}"
+                             class="estado-lotes-vazio text-secondary">
+                            Nenhum lote foi registrado nesta execução.
+                        </div>
+
+
+                        <div class="lista-lotes-descoberta"
+                             th:if="${!#lists.isEmpty(execucao.lotes)}">
+
+                            <article
+                                    class="lote-descoberta"
+                                    th:each="lote : ${execucao.lotes}"
+                                    th:attr="
+                                        data-decisao=${lote.decisaoCss()},
+                                        data-conteudo=${lote.tituloFormatado() + ' ' + lote.cidadeFormatada() + ' ' + lote.numeroProcessoFormatado() + ' ' + (lote.urlOriginal != null ? lote.urlOriginal : '') + ' ' + (lote.urlNormalizada != null ? lote.urlNormalizada : '') + ' ' + lote.motivo}
+                                    "
+                            >
+
+                                <div class="lote-cabecalho">
+
+                                    <div class="min-width-0">
+                                        <h4 class="h6 mb-1" th:text="${lote.tituloFormatado()}">Título do lote</h4>
+                                        <div class="small text-secondary" th:text="${lote.cidadeFormatada()}">Cidade</div>
+                                    </div>
+
+                                    <span class="badge decisao-lote"
+                                          th:classappend="${' decisao-lote-' + lote.decisaoCss()}"
+                                          th:text="${lote.decisaoFormatada()}">
+                                        Importado
+                                    </span>
+
+                                </div>
+
+
+                                <div class="lote-detalhes mt-3">
+
+                                    <div>
+                                        <span class="campo-label">Processo</span>
+                                        <span class="processo" th:text="${lote.numeroProcessoFormatado()}">Processo</span>
+                                    </div>
+
+                                    <div>
+                                        <span class="campo-label">Motivo da decisão</span>
+                                        <span th:text="${lote.motivo}">Motivo</span>
+                                    </div>
+
+                                    <div th:if="${lote.urlOriginal != null}">
+                                        <span class="campo-label">URL original</span>
+                                        <a th:href="${lote.urlOriginal}"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="url-lote"
+                                           th:text="${lote.urlOriginal}">
+                                            URL original
+                                        </a>
+                                    </div>
+
+                                    <div th:if="${lote.urlNormalizada != null}">
+                                        <span class="campo-label">URL normalizada</span>
+                                        <code class="url-lote" th:text="${lote.urlNormalizada}">URL normalizada</code>
+                                    </div>
+
+                                </div>
+
+
+                                <a
+                                        th:if="${lote.imovelId != null}"
+                                        th:href="@{/imoveis/{id}(id=${lote.imovelId})}"
+                                        class="btn btn-outline-dark btn-sm mt-3"
+                                >
+                                    Abrir imóvel relacionado
+                                </a>
+
+                            </article>
+
+                        </div>
+
+                    </div>
+
+                </details>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <hr class="separador-secoes my-5">
+
+
+    <section class="mb-4" aria-labelledby="tituloResumoAuditoria">
+
+        <div class="d-flex justify-content-between align-items-end gap-3 mb-3">
+
+            <div>
+
+                <div class="label">
+                    Histórico dos imóveis
+                </div>
+
+                <h2 id="tituloResumoAuditoria" class="h5 mb-0 mt-1">
+                    Atividade recente dos imóveis
+                </h2>
+
+            </div>
+
+            <small class="text-secondary">
+                Últimos 200 eventos
+            </small>
+
+        </div>
+
+
+        <div class="row g-3">
+
+            <div class="col-6 col-xl-3">
+
+                <div class="card metrica-card h-100">
+
+                    <div class="card-body p-3 p-md-4">
+
+                        <div class="metrica-icone metrica-icone-total" aria-hidden="true">
+                            ≡
+                        </div>
+
+                        <div class="label mt-3">
+                            Eventos registrados
+                        </div>
+
+                        <div
+                                class="display-6 fw-semibold mt-1"
+                                th:text="${central.totalEventos}"
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-xl-3">
+
+                <div class="card metrica-card h-100">
+
+                    <div class="card-body p-3 p-md-4">
+
+                        <div class="metrica-icone metrica-icone-manual" aria-hidden="true">
+                            ✎
+                        </div>
+
+                        <div class="label mt-3">
+                            Intervenções manuais
+                        </div>
+
+                        <div
+                                class="display-6 fw-semibold mt-1"
+                                th:text="${central.totalManuais}"
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-xl-3">
+
+                <div class="card metrica-card h-100">
+
+                    <div class="card-body p-3 p-md-4">
+
+                        <div class="metrica-icone metrica-icone-automatica" aria-hidden="true">
+                            ↻
+                        </div>
+
+                        <div class="label mt-3">
+                            Atualizações automáticas
+                        </div>
+
+                        <div
+                                class="display-6 fw-semibold mt-1"
+                                th:text="${central.totalAutomaticos}"
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-6 col-xl-3">
+
+                <div class="card metrica-card h-100">
+
+                    <div class="card-body p-3 p-md-4">
+
+                        <div class="metrica-icone metrica-icone-imoveis" aria-hidden="true">
+                            ⌂
+                        </div>
+
+                        <div class="label mt-3">
+                            Imóveis impactados
+                        </div>
+
+                        <div
+                                class="display-6 fw-semibold mt-1"
+                                th:text="${central.totalImoveisImpactados}"
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="card filtros-card mb-4" aria-labelledby="tituloFiltrosAuditoria">
+
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+
+                <div>
+
+                    <div class="label">
+                        Consulta
+                    </div>
+
+                    <h2 id="tituloFiltrosAuditoria" class="h5 mb-0 mt-1">
+                        Filtrar trilha de auditoria
+                    </h2>
+
+                </div>
+
+                <button
+                        id="botaoLimparAuditoria"
+                        type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                >
+                    Limpar
+                </button>
+
+            </div>
+
+
+            <div class="row g-3">
+
+                <div class="col-12 col-lg-5">
+
+                    <label for="filtroBuscaAuditoria" class="form-label campo-label">
+                        Processo, imóvel ou descrição
+                    </label>
+
+                    <input
+                            id="filtroBuscaAuditoria"
+                            type="search"
+                            class="form-control"
+                            placeholder="Busque por número, cidade, bairro ou texto"
+                            autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="col-6 col-lg-2">
+
+                    <label for="filtroCategoriaAuditoria" class="form-label campo-label">
+                        Tipo de ação
+                    </label>
+
+                    <select id="filtroCategoriaAuditoria" class="form-select">
+                        <option value="">Todas</option>
+                        <option value="MANUAL">Intervenção manual</option>
+                        <option value="AUTOMATICA">Atualização automática</option>
+                    </select>
+
+                </div>
+
+
+                <div class="col-6 col-lg-3">
+
+                    <label for="filtroStatusAuditoria" class="form-label campo-label">
+                        Status do pipeline
+                    </label>
+
+                    <select id="filtroStatusAuditoria" class="form-select">
+                        <option value="">Todos</option>
+                    </select>
+
+                </div>
+
+
+                <div class="col-12 col-lg-2">
+
+                    <label for="filtroPeriodoAuditoria" class="form-label campo-label">
+                        Período
+                    </label>
+
+                    <select id="filtroPeriodoAuditoria" class="form-select">
+                        <option value="">Todo o histórico</option>
+                        <option value="1">Últimas 24 horas</option>
+                        <option value="7">Últimos 7 dias</option>
+                        <option value="30">Últimos 30 dias</option>
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section aria-labelledby="tituloTrilhaAuditoria">
+
+        <div class="d-flex
+                    justify-content-between
+                    align-items-end
+                    gap-3
+                    flex-wrap
+                    mb-3">
+
+            <div>
+
+                <div class="label">
+                    Registro imutável
+                </div>
+
+                <h2 id="tituloTrilhaAuditoria" class="h5 mb-0 mt-1">
+                    Trilha de eventos
+                </h2>
+
+            </div>
+
+            <div id="resultadoAuditoria" class="resultado-filtro" aria-live="polite"></div>
+
+        </div>
+
+
+        <div
+                th:if="${#lists.isEmpty(central.eventos)}"
+                class="card estado-vazio"
+        >
+
+            <div class="card-body p-5 text-center">
+
+                <div class="estado-vazio-icone" aria-hidden="true">
+                    ✓
+                </div>
+
+                <h3 class="h5 mt-3">
+                    A trilha ainda está vazia
+                </h3>
+
+                <p class="text-secondary mb-0">
+                    As coletas e alterações manuais aparecerão aqui assim que forem registradas.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div
+                id="semResultadosAuditoria"
+                class="alert alert-secondary d-none"
+        >
+            Nenhum evento corresponde aos filtros selecionados.
+        </div>
+
+
+        <div
+                id="listaEventosAuditoria"
+                class="trilha-auditoria"
+                th:if="${!#lists.isEmpty(central.eventos)}"
+        >
+
+            <article
+                    class="card evento-auditoria"
+                    th:each="evento : ${central.eventos}"
+                    th:attr="
+                        data-processo=${evento.numeroProcessoFormatado()},
+                        data-tipo-imovel=${evento.tipoImovelFormatado()},
+                        data-localizacao=${evento.localizacaoFormatada()},
+                        data-descricao=${evento.descricaoFormatada()},
+                        data-origem=${evento.origem != null ? evento.origem : ''},
+                        data-categoria=${evento.categoria()},
+                        data-status=${evento.statusPipelineFormatado()},
+                        data-data=${evento.dataEventoIso()}
+                    "
+            >
+
+                <div class="card-body p-0">
+
+                    <div class="row g-0">
+
+                        <div class="col-12 col-lg-2 evento-tempo">
+
+                            <time
+                                    th:attr="datetime=${evento.dataEventoIso()}"
+                                    th:text="${evento.dataEventoFormatada()}"
+                            >
+                                Data do evento
+                            </time>
+
+                            <span
+                                    class="evento-categoria mt-2"
+                                    th:classappend="${evento.categoria() == 'MANUAL'
+                                        ? ' evento-categoria-manual'
+                                        : ' evento-categoria-automatica'}"
+                                    th:text="${evento.categoriaFormatada()}"
+                            >
+                                Atualização automática
+                            </span>
+
+                        </div>
+
+
+                        <div class="col-12 col-lg-7 evento-conteudo">
+
+                            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+
+                                <div>
+
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                                        <span
+                                                class="tipo-imovel"
+                                                th:text="${evento.tipoImovelFormatado()}"
+                                        >
+                                            Imóvel
+                                        </span>
+
+                                        <span class="separador" aria-hidden="true">/</span>
+
+                                        <span
+                                                class="text-secondary small"
+                                                th:text="${evento.localizacaoFormatada()}"
+                                        >
+                                            Localização
+                                        </span>
+
+                                    </div>
+
+                                    <div
+                                            class="processo mt-2"
+                                            th:text="${evento.numeroProcessoFormatado()}"
+                                    >
+                                        Número do processo
+                                    </div>
+
+                                </div>
+
+
+                                <a
+                                        th:if="${evento.imovelId != null}"
+                                        th:href="@{/imoveis/{id}(id=${evento.imovelId})}"
+                                        class="btn btn-outline-dark btn-sm"
+                                >
+                                    Abrir imóvel
+                                </a>
+
+                            </div>
+
+
+                            <p
+                                    class="evento-descricao mb-0 mt-3"
+                                    th:text="${evento.descricaoFormatada()}"
+                            >
+                                Descrição do evento
+                            </p>
+
+
+                            <div class="small text-secondary mt-2">
+                                Origem:
+                                <span th:text="${evento.origem != null ? evento.origem : 'Não informada'}">
+                                    Origem
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-12 col-lg-3 evento-estado">
+
+                            <div class="campo-label">
+                                Estado após o evento
+                            </div>
+
+                            <span
+                                    class="badge status-pipeline mt-2"
+                                    th:text="${evento.statusPipelineFormatado()}"
+                            >
+                                Em análise
+                            </span>
+
+                            <div class="estado-factual mt-3">
+
+                                <div>
+                                    <span>Leilão</span>
+                                    <strong th:text="${evento.statusLeilaoFormatado()}">
+                                        Encerrado
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Resultado</span>
+                                    <strong th:text="${evento.resultadoLeilaoFormatado()}">
+                                        Sem lances
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script th:src="@{/js/auditoria.js}"></script>
+
+</body>
+
+</html>

@@ -65,6 +65,24 @@ body {
     color: var(--topbar-secundario) !important;
 }
 
+.link-auditoria {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    color: #f8fafc;
+    font-size: 0.85rem;
+    padding: 7px 11px;
+    text-decoration: none;
+    transition:
+            background-color 0.15s ease,
+            border-color 0.15s ease;
+}
+
+.link-auditoria:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}
+
 
 @media (max-width: 767px) {
 
