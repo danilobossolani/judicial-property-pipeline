@@ -1,5 +1,6 @@
 package br.com.bossolani.judicialpipeline.service;
 
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
 import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcessoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.DadosDinamicosLeilaoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteEnriquecidoDTO;
@@ -23,7 +24,9 @@ import br.com.bossolani.judicialpipeline.repository.ProcessoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -96,6 +99,11 @@ public class PersistenciaLeilaoService {
         validarColeta(
                 lote,
                 dadosLeilao
+        );
+
+
+        validarClasseProcessual(
+                dadosProcesso
         );
 
 
@@ -1027,5 +1035,54 @@ public class PersistenciaLeilaoService {
 
 
         return numeroNormalizado;
+    }
+
+
+    private void validarClasseProcessual(
+            DataJudProcessoDTO dadosProcesso
+    ) {
+
+        if (dadosProcesso == null) {
+            return;
+        }
+
+
+        String classeNormalizada =
+                normalizarTexto(
+                        dadosProcesso.classe()
+                );
+
+
+        if (classeNormalizada.contains(
+                "despejo"
+        )) {
+
+            throw new LoteDescartadoException(
+                    "Ação de despejo não representa oportunidade imobiliária."
+            );
+        }
+    }
+
+
+    private String normalizarTexto(
+            String texto
+    ) {
+
+        if (texto == null) {
+            return "";
+        }
+
+
+        return Normalizer.normalize(
+                        texto,
+                        Normalizer.Form.NFD
+                )
+                .replaceAll(
+                        "\\p{M}",
+                        ""
+                )
+                .toLowerCase(
+                        Locale.ROOT
+                );
     }
 }

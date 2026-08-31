@@ -2,6 +2,7 @@ package br.com.bossolani.judicialpipeline.service;
 
 import br.com.bossolani.judicialpipeline.dto.ResultadoDescobertaDTO;
 import br.com.bossolani.judicialpipeline.exception.DescobertaEmAndamentoException;
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesDiscoveryBrowser;
 import br.com.bossolani.judicialpipeline.model.DecisaoLoteDescoberta;
@@ -39,6 +40,99 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DescobertaAutomaticaServiceTest {
+
+    @Test
+    void deveRegistrarClasseDeDespejoComoDescarteSemFalha()
+            throws Exception {
+
+        Dependencias dependencias =
+                novasDependencias();
+
+        String url =
+                "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/9997/";
+
+
+        when(dependencias.browser().descobrirLotes())
+                .thenReturn(
+                        List.of(
+                                lote(
+                                        url,
+                                        "Casa em Sorocaba",
+                                        "Sorocaba",
+                                        "Imóvel residencial"
+                                )
+                        )
+                );
+
+
+        when(dependencias.persistencia().coletarESalvar(
+                url
+        )).thenThrow(
+                new LoteDescartadoException(
+                        "Ação de despejo não representa oportunidade imobiliária."
+                )
+        );
+
+
+        ResultadoDescobertaDTO resultado =
+                dependencias.service()
+                        .executarDescoberta();
+
+
+        assertEquals(
+                1,
+                resultado.encontrados()
+        );
+
+        assertEquals(
+                0,
+                resultado.elegiveis()
+        );
+
+        assertEquals(
+                0,
+                resultado.importados()
+        );
+
+        assertEquals(
+                1,
+                resultado.descartados()
+        );
+
+        assertEquals(
+                0,
+                resultado.falhas()
+        );
+
+        assertEquals(
+                StatusExecucaoDescoberta.CONCLUIDA,
+                resultado.status()
+        );
+
+
+        ArgumentCaptor<ResultadoLoteDescoberta> captor =
+                ArgumentCaptor.forClass(
+                        ResultadoLoteDescoberta.class
+                );
+
+
+        verify(dependencias.resultadoRepository()).save(
+                captor.capture()
+        );
+
+
+        assertEquals(
+                DecisaoLoteDescoberta.DESCARTADO,
+                captor.getValue()
+                        .getDecisao()
+        );
+
+        assertEquals(
+                "Ação de despejo não representa oportunidade imobiliária.",
+                captor.getValue()
+                        .getMotivo()
+        );
+    }
 
     @Test
     void devePersistirContadoresMotivosEContinuarAposFalhaParcial()

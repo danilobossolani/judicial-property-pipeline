@@ -1,5 +1,7 @@
 package br.com.bossolani.judicialpipeline.service;
 
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
+import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcessoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.DadosDinamicosLeilaoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteEnriquecidoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteLeilaoDTO;
@@ -21,13 +23,168 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class PersistenciaLeilaoServiceTest {
+
+    @Test
+    void deveDescartarClasseDeDespejoAntesDePersistir()
+            throws Exception {
+
+        IntegracaoLeilaoService integracao =
+                mock(
+                        IntegracaoLeilaoService.class
+                );
+
+        ProcessoRepository processoRepository =
+                mock(
+                        ProcessoRepository.class
+                );
+
+        ImovelRepository imovelRepository =
+                mock(
+                        ImovelRepository.class
+                );
+
+        LeilaoRepository leilaoRepository =
+                mock(
+                        LeilaoRepository.class
+                );
+
+        FonteRepository fonteRepository =
+                mock(
+                        FonteRepository.class
+                );
+
+        AcompanhamentoRepository acompanhamentoRepository =
+                mock(
+                        AcompanhamentoRepository.class
+                );
+
+        HistoricoAcompanhamentoRepository historicoRepository =
+                mock(
+                        HistoricoAcompanhamentoRepository.class
+                );
+
+
+        PersistenciaLeilaoService service =
+                new PersistenciaLeilaoService(
+                        integracao,
+                        processoRepository,
+                        imovelRepository,
+                        leilaoRepository,
+                        fonteRepository,
+                        acompanhamentoRepository,
+                        historicoRepository,
+                        new TriagemLoteService()
+                );
+
+
+        String url =
+                "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/9997/";
+
+
+        LoteLeilaoDTO lote =
+                new LoteLeilaoDTO(
+                        "0050699-62.2005.8.26.0602",
+                        new BigDecimal("935563.84"),
+                        "Sorocaba",
+                        "5ª Vara Cível",
+                        "Casa",
+                        "Rua Manoel Lourenço Rodrigues, 45 - Sorocaba - SP",
+                        "45",
+                        "Vila Barão",
+                        url
+                );
+
+
+        DadosDinamicosLeilaoDTO dadosLeilao =
+                new DadosDinamicosLeilaoDTO(
+                        LocalDateTime.of(
+                                2026,
+                                6,
+                                29,
+                                9,
+                                0
+                        ),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        50,
+                        "ENCERRADO",
+                        "SEM LANCES",
+                        null,
+                        null,
+                        null
+                );
+
+
+        DataJudProcessoDTO dadosProcesso =
+                new DataJudProcessoDTO(
+                        "00506996220058260602",
+                        "TJSP",
+                        "G1",
+                        null,
+                        "05 CÍVEL DE SOROCABA",
+                        "Despejo por Falta de Pagamento",
+                        "SAJ",
+                        "Eletrônico",
+                        null
+                );
+
+
+        when(integracao.buscarLote(
+                url
+        )).thenReturn(
+                new LoteEnriquecidoDTO(
+                        lote,
+                        dadosLeilao,
+                        dadosProcesso,
+                        true
+                )
+        );
+
+
+        LoteDescartadoException exception =
+                assertThrows(
+                        LoteDescartadoException.class,
+                        () -> service.coletarESalvar(
+                                url
+                        )
+                );
+
+
+        assertEquals(
+                "Ação de despejo não representa oportunidade imobiliária.",
+                exception.getMessage()
+        );
+
+
+        verify(processoRepository, never()).save(
+                any(Processo.class)
+        );
+
+        verify(imovelRepository, never()).save(
+                any(Imovel.class)
+        );
+
+        verify(leilaoRepository, never()).save(
+                any(Leilao.class)
+        );
+
+        verify(fonteRepository, never()).save(
+                any(Fonte.class)
+        );
+    }
 
     @Test
     void deveReutilizarImovelELeilaoQuandoProcessoJaExiste()

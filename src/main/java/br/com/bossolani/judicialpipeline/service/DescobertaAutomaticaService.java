@@ -3,6 +3,7 @@ package br.com.bossolani.judicialpipeline.service;
 import br.com.bossolani.judicialpipeline.dto.ResultadoDescobertaDTO;
 import br.com.bossolani.judicialpipeline.dto.ResultadoTriagemLoteDTO;
 import br.com.bossolani.judicialpipeline.exception.DescobertaEmAndamentoException;
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesDiscoveryBrowser;
 import br.com.bossolani.judicialpipeline.model.DecisaoLoteDescoberta;
@@ -416,6 +417,27 @@ public class DescobertaAutomaticaService {
                         execucao.getTotalImportado() + 1
                 );
             }
+
+        } catch (LoteDescartadoException exception) {
+
+            resultado.setDecisao(
+                    DecisaoLoteDescoberta.DESCARTADO
+            );
+
+            resultado.setMotivo(
+                    exception.getMessage()
+            );
+
+            execucao.setTotalElegivel(
+                    Math.max(
+                            0,
+                            execucao.getTotalElegivel() - 1
+                    )
+            );
+
+            execucao.setTotalDescartado(
+                    execucao.getTotalDescartado() + 1
+            );
 
         } catch (Exception exception) {
 
