@@ -93,7 +93,7 @@
 
 
     <!-- ===================================================== -->
-    <!-- MENSAGEM DE SUCESSO                                   -->
+    <!-- MENSAGENS                                             -->
     <!-- ===================================================== -->
 
     <div
@@ -102,7 +102,17 @@
             role="alert"
             th:text="${mensagemSucesso}"
     >
-        Acompanhamento atualizado com sucesso.
+        Operação realizada com sucesso.
+    </div>
+
+
+    <div
+            th:if="${mensagemErro != null}"
+            class="alert alert-danger shadow-sm"
+            role="alert"
+            th:text="${mensagemErro}"
+    >
+        Não foi possível realizar a operação.
     </div>
 
 
@@ -271,8 +281,6 @@
                     <div class="row g-4 mt-1">
 
 
-                        <!-- NÚMERO -->
-
                         <div class="col-12 col-md-6">
 
                             <div class="campo-label">
@@ -288,8 +296,6 @@
 
                         </div>
 
-
-                        <!-- COMARCA -->
 
                         <div class="col-6 col-md-3">
 
@@ -308,8 +314,6 @@
                         </div>
 
 
-                        <!-- VARA -->
-
                         <div class="col-6 col-md-3">
 
                             <div class="campo-label">
@@ -326,8 +330,6 @@
 
                         </div>
 
-
-                        <!-- CLASSE -->
 
                         <div class="col-12 col-md-6">
 
@@ -346,8 +348,6 @@
                         </div>
 
 
-                        <!-- ÓRGÃO JULGADOR -->
-
                         <div class="col-12 col-md-6">
 
                             <div class="campo-label">
@@ -364,8 +364,6 @@
 
                         </div>
 
-
-                        <!-- TRIBUNAL -->
 
                         <div class="col-6 col-md-3">
 
@@ -384,8 +382,6 @@
                         </div>
 
 
-                        <!-- GRAU -->
-
                         <div class="col-6 col-md-3">
 
                             <div class="campo-label">
@@ -402,8 +398,6 @@
 
                         </div>
 
-
-                        <!-- SISTEMA -->
 
                         <div class="col-6 col-md-3">
 
@@ -422,8 +416,6 @@
                         </div>
 
 
-                        <!-- FORMATO -->
-
                         <div class="col-6 col-md-3">
 
                             <div class="campo-label">
@@ -441,8 +433,6 @@
                         </div>
 
 
-                        <!-- DATA AJUIZAMENTO -->
-
                         <div class="col-12 col-md-6">
 
                             <div class="campo-label">
@@ -457,8 +447,6 @@
 
                         </div>
 
-
-                        <!-- ÚLTIMA ATUALIZAÇÃO -->
 
                         <div class="col-12 col-md-6">
 
@@ -538,7 +526,6 @@
 
                         <div class="row g-3">
 
-
                             <div class="col-12 col-md-4">
 
                                 <div class="campo-label">
@@ -609,7 +596,6 @@
 
                         <div class="row g-3">
 
-
                             <div class="col-12 col-md-4">
 
                                 <div class="campo-label">
@@ -670,12 +656,8 @@
                     <hr>
 
 
-                    <!-- VALORES COMPLEMENTARES -->
-
                     <div class="row g-3">
 
-
-                        <!-- LANCE MÍNIMO -->
 
                         <div class="col-6 col-md-4">
 
@@ -700,8 +682,6 @@
                         </div>
 
 
-                        <!-- INCREMENTO -->
-
                         <div class="col-6 col-md-4">
 
                             <div class="campo-label">
@@ -724,8 +704,6 @@
 
                         </div>
 
-
-                        <!-- COMISSÃO -->
 
                         <div class="col-6 col-md-4">
 
@@ -756,8 +734,6 @@
             </section>
 
 
-            <!-- SEM LEILÃO -->
-
             <div
                     class="alert alert-secondary"
                     th:if="${detalhe.leilao == null}"
@@ -783,8 +759,6 @@
                     </h2>
 
 
-                    <!-- HISTÓRICO VAZIO -->
-
                     <div
                             th:if="${#lists.isEmpty(detalhe.historico)}"
                             class="text-secondary"
@@ -792,8 +766,6 @@
                         Nenhum evento registrado até o momento.
                     </div>
 
-
-                    <!-- TIMELINE -->
 
                     <div
                             class="timeline"
@@ -809,9 +781,6 @@
 
 
                             <div class="timeline-content">
-
-
-                                <!-- CABEÇALHO DO EVENTO -->
 
                                 <div class="d-flex
                                             justify-content-between
@@ -835,8 +804,6 @@
                                 </div>
 
 
-                                <!-- SITUAÇÃO FACTUAL DO LEILÃO -->
-
                                 <div class="small text-secondary mt-1">
 
                                     <span
@@ -856,8 +823,6 @@
                                 </div>
 
 
-                                <!-- DESCRIÇÃO -->
-
                                 <div
                                         class="mt-2"
                                         th:if="${evento.descricao != null
@@ -867,8 +832,6 @@
                                     Descrição
                                 </div>
 
-
-                                <!-- ORIGEM -->
 
                                 <div
                                         class="small text-secondary mt-2"
@@ -914,7 +877,6 @@
 
                 <div class="card-body p-4">
 
-
                     <div class="label">
                         Pipeline
                     </div>
@@ -936,13 +898,13 @@
                                 class="badge text-bg-dark status-principal"
                                 th:text="${detalhe.acompanhamento.statusPipelineFormatado()}"
                         >
-                            Monitorando processo
+                            Em análise
                         </span>
 
                     </div>
 
 
-                    <!-- DADOS DO ACOMPANHAMENTO -->
+                    <!-- IDENTIFICAÇÃO -->
 
                     <div class="campo-bloco">
 
@@ -959,6 +921,8 @@
                     </div>
 
 
+                    <!-- ÚLTIMA VERIFICAÇÃO -->
+
                     <div class="campo-bloco">
 
                         <div class="campo-label">
@@ -971,10 +935,53 @@
                             Data
                         </div>
 
+
+                        <!-- ATUALIZAÇÃO DOS DADOS -->
+
+                        <form
+                                id="formAtualizarDados"
+                                class="mt-3"
+                                th:action="@{/imoveis/{id}/atualizar-dados(id=${detalhe.imovel.id})}"
+                                method="post"
+                        >
+
+                            <button
+                                    id="botaoAtualizarDados"
+                                    type="submit"
+                                    class="btn btn-outline-dark w-100"
+                            >
+
+                                <span
+                                        id="iconeAtualizacao"
+                                        aria-hidden="true"
+                                >
+                                    ↻
+                                </span>
+
+                                <span id="textoAtualizacao">
+                                    Atualizar dados agora
+                                </span>
+
+                                <span
+                                        id="spinnerAtualizacao"
+                                        class="spinner-border spinner-border-sm ms-2 d-none"
+                                        role="status"
+                                        aria-hidden="true"
+                                ></span>
+
+                            </button>
+
+                        </form>
+
+
+                        <div class="form-text mt-2">
+                            Consulta novamente a fonte cadastrada e atualiza os dados deste imóvel.
+                        </div>
+
                     </div>
 
 
-                    <!-- FORMULÁRIO OPERACIONAL -->
+                    <!-- ATUALIZAÇÃO MANUAL -->
 
                     <div class="campo-bloco">
 
@@ -1102,8 +1109,6 @@
                             </div>
 
 
-                            <!-- BOTÃO -->
-
                             <div class="d-grid">
 
                                 <button
@@ -1141,8 +1146,6 @@
                     </h2>
 
 
-                    <!-- SEM FONTES -->
-
                     <div
                             th:if="${#lists.isEmpty(detalhe.fontes)}"
                             class="text-secondary"
@@ -1150,8 +1153,6 @@
                         Nenhuma fonte vinculada.
                     </div>
 
-
-                    <!-- LISTA DE FONTES -->
 
                     <div
                             th:each="fonte : ${detalhe.fontes}"
@@ -1182,7 +1183,7 @@
                                     th:text="${'Capturado em '
                                         + fonte.dataCapturaFormatada()}"
                             >
-                                Capturado em 28/08/2026
+                                Capturado em 30/08/2026 21:20
                             </div>
 
                         </div>
@@ -1209,6 +1210,9 @@
     </div>
 
 </main>
+
+
+<script th:src="@{/js/detalhes.js}"></script>
 
 </body>
 
