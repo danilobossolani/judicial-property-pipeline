@@ -11,9 +11,16 @@
 
     <title>Detalhes do Imóvel - Pipeline Judicial</title>
 
+    <script th:src="@{/js/tema.js}"></script>
+
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
             rel="stylesheet"
+    >
+
+    <link
+            rel="stylesheet"
+            th:href="@{/css/tema.css}"
     >
 
     <link
@@ -25,10 +32,6 @@
 
 <body>
 
-
-<!-- ========================================================= -->
-<!-- CABEÇALHO                                                 -->
-<!-- ========================================================= -->
 
 <header class="topbar py-4">
 
@@ -60,21 +63,40 @@
             </div>
 
 
-            <div
-                    th:if="${detalhe.acompanhamento != null}"
-                    class="text-end"
-            >
+            <div class="d-flex
+                        align-items-center
+                        gap-3
+                        flex-wrap
+                        justify-content-end">
 
-                <div class="small text-white-50 mb-1">
-                    Situação atual
+                <div
+                        th:if="${detalhe.acompanhamento != null}"
+                        class="text-end"
+                >
+
+                    <div class="small text-white-50 mb-1">
+                        Situação atual
+                    </div>
+
+                    <span
+                            class="badge bg-light text-dark status-principal"
+                            th:text="${detalhe.acompanhamento.statusPipelineFormatado()}"
+                    >
+                        Em análise
+                    </span>
+
                 </div>
 
-                <span
-                        class="badge bg-light text-dark status-principal"
-                        th:text="${detalhe.acompanhamento.statusPipelineFormatado()}"
+
+                <button
+                        id="botaoTema"
+                        data-theme-toggle
+                        type="button"
+                        class="botao-tema"
+                        aria-label="Alterar tema"
                 >
-                    Monitorando processo
-                </span>
+                    🌙 Modo escuro
+                </button>
 
             </div>
 
@@ -85,16 +107,10 @@
 </header>
 
 
-<!-- ========================================================= -->
-<!-- CONTEÚDO PRINCIPAL                                        -->
-<!-- ========================================================= -->
-
 <main class="container py-4">
 
 
-    <!-- ===================================================== -->
-    <!-- MENSAGENS                                             -->
-    <!-- ===================================================== -->
+    <!-- MENSAGENS -->
 
     <div
             th:if="${mensagemSucesso != null}"
@@ -116,18 +132,14 @@
     </div>
 
 
-    <!-- ===================================================== -->
-    <!-- RESUMO DO IMÓVEL                                      -->
-    <!-- ===================================================== -->
+    <!-- RESUMO -->
 
-    <section class="card detalhe-card shadow-sm mb-4">
+    <section class="card detalhe-card mb-4">
 
         <div class="card-body p-4">
 
             <div class="row g-4">
 
-
-                <!-- LOCALIZAÇÃO -->
 
                 <div class="col-12 col-lg-6">
 
@@ -169,8 +181,6 @@
                 </div>
 
 
-                <!-- AVALIAÇÃO -->
-
                 <div class="col-6 col-lg-3">
 
                     <div class="label">
@@ -194,8 +204,6 @@
 
                 </div>
 
-
-                <!-- LANCE MÍNIMO -->
 
                 <div
                         class="col-6 col-lg-3"
@@ -239,43 +247,27 @@
     </section>
 
 
-    <!-- ===================================================== -->
-    <!-- GRID PRINCIPAL                                        -->
-    <!-- ===================================================== -->
-
     <div class="row g-4">
 
 
-        <!-- ================================================= -->
-        <!-- COLUNA ESQUERDA                                   -->
-        <!-- ================================================= -->
+        <!-- COLUNA ESQUERDA -->
 
         <div class="col-12 col-xl-8">
 
 
-            <!-- ============================================= -->
-            <!-- PROCESSO JUDICIAL                             -->
-            <!-- ============================================= -->
+            <!-- PROCESSO -->
 
-            <section class="card detalhe-card shadow-sm mb-4">
+            <section class="card detalhe-card mb-4">
 
                 <div class="card-body p-4">
 
-                    <div class="section-header">
-
-                        <div>
-
-                            <div class="label">
-                                Processo judicial
-                            </div>
-
-                            <h2 class="h5 mb-0 mt-1">
-                                Informações processuais
-                            </h2>
-
-                        </div>
-
+                    <div class="label">
+                        Processo judicial
                     </div>
+
+                    <h2 class="h5 mb-0 mt-1">
+                        Informações processuais
+                    </h2>
 
 
                     <div class="row g-4 mt-1">
@@ -442,7 +434,7 @@
                             <div
                                     th:text="${detalhe.processo.dataAjuizamentoFormatada()}"
                             >
-                                29/11/2005 14:04
+                                Data
                             </div>
 
                         </div>
@@ -457,7 +449,7 @@
                             <div
                                     th:text="${detalhe.processo.ultimaAtualizacaoFormatada()}"
                             >
-                                03/06/2026 00:49
+                                Atualização
                             </div>
 
                         </div>
@@ -469,12 +461,10 @@
             </section>
 
 
-            <!-- ============================================= -->
-            <!-- LEILÃO                                       -->
-            <!-- ============================================= -->
+            <!-- LEILÃO -->
 
             <section
-                    class="card detalhe-card shadow-sm mb-4"
+                    class="card detalhe-card mb-4"
                     th:if="${detalhe.leilao != null}"
             >
 
@@ -526,6 +516,7 @@
 
                         <div class="row g-3">
 
+
                             <div class="col-12 col-md-4">
 
                                 <div class="campo-label">
@@ -573,7 +564,7 @@
                                             )
                                             : 'Não informado'}"
                                 >
-                                    R$ 0,00
+                                    Valor
                                 </div>
 
                             </div>
@@ -595,6 +586,7 @@
                         </h3>
 
                         <div class="row g-3">
+
 
                             <div class="col-12 col-md-4">
 
@@ -643,7 +635,7 @@
                                             )
                                             : 'Não informado'}"
                                 >
-                                    R$ 0,00
+                                    Valor
                                 </div>
 
                             </div>
@@ -676,7 +668,7 @@
                                         )
                                         : 'Não informado'}"
                             >
-                                R$ 0,00
+                                Valor
                             </div>
 
                         </div>
@@ -699,7 +691,7 @@
                                         )
                                         : 'Não informado'}"
                             >
-                                R$ 0,00
+                                Valor
                             </div>
 
                         </div>
@@ -722,7 +714,7 @@
                                         ) + '%'
                                         : 'Não informado'}"
                             >
-                                5%
+                                Comissão
                             </div>
 
                         </div>
@@ -742,11 +734,9 @@
             </div>
 
 
-            <!-- ============================================= -->
-            <!-- HISTÓRICO                                    -->
-            <!-- ============================================= -->
+            <!-- HISTÓRICO -->
 
-            <section class="card detalhe-card shadow-sm mb-4">
+            <section class="card detalhe-card mb-4">
 
                 <div class="card-body p-4">
 
@@ -790,7 +780,7 @@
                                     <strong
                                             th:text="${evento.statusPipelineFormatado()}"
                                     >
-                                        Monitorando processo
+                                        Em análise
                                     </strong>
 
 
@@ -798,7 +788,7 @@
                                             class="text-secondary"
                                             th:text="${evento.dataEventoFormatada()}"
                                     >
-                                        30/08/2026 20:00
+                                        Data
                                     </small>
 
                                 </div>
@@ -841,7 +831,7 @@
                                     Origem:
 
                                     <span th:text="${evento.origem}">
-                                        Atualização manual
+                                        Origem
                                     </span>
 
                                 </div>
@@ -859,19 +849,15 @@
         </div>
 
 
-        <!-- ================================================= -->
-        <!-- COLUNA DIREITA                                    -->
-        <!-- ================================================= -->
+        <!-- COLUNA DIREITA -->
 
         <div class="col-12 col-xl-4">
 
 
-            <!-- ============================================= -->
-            <!-- ACOMPANHAMENTO OPERACIONAL                    -->
-            <!-- ============================================= -->
+            <!-- ACOMPANHAMENTO -->
 
             <section
-                    class="card detalhe-card shadow-sm mb-4"
+                    class="card detalhe-card mb-4"
                     th:if="${detalhe.acompanhamento != null}"
             >
 
@@ -885,8 +871,6 @@
                         Acompanhamento
                     </h2>
 
-
-                    <!-- STATUS ATUAL -->
 
                     <div class="mb-4">
 
@@ -904,8 +888,6 @@
                     </div>
 
 
-                    <!-- IDENTIFICAÇÃO -->
-
                     <div class="campo-bloco">
 
                         <div class="campo-label">
@@ -921,8 +903,6 @@
                     </div>
 
 
-                    <!-- ÚLTIMA VERIFICAÇÃO -->
-
                     <div class="campo-bloco">
 
                         <div class="campo-label">
@@ -935,8 +915,6 @@
                             Data
                         </div>
 
-
-                        <!-- ATUALIZAÇÃO DOS DADOS -->
 
                         <form
                                 id="formAtualizarDados"
@@ -981,8 +959,6 @@
                     </div>
 
 
-                    <!-- ATUALIZAÇÃO MANUAL -->
-
                     <div class="campo-bloco">
 
                         <div class="label mb-2">
@@ -994,8 +970,6 @@
                                 method="post"
                         >
 
-
-                            <!-- STATUS -->
 
                             <div class="mb-3">
 
@@ -1022,7 +996,6 @@
                                         Monitorando leilão
                                     </option>
 
-
                                     <option
                                             value="AGUARDANDO_RESULTADO"
                                             th:selected="${detalhe.acompanhamento.statusPipeline
@@ -1030,7 +1003,6 @@
                                     >
                                         Aguardando resultado
                                     </option>
-
 
                                     <option
                                             value="MONITORANDO_PROCESSO"
@@ -1040,7 +1012,6 @@
                                         Monitorando processo
                                     </option>
 
-
                                     <option
                                             value="EM_ANALISE"
                                             th:selected="${detalhe.acompanhamento.statusPipeline
@@ -1048,7 +1019,6 @@
                                     >
                                         Em análise
                                     </option>
-
 
                                     <option
                                             value="OPORTUNIDADE"
@@ -1058,7 +1028,6 @@
                                         Oportunidade
                                     </option>
 
-
                                     <option
                                             value="DESCARTADO"
                                             th:selected="${detalhe.acompanhamento.statusPipeline
@@ -1066,7 +1035,6 @@
                                     >
                                         Descartado
                                     </option>
-
 
                                     <option
                                             value="ENCERRADO"
@@ -1080,8 +1048,6 @@
 
                             </div>
 
-
-                            <!-- OBSERVAÇÃO -->
 
                             <div class="mb-3">
 
@@ -1129,11 +1095,9 @@
             </section>
 
 
-            <!-- ============================================= -->
-            <!-- FONTES                                        -->
-            <!-- ============================================= -->
+            <!-- FONTES -->
 
-            <section class="card detalhe-card shadow-sm mb-4">
+            <section class="card detalhe-card mb-4">
 
                 <div class="card-body p-4">
 
@@ -1166,7 +1130,7 @@
                                         ? fonte.origemNome
                                         : fonte.tipoFormatado()}"
                             >
-                                Sublime Leilões
+                                Fonte
                             </strong>
 
 
@@ -1183,7 +1147,7 @@
                                     th:text="${'Capturado em '
                                         + fonte.dataCapturaFormatada()}"
                             >
-                                Capturado em 30/08/2026 21:20
+                                Capturado em
                             </div>
 
                         </div>

@@ -15,56 +15,82 @@ public class PainelController {
 
     private final PainelService painelService;
 
+
     public PainelController(
             PainelService painelService
     ) {
-        this.painelService = painelService;
+
+        this.painelService =
+                painelService;
     }
 
+
     @GetMapping("/")
-    public String painel(Model model) {
+    public String painel(
+            Model model
+    ) {
 
         List<PipelineImovelDTO> imoveis =
                 painelService.listarImoveis();
 
-        long monitorando =
-                imoveis.stream()
+
+        long totalImoveis =
+                imoveis.size();
+
+
+        /*
+         * Consideramos "em acompanhamento" qualquer imóvel
+         * que ainda faça parte do pipeline operacional.
+         *
+         * DESCARTADO e ENCERRADO deixam de contar.
+         */
+        long totalMonitorando =
+                imoveis
+                        .stream()
                         .filter(imovel ->
                                 imovel.statusPipeline()
-                                        == StatusPipeline.MONITORANDO_LEILAO
-                                        ||
-                                        imovel.statusPipeline()
-                                                == StatusPipeline.MONITORANDO_PROCESSO
+                                        != StatusPipeline.DESCARTADO
+                        )
+                        .filter(imovel ->
+                                imovel.statusPipeline()
+                                        != StatusPipeline.ENCERRADO
                         )
                         .count();
 
-        long semLances =
-                imoveis.stream()
+
+        long totalSemLances =
+                imoveis
+                        .stream()
                         .filter(imovel ->
                                 imovel.resultadoLeilao()
                                         == ResultadoLeilao.SEM_LANCES
                         )
                         .count();
 
+
         model.addAttribute(
                 "imoveis",
                 imoveis
         );
 
+
         model.addAttribute(
                 "totalImoveis",
-                imoveis.size()
+                totalImoveis
         );
+
 
         model.addAttribute(
                 "totalMonitorando",
-                monitorando
+                totalMonitorando
         );
+
 
         model.addAttribute(
                 "totalSemLances",
-                semLances
+                totalSemLances
         );
+
 
         return "painel";
     }

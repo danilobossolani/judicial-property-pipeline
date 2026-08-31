@@ -1,30 +1,32 @@
 body {
-    background-color: #f4f5f7;
-    color: #1f2937;
+    background-color: var(--fundo-pagina);
+    color: var(--texto-principal);
 }
 
 .topbar {
-    background-color: #111827;
-    color: white;
+    background-color: var(--topbar);
+    color: var(--topbar-texto);
 }
 
 .voltar-link {
-    color: #cbd5e1;
+    color: var(--topbar-secundario);
     font-size: 0.9rem;
     text-decoration: none;
 }
 
 .voltar-link:hover {
-    color: white;
+    color: var(--topbar-texto);
 }
 
 .detalhe-card {
-    border: none;
+    background-color: var(--fundo-card);
+    border: 1px solid var(--borda);
     border-radius: 16px;
+    box-shadow: var(--sombra) !important;
 }
 
 .label {
-    color: #6b7280;
+    color: var(--texto-secundario);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -32,7 +34,7 @@ body {
 }
 
 .campo-label {
-    color: #6b7280;
+    color: var(--texto-secundario);
     font-size: 0.8rem;
     font-weight: 600;
     margin-bottom: 4px;
@@ -64,14 +66,19 @@ body {
 }
 
 .praca {
-    background-color: #f9fafb;
-    border: 1px solid #e5e7eb;
+    background-color: var(--fundo-secundario);
+    border: 1px solid var(--borda);
     border-radius: 12px;
     padding: 18px;
 }
 
+hr {
+    border-color: var(--borda);
+    opacity: 1;
+}
+
 .campo-bloco {
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--borda);
     padding: 16px 0;
 }
 
@@ -85,7 +92,7 @@ body {
 }
 
 .fonte-item {
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--borda);
     padding: 18px 0;
 }
 
@@ -110,7 +117,7 @@ body {
 }
 
 .timeline-item::before {
-    background-color: #d1d5db;
+    background-color: var(--borda);
     content: "";
     height: 100%;
     left: 6px;
@@ -124,7 +131,7 @@ body {
 }
 
 .timeline-marker {
-    background-color: #111827;
+    background-color: var(--texto-principal);
     border-radius: 50%;
     flex: 0 0 14px;
     height: 14px;
@@ -138,6 +145,27 @@ body {
     flex: 1;
     min-width: 0;
 }
+
+.text-white-50 {
+    color: var(--topbar-secundario) !important;
+}
+
+.form-text {
+    color: var(--texto-secundario);
+}
+
+html[data-theme="dark"] .alert-success {
+    background-color: #12372a;
+    border-color: #1f6b4f;
+    color: #d1fae5;
+}
+
+html[data-theme="dark"] .alert-danger {
+    background-color: #451a1a;
+    border-color: #7f1d1d;
+    color: #fee2e2;
+}
+
 
 @media (max-width: 767px) {
 

@@ -1,26 +1,28 @@
 body {
-    background-color: #f4f5f7;
-    color: #1f2937;
+    background-color: var(--fundo-pagina);
+    color: var(--texto-principal);
 }
 
 .topbar {
-    background-color: #111827;
-    color: white;
+    background-color: var(--topbar);
+    color: var(--topbar-texto);
 }
 
 .stat-card,
 .imovel-card,
 .filtros-card {
-    border: none;
+    background-color: var(--fundo-card);
+    border: 1px solid var(--borda);
     border-radius: 16px;
+    box-shadow: var(--sombra) !important;
 }
 
 .label {
-    color: #6b7280;
+    color: var(--texto-secundario);
     font-size: 0.75rem;
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .valor {
@@ -55,9 +57,14 @@ body {
 }
 
 .resultado-filtro {
-    color: #6b7280;
+    color: var(--texto-secundario);
     font-size: 0.9rem;
 }
+
+.text-white-50 {
+    color: var(--topbar-secundario) !important;
+}
+
 
 @media (max-width: 767px) {
 
