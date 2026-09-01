@@ -30,6 +30,12 @@ management:
       probes:
         enabled: true
 
+app:
+  security:
+    enabled: ${APP_SECURITY_ENABLED:false}
+    username: ${APP_SECURITY_USERNAME:}
+    password: ${APP_SECURITY_PASSWORD:}
+
 datajud:
   url: https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search
   api-key: ${DATAJUD_API_KEY}

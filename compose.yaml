@@ -30,6 +30,10 @@ services:
       DB_USER: ${POSTGRES_USER:-judicial_pipeline}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
       DATAJUD_API_KEY: ${DATAJUD_API_KEY:?Defina DATAJUD_API_KEY no arquivo .env}
+      APP_SECURITY_ENABLED: ${APP_SECURITY_ENABLED:-true}
+      APP_SECURITY_USERNAME: ${APP_SECURITY_USERNAME:?Defina APP_SECURITY_USERNAME no arquivo .env}
+      APP_SECURITY_PASSWORD: ${APP_SECURITY_PASSWORD:?Defina APP_SECURITY_PASSWORD no arquivo .env}
+      APP_COOKIE_SECURE: ${APP_COOKIE_SECURE:-false}
       TZ: America/Sao_Paulo
     ports:
       - "${APP_PORT:-8080}:8080"

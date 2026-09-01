@@ -51,7 +51,7 @@ Antes de integrar qualquer mudança ao branch `main`:
 - [x] Reduzir logs SQL no ambiente de produção.
 - [x] Adicionar endpoint de saúde básico e seguro.
 - [x] Adotar migrações versionadas de banco de dados antes do primeiro deploy público.
-- [ ] Adicionar métricas operacionais sem expor dados sensíveis.
+- [x] Adicionar métricas operacionais sem expor dados sensíveis.
 - [x] Implementar retentativas com espera progressiva para falhas transitórias das fontes.
 - [x] Definir timeout e cadência conservadora de descoberta das fontes.
 - [ ] Definir retenção operacional do histórico após medir o volume do piloto.
@@ -71,6 +71,7 @@ Antes de integrar qualquer mudança ao branch `main`:
 - Configurar HTTPS, domínio, logs, monitoramento e alertas.
 - Executar teste de fumaça após cada deploy.
 - Documentar restauração do banco e rollback da aplicação.
+- [x] Proteger interface, APIs administrativas e métricas com autenticação configurável.
 
 ### 4. Expansão controlada
 

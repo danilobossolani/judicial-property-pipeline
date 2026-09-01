@@ -565,6 +565,8 @@ class DescobertaAutomaticaServiceTest {
                 mock(ExecucaoDescobertaRepository.class);
         ResultadoLoteDescobertaRepository resultadoRepository =
                 mock(ResultadoLoteDescobertaRepository.class);
+        ObservabilidadePipelineService observabilidade =
+                mock(ObservabilidadePipelineService.class);
 
         when(fonteIndisponivel.nome())
                 .thenReturn("Sublime Leilões");
@@ -588,7 +590,8 @@ class DescobertaAutomaticaServiceTest {
                         fonteRepository,
                         persistencia,
                         execucaoRepository,
-                        resultadoRepository
+                        resultadoRepository,
+                        observabilidade
                 );
 
         ResultadoDescobertaDTO resultado =
@@ -636,6 +639,11 @@ class DescobertaAutomaticaServiceTest {
         ResultadoLoteDescobertaRepository resultadoRepository =
                 mock(
                         ResultadoLoteDescobertaRepository.class
+                );
+
+        ObservabilidadePipelineService observabilidade =
+                mock(
+                        ObservabilidadePipelineService.class
                 );
 
 
@@ -694,7 +702,8 @@ class DescobertaAutomaticaServiceTest {
                         fonteRepository,
                         persistencia,
                         execucaoRepository,
-                        resultadoRepository
+                        resultadoRepository,
+                        observabilidade
                 );
 
 
@@ -704,7 +713,8 @@ class DescobertaAutomaticaServiceTest {
                 fonteRepository,
                 persistencia,
                 execucaoRepository,
-                resultadoRepository
+                resultadoRepository,
+                observabilidade
         );
     }
 
@@ -729,7 +739,8 @@ class DescobertaAutomaticaServiceTest {
             FonteRepository fonteRepository,
             PersistenciaLeilaoService persistencia,
             ExecucaoDescobertaRepository execucaoRepository,
-            ResultadoLoteDescobertaRepository resultadoRepository
+            ResultadoLoteDescobertaRepository resultadoRepository,
+            ObservabilidadePipelineService observabilidade
     ) {
     }
 }

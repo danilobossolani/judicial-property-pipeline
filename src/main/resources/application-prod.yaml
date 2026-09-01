@@ -4,12 +4,31 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+server:
+  servlet:
+    session:
+      timeout: 8h
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${APP_COOKIE_SECURE:false}
+
 logging:
   level:
     org.hibernate.SQL: warn
     org.hibernate.orm.jdbc.bind: warn
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
   endpoint:
     health:
       show-details: never
+
+app:
+  security:
+    enabled: ${APP_SECURITY_ENABLED:true}
+    username: ${APP_SECURITY_USERNAME:}
+    password: ${APP_SECURITY_PASSWORD:}

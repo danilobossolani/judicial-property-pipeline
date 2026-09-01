@@ -11,18 +11,45 @@
 | Timeout por requisição | 15 segundos | `integracao.fontes.timeout-ms`. |
 | Retentativas | 3 | Espera progressiva a partir de 400 ms. |
 | Health check | `/actuator/health` | Não expõe detalhes internos. |
+| Métricas | `/actuator/prometheus` | Exige autenticação e não contém processos, URLs ou imóveis. |
+| Sessão | 8 horas | Encerrar manualmente ao terminar a operação. |
 
 Credenciais devem existir somente como segredos/variáveis do ambiente. Não coloque senha, chave DataJud ou URL privada no Git, imagem Docker ou logs.
+
+## Acesso e métricas
+
+No perfil de produção, configure `APP_SECURITY_USERNAME` e uma
+`APP_SECURITY_PASSWORD` com pelo menos 12 caracteres. A interface utiliza
+login por formulário, as APIs e as métricas também aceitam HTTP Basic, e o
+endpoint de saúde continua público para o orquestrador.
+
+Quando o tráfego já estiver protegido por HTTPS, configure
+`APP_COOKIE_SECURE=true`. Nunca publique diretamente a porta da aplicação na
+internet sem proxy HTTPS ou rede privada. Rotacione a senha ao trocar o
+responsável operacional e reinicie a aplicação para aplicar a nova credencial.
+
+Exemplo de coleta pelo Prometheus:
+
+```text
+GET /actuator/prometheus
+Authorization: Basic <credencial do operador armazenada como segredo>
+```
+
+As métricas customizadas usam o prefixo
+`judicial_pipeline_descoberta_` e possuem somente dimensões limitadas de
+origem, status e resultado. Fonte, processo, endereço e URL nunca são tags.
 
 ## Subida e teste de fumaça
 
 1. Garanta um backup recente do PostgreSQL.
 2. Inicie a aplicação; o Flyway aplicará apenas migrações pendentes.
 3. Confirme que `/actuator/health` responde `UP`.
-4. Abra o painel, a Central de Auditoria e um detalhe de imóvel.
-5. Execute uma descoberta manual supervisionada.
-6. Confirme contadores, fonte por lote, descartes, falhas e ausência de despejos.
-7. Aprove ou descarte um item de teste e confirme o evento no histórico.
+4. Confirme que painel e APIs redirecionam ou recusam acesso sem autenticação.
+5. Entre como operador e abra o painel, a Central de Auditoria e um detalhe de imóvel.
+6. Confirme que `/actuator/prometheus` responde somente com autenticação.
+7. Execute uma descoberta manual supervisionada.
+8. Confirme contadores, fonte por lote, descartes, falhas e ausência de despejos.
+9. Aprove ou descarte um item de teste e confirme o evento no histórico.
 
 ## Backup e restauração
 
@@ -61,7 +88,8 @@ Em produção, prefira PostgreSQL gerenciado com backup automático, retenção 
 - [ ] segredos configurados fora do repositório;
 - [ ] backup automático e restauração testada;
 - [ ] domínio e HTTPS configurados;
-- [ ] acesso protegido por autenticação no proxy, VPN ou camada equivalente;
+- [x] aplicação protegida por autenticação configurável;
+- [ ] acesso externo adicionalmente protegido por HTTPS, proxy ou VPN;
 - [ ] logs, monitoramento e alerta de indisponibilidade configurados;
 - [ ] CI verde no commit implantado;
 - [ ] descoberta real supervisionada validada;

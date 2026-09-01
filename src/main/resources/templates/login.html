@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Acesso - Pipeline Judicial</title>
+    <script th:src="@{/js/tema.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/tema.css}">
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+</head>
+
+<body class="pagina-login">
+
+<main class="login-container">
+    <section class="login-card" aria-labelledby="tituloLogin">
+        <div class="login-marca" aria-hidden="true">JP</div>
+
+        <p class="login-sobretitulo">Acesso protegido</p>
+
+        <h1 id="tituloLogin">Pipeline Judicial</h1>
+
+        <p class="login-descricao">
+            Entre com as credenciais do operador para acessar imóveis,
+            auditoria e ações administrativas.
+        </p>
+
+        <div th:if="${param.error}"
+             class="login-alerta login-alerta-erro"
+             role="alert">
+            Usuário ou senha inválidos.
+        </div>
+
+        <div th:if="${param.logout}"
+             class="login-alerta login-alerta-sucesso"
+             role="status">
+            Sessão encerrada com segurança.
+        </div>
+
+        <form th:action="@{/login}"
+              method="post"
+              class="login-formulario">
+            <label for="username">Usuário</label>
+            <input id="username"
+                   name="username"
+                   type="text"
+                   autocomplete="username"
+                   required
+                   autofocus>
+
+            <label for="password">Senha</label>
+            <input id="password"
+                   name="password"
+                   type="password"
+                   autocomplete="current-password"
+                   required>
+
+            <button type="submit">Entrar</button>
+        </form>
+
+        <p class="login-rodape">
+            Ambiente restrito. As decisões comerciais continuam sendo humanas
+            e ficam registradas no histórico.
+        </p>
+    </section>
+
+    <button id="botaoTema"
+            data-theme-toggle
+            type="button"
+            class="botao-tema login-tema"
+            aria-label="Alterar tema">
+        🌙 Modo escuro
+    </button>
+</main>
+
+</body>
+</html>

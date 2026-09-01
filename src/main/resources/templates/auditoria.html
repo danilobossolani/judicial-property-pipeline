@@ -9,6 +9,14 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1">
 
+    <meta th:if="${_csrf != null}"
+          name="_csrf"
+          th:content="${_csrf.token}">
+
+    <meta th:if="${_csrf != null}"
+          name="_csrf_header"
+          th:content="${_csrf.headerName}">
+
     <title>Central de Auditoria - Pipeline Judicial</title>
 
     <script th:src="@{/js/tema.js}"></script>
@@ -102,6 +110,19 @@
                 >
                     🌙 Modo escuro
                 </button>
+
+                <form th:if="${segurancaHabilitada and usuarioAtual != null}"
+                      th:action="@{/logout}"
+                      method="post"
+                      class="sessao-operador">
+                    <span class="sessao-operador-nome"
+                          th:text="${usuarioAtual}">
+                        operador
+                    </span>
+                    <button type="submit" class="botao-sair">
+                        Sair
+                    </button>
+                </form>
 
             </div>
 

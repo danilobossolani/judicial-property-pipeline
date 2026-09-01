@@ -176,3 +176,39 @@ html[data-theme="dark"] .alert-secondary {
     outline: 2px solid #93c5fd;
     outline-offset: 2px;
 }
+
+
+.sessao-operador {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.6rem;
+    margin: 0;
+}
+
+
+.sessao-operador-nome {
+    color: var(--topbar-secundario);
+    font-size: 0.78rem;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.botao-sair {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    color: #f8fafc;
+    cursor: pointer;
+    font-size: 0.82rem;
+    padding: 7px 11px;
+}
+
+
+.botao-sair:hover,
+.botao-sair:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.5);
+}

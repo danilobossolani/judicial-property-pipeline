@@ -34,6 +34,19 @@ DB_PASSWORD=...
 DATAJUD_API_KEY=...
 ```
 
+No perfil `prod`, o acesso também exige:
+
+```text
+APP_SECURITY_ENABLED=true
+APP_SECURITY_USERNAME=...
+APP_SECURITY_PASSWORD=...  # mínimo de 12 caracteres
+APP_COOKIE_SECURE=true     # use true quando houver HTTPS
+```
+
+O perfil local mantém a autenticação desabilitada por padrão. Isso evita
+atrapalhar o desenvolvimento, mas o `compose.yaml` e o perfil `prod` habilitam
+a proteção e recusam inicialização sem usuário e senha válidos.
+
 Execução local:
 
 ```powershell
@@ -58,5 +71,10 @@ O pacote executável é gerado como `target/judicial-pipeline-0.0.1-SNAPSHOT-exe
 3. Consulte `http://localhost:8080/actuator/health`.
 
 O compose é uma preparação reproduzível, não um deploy público. Servidor, domínio, HTTPS, controle de acesso e PostgreSQL de produção ainda precisam ser escolhidos e configurados.
+
+Em produção, `/actuator/health` permanece público e retorna apenas `UP` ou
+`DOWN`. `/actuator/prometheus` exige autenticação do operador e publica
+somente métricas técnicas e contadores agregados, sem URLs, processos ou dados
+de imóveis.
 
 Consulte [OPERATIONS.md](OPERATIONS.md) para backup, restauração, agendamento, logs, atualização e rollback.

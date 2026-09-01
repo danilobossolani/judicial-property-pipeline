@@ -44,6 +44,7 @@ public class DescobertaAutomaticaService {
     private final PersistenciaLeilaoService persistenciaLeilaoService;
     private final ExecucaoDescobertaRepository execucaoRepository;
     private final ResultadoLoteDescobertaRepository resultadoLoteRepository;
+    private final ObservabilidadePipelineService observabilidadePipelineService;
     private final AtomicBoolean emExecucao =
             new AtomicBoolean(false);
 
@@ -53,7 +54,8 @@ public class DescobertaAutomaticaService {
             FonteRepository fonteRepository,
             PersistenciaLeilaoService persistenciaLeilaoService,
             ExecucaoDescobertaRepository execucaoRepository,
-            ResultadoLoteDescobertaRepository resultadoLoteRepository
+            ResultadoLoteDescobertaRepository resultadoLoteRepository,
+            ObservabilidadePipelineService observabilidadePipelineService
     ) {
 
         this.providers = List.copyOf(providers);
@@ -62,6 +64,8 @@ public class DescobertaAutomaticaService {
         this.persistenciaLeilaoService = persistenciaLeilaoService;
         this.execucaoRepository = execucaoRepository;
         this.resultadoLoteRepository = resultadoLoteRepository;
+        this.observabilidadePipelineService =
+                observabilidadePipelineService;
     }
 
     @Scheduled(
@@ -141,7 +145,7 @@ public class DescobertaAutomaticaService {
             finalizarExecucao(execucao);
             execucaoRepository.save(execucao);
 
-            return ResultadoDescobertaDTO.de(execucao);
+            return registrarResultado(execucao);
 
         } catch (Exception exception) {
             execucao.setStatus(
@@ -154,7 +158,7 @@ public class DescobertaAutomaticaService {
             finalizarExecucao(execucao);
             salvarFalhaFatal(execucao, exception);
 
-            return ResultadoDescobertaDTO.de(execucao);
+            return registrarResultado(execucao);
 
         } finally {
             emExecucao.set(false);
@@ -163,6 +167,20 @@ public class DescobertaAutomaticaService {
 
     public boolean estaEmExecucao() {
         return emExecucao.get();
+    }
+
+    private ResultadoDescobertaDTO registrarResultado(
+            ExecucaoDescoberta execucao
+    ) {
+
+        ResultadoDescobertaDTO resultado =
+                ResultadoDescobertaDTO.de(execucao);
+
+        observabilidadePipelineService.registrarDescoberta(
+                resultado
+        );
+
+        return resultado;
     }
 
     private void descobrirEProcessarFonte(

@@ -69,6 +69,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const secaoDescoberta =
         document.querySelector(".descoberta-automatica");
 
+    const csrfToken =
+        document.querySelector('meta[name="_csrf"]')
+            ?.getAttribute("content");
+
+    const csrfHeader =
+        document.querySelector('meta[name="_csrf_header"]')
+            ?.getAttribute("content");
+
     function normalizarTexto(valor) {
 
         return (valor || "")
@@ -437,16 +445,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
 
+            const headers = {
+                "Accept": "application/json"
+            };
+
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
             const resposta =
                 await fetch(
                     "/api/descobertas",
                     {
                         method: "POST",
-                        headers: {
-                            "Accept": "application/json"
-                        }
+                        headers
                     }
                 );
+
+            if (resposta.status === 401) {
+                window.location.assign("/login");
+                return;
+            }
 
 
             const corpo =
