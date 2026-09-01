@@ -72,6 +72,11 @@ O pacote executável é gerado como `target/judicial-pipeline-0.0.1-SNAPSHOT-exe
 
 O compose é uma preparação reproduzível, não um deploy público. Servidor, domínio, HTTPS, controle de acesso e PostgreSQL de produção ainda precisam ser escolhidos e configurados.
 
+No Windows, o pacote local também fornece `INICIAR.bat`, `PARAR.bat` e
+`VER-STATUS.bat`. As instruções para entregar e executar esse pacote estão em
+[ENTREGA-LOCAL.md](ENTREGA-LOCAL.md). O arquivo `.env` com credenciais nunca
+deve ser incluído no ZIP ou enviado por mensagens.
+
 Em produção, `/actuator/health` permanece público e retorna apenas `UP` ou
 `DOWN`. `/actuator/prometheus` exige autenticação do operador e publica
 somente métricas técnicas e contadores agregados, sem URLs, processos ou dados
