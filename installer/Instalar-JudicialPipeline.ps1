@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Origem,
@@ -82,21 +82,108 @@ function Get-OptionalEnvironmentSetting {
     return $value
 }
 
+function Test-SystemRequirements {
+    if (-not [Environment]::Is64BitOperatingSystem) {
+        throw "Este programa precisa do Windows de 64 bits."
+    }
+
+    $operatingSystem = Get-CimInstance Win32_OperatingSystem
+    $build = [int]$operatingSystem.BuildNumber
+    if ($operatingSystem.Caption -match "Windows 10" -and $build -lt 19045) {
+        throw "Atualize o Windows 10 para a versão 22H2 antes de instalar."
+    }
+    if ($operatingSystem.Caption -match "Windows 11" -and $build -lt 22631) {
+        throw "Atualize o Windows 11 para a versão 23H2 ou mais recente antes de instalar."
+    }
+    if ($operatingSystem.Caption -notmatch "Windows 10|Windows 11") {
+        throw "O Judicial Pipeline requer Windows 10 ou Windows 11 atualizado."
+    }
+
+    $memoryBytes = [int64]$operatingSystem.TotalVisibleMemorySize * 1KB
+    if ($memoryBytes -lt 8GB) {
+        throw "Este computador precisa de pelo menos 8 GB de memória RAM."
+    }
+
+    # Win32_Processor.VirtualizationFirmwareEnabled pode retornar falso quando
+    # o hipervisor já assumiu o recurso. O Docker faz a verificação definitiva
+    # ao iniciar; bloquear aqui causaria falsos negativos em máquinas válidas.
+}
+
+function Invoke-DockerCommand {
+    param(
+        [string[]]$Arguments,
+        [string]$OutputPath
+    )
+
+    # No Windows PowerShell 5.1, mensagens normais do Docker enviadas para
+    # stderr podem virar erros terminantes quando ErrorActionPreference=Stop.
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        if ($OutputPath) {
+            & docker @Arguments *> $OutputPath
+        } else {
+            & docker @Arguments *> $null
+        }
+        return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+}
+
 function Test-DockerReady {
     try {
-        & docker info *> $null
-        return $LASTEXITCODE -eq 0
+        return (Invoke-DockerCommand -Arguments @("info")) -eq 0
     } catch {
         return $false
     }
 }
 
+function Get-DockerDesktopPath {
+    $candidates = @(
+        (Join-Path $env:ProgramFiles "Docker\Docker\Docker Desktop.exe"),
+        (Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\Docker Desktop.exe")
+    )
+
+    return $candidates |
+        Where-Object { Test-Path -LiteralPath $_ } |
+        Select-Object -First 1
+}
+
 function Add-DockerToCurrentPath {
-    $dockerBin = Join-Path $env:ProgramFiles "Docker\Docker\resources\bin"
-    if (Test-Path -LiteralPath $dockerBin) {
-        $pathEntries = $env:Path -split ";"
-        if ($pathEntries -notcontains $dockerBin) {
-            $env:Path = "$dockerBin;$env:Path"
+    $candidates = @(
+        (Join-Path $env:ProgramFiles "Docker\Docker\resources\bin"),
+        (Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin")
+    )
+
+    foreach ($dockerBin in $candidates) {
+        if (Test-Path -LiteralPath $dockerBin) {
+            $pathEntries = $env:Path -split ";"
+            if ($pathEntries -notcontains $dockerBin) {
+                $env:Path = "$dockerBin;$env:Path"
+            }
+        }
+    }
+}
+
+function Invoke-DownloadWithRetry {
+    param(
+        [string]$Uri,
+        [string]$OutputPath
+    )
+
+    [Net.ServicePointManager]::SecurityProtocol =
+        [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Invoke-WebRequest -Uri $Uri -OutFile $OutputPath -UseBasicParsing
+            return
+        } catch {
+            if ($attempt -eq 3) {
+                throw
+            }
+            Start-Sleep -Seconds (5 * $attempt)
         }
     }
 }
@@ -104,38 +191,25 @@ function Add-DockerToCurrentPath {
 function Install-DockerDesktop {
     Write-Step "Baixando e instalando os componentes necessários"
 
-    $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
-    if ($winget) {
-        $process = Start-Process -FilePath $winget.Source -ArgumentList @(
-            "install",
-            "--exact",
-            "--id", "Docker.DockerDesktop",
-            "--silent",
-            "--accept-package-agreements",
-            "--accept-source-agreements",
-            "--disable-interactivity"
-        ) -Wait -PassThru -WindowStyle Hidden
-
-        if ($process.ExitCode -eq 0) {
-            return
-        }
-
-        Write-Host "O instalador padrão não concluiu. Tentando a fonte oficial..." -ForegroundColor Yellow
-    }
-
     $dockerInstaller = Join-Path $env:TEMP "DockerDesktopInstaller-JudicialPipeline.exe"
     $dockerUrl = "https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
-    Invoke-WebRequest -Uri $dockerUrl -OutFile $dockerInstaller -UseBasicParsing
+    Invoke-DownloadWithRetry -Uri $dockerUrl -OutputPath $dockerInstaller
 
-    $process = Start-Process -FilePath $dockerInstaller -ArgumentList @(
-        "install",
-        "--quiet",
-        "--accept-license",
-        "--backend=wsl-2"
-    ) -Wait -PassThru -WindowStyle Hidden
+    try {
+        $process = Start-Process -FilePath $dockerInstaller -ArgumentList @(
+            "install",
+            "--quiet",
+            "--accept-license",
+            "--backend=wsl-2",
+            "--always-run-service",
+            "--no-windows-containers"
+        ) -Wait -PassThru -WindowStyle Hidden
 
-    if ($process.ExitCode -ne 0) {
-        throw "O Docker Desktop não foi instalado. Código: $($process.ExitCode)."
+        if ($process.ExitCode -ne 0) {
+            throw "O componente local não foi instalado. Código: $($process.ExitCode)."
+        }
+    } finally {
+        Remove-Item -LiteralPath $dockerInstaller -Force -ErrorAction SilentlyContinue
     }
 }
 
@@ -144,8 +218,8 @@ function Start-DockerDesktop {
         return $true
     }
 
-    $dockerDesktop = Join-Path $env:ProgramFiles "Docker\Docker\Docker Desktop.exe"
-    if (-not (Test-Path -LiteralPath $dockerDesktop)) {
+    $dockerDesktop = Get-DockerDesktopPath
+    if (-not $dockerDesktop) {
         return $false
     }
 
@@ -188,27 +262,35 @@ function Install-Shortcuts {
     }
 
     Write-Step "Criando o atalho na área de trabalho"
-    $desktop = [Environment]::GetFolderPath("Desktop")
-    $startMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
+    $desktop = [Environment]::GetFolderPath("CommonDesktopDirectory")
+    $startMenu = [Environment]::GetFolderPath("CommonPrograms")
     $iconPath = Join-Path $Destino "installer\assets\judicial-pipeline-icon.ico"
+    $launcherPath = Join-Path $Destino "Judicial Pipeline.exe"
+    if (-not (Test-Path -LiteralPath $launcherPath)) {
+        $launcherPath = Join-Path $Destino "INICIAR.bat"
+    }
+    $manualPath = Join-Path $Destino "output\pdf\Manual-do-Usuario-Judicial-Pipeline.pdf"
+    if (-not (Test-Path -LiteralPath $manualPath)) {
+        $manualPath = Join-Path $Destino "LEIA-ME-PRIMEIRO.txt"
+    }
 
     New-Shortcut `
         -Path (Join-Path $desktop "Judicial Pipeline.lnk") `
-        -Target (Join-Path $Destino "INICIAR.bat") `
+        -Target $launcherPath `
         -WorkingDirectory $Destino `
         -Description "Iniciar o Judicial Pipeline" `
         -Icon $iconPath
 
     New-Shortcut `
         -Path (Join-Path $startMenu "Judicial Pipeline.lnk") `
-        -Target (Join-Path $Destino "INICIAR.bat") `
+        -Target $launcherPath `
         -WorkingDirectory $Destino `
         -Description "Iniciar o Judicial Pipeline" `
         -Icon $iconPath
 
     New-Shortcut `
-        -Path (Join-Path $startMenu "Judicial Pipeline - Ajuda.lnk") `
-        -Target (Join-Path $Destino "LEIA-ME-PRIMEIRO.txt") `
+        -Path (Join-Path $startMenu "Judicial Pipeline - Manual.lnk") `
+        -Target $manualPath `
         -WorkingDirectory $Destino `
         -Description "Ajuda do Judicial Pipeline" `
         -Icon $iconPath
@@ -236,6 +318,11 @@ function Wait-ApplicationHealth {
 try {
     Write-Host "JUDICIAL PIPELINE" -ForegroundColor Green
     Write-Host "Instalação automática para Windows"
+
+    New-Item -ItemType Directory -Path $Destino -Force | Out-Null
+    Start-Transcript -LiteralPath (Join-Path $Destino "instalacao.log") -Append | Out-Null
+    $logIniciado = $true
+    Test-SystemRequirements
 
     if (-not (Test-Path -LiteralPath $Origem)) {
         throw "O conteúdo do instalador não foi encontrado."
@@ -270,7 +357,6 @@ try {
     }
 
     Write-Step "Copiando o programa"
-    New-Item -ItemType Directory -Path $Destino -Force | Out-Null
     Get-ChildItem -LiteralPath $Origem -Force |
         Where-Object { $_.Name -notin @(".git", ".idea", "target", ".env") } |
         Copy-Item -Destination $Destino -Recurse -Force
@@ -293,10 +379,18 @@ try {
         "APP_PORT=$Porta"
     ) | Set-Content -LiteralPath $environmentFile -Encoding UTF8
 
-    Start-Transcript -LiteralPath (Join-Path $Destino "instalacao.log") -Append | Out-Null
-    $logIniciado = $true
-
     Add-DockerToCurrentPath
+    $windowsPreparationScript = Join-Path $Destino "Preparar-Windows.ps1"
+    & powershell.exe `
+        -NoProfile `
+        -ExecutionPolicy Bypass `
+        -File $windowsPreparationScript `
+        -Silencioso
+    $windowsPreparationResult = $LASTEXITCODE
+    if ($windowsPreparationResult -notin @(0, 10)) {
+        throw "O Windows não conseguiu atualizar o componente WSL automaticamente."
+    }
+
     if (-not (Get-Command docker.exe -ErrorAction SilentlyContinue)) {
         if ($NaoInstalarDocker) {
             throw "Docker Desktop não está instalado."
@@ -307,7 +401,12 @@ try {
 
     Install-Shortcuts
 
-    if (-not (Start-DockerDesktop)) {
+    if ($windowsPreparationResult -eq 0 -and -not (Test-DockerReady)) {
+        Invoke-DockerCommand -Arguments @("desktop", "stop") | Out-Null
+        Start-Sleep -Seconds 3
+    }
+
+    if ($windowsPreparationResult -eq 10 -or -not (Start-DockerDesktop)) {
         Write-Host ""
         Write-Host "A primeira etapa terminou." -ForegroundColor Green
         Write-Host "Reinicie o computador e depois clique no atalho Judicial Pipeline."
@@ -323,8 +422,10 @@ try {
     Push-Location $Destino
     try {
         $composeLog = Join-Path $Destino "preparacao-docker.log"
-        & docker compose up --build -d *> $composeLog
-        if ($LASTEXITCODE -ne 0) {
+        $composeExitCode = Invoke-DockerCommand `
+            -Arguments @("compose", "up", "--build", "-d") `
+            -OutputPath $composeLog
+        if ($composeExitCode -ne 0) {
             throw "O ambiente local não pôde ser iniciado. Consulte preparacao-docker.log."
         }
     } finally {

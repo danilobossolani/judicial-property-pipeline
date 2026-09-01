@@ -26,11 +26,13 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 ## Comportamento no computador do cliente
 
 - solicita elevação administrativa pelo UAC;
+- verifica, ativa e atualiza o WSL automaticamente; o cliente nunca precisa
+  executar `wsl --update`;
 - instala Docker Desktop quando necessário;
 - cria `C:\ProgramData\JudicialPipeline`;
 - gera senhas internas aleatórias e desabilita o login somente no ambiente
   local, que fica limitado a `127.0.0.1`;
-- cria atalhos na área de trabalho e no menu Iniciar;
+- cria um inicializador visual e atalhos na área de trabalho e no menu Iniciar;
 - inicia PostgreSQL e aplicação via Docker Compose;
 - abre `http://localhost:8080` quando o health check estiver `UP`;
 - preserva a senha interna e o volume do PostgreSQL quando o instalador é

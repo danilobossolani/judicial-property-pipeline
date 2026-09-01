@@ -50,3 +50,31 @@ jobs:
           path: target/*.jar
           if-no-files-found: error
           retention-days: 14
+
+  validate-windows-installer:
+    name: Validate Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build installer with CI-only test key
+        shell: pwsh
+        run: ./installer/build-installer.ps1 -DataJudApiKey "ci-structural-test-key"
+
+      - name: Validate embedded payload and checksum
+        shell: pwsh
+        run: |
+          $installer = Resolve-Path "dist/Judicial-Pipeline-Instalador.exe"
+          $process = Start-Process -FilePath $installer -ArgumentList "--validate" -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "O payload do instalador é inválido. Código: $($process.ExitCode)."
+          }
+
+          $expected = (Get-Content "$installer.sha256.txt").Split(" ")[0]
+          $actual = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash
+          if ($actual -ne $expected) {
+            throw "O checksum do instalador não confere."
+          }

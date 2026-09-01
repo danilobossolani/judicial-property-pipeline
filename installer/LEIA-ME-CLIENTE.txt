@@ -27,12 +27,13 @@ arquivo é Judicial-Pipeline-Instalador.exe e use "Mais informações" e
 
 SE O SISTEMA NAO ABRIR
 
-1. Aguarde dois minutos e clique novamente no atalho Judicial Pipeline.
-2. Confirme que o Docker Desktop está aberto e mostra o mecanismo em execução.
-3. Execute VER-STATUS.bat dentro da pasta
-   C:\ProgramData\JudicialPipeline e envie a tela ao responsável técnico.
-4. Se solicitado pelo responsável técnico, envie também os arquivos
-   instalacao.log e preparacao-docker.log dessa mesma pasta.
+1. Reinicie o computador e clique novamente no atalho Judicial Pipeline.
+2. Se continuar, envie ao responsável técnico:
+   - instalacao.log e preparacao-docker.log da pasta
+     C:\ProgramData\JudicialPipeline;
+   - inicializacao.log e inicio.log da pasta
+     %LOCALAPPDATA%\JudicialPipeline.
+3. O cliente não precisa editar configurações nem executar comandos.
 
 DADOS E ATUALIZACOES
 

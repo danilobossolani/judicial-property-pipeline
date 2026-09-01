@@ -1,28 +1,33 @@
-JUDICIAL PIPELINE - INSTALACAO NO WINDOWS
+JUDICIAL PIPELINE - LEIA-ME PRIMEIRO
 
-1. Instale e abra o Docker Desktop:
-   https://www.docker.com/products/docker-desktop/
+PRIMEIRA INSTALACAO
 
-2. Extraia TODO o conteudo deste ZIP para uma pasta normal.
-   Nao execute os arquivos diretamente de dentro do ZIP.
+1. Clique duas vezes em Judicial-Pipeline-Instalador.exe.
+2. Autorize a instalacao quando o Windows perguntar.
+3. Aguarde enquanto os componentes necessarios sao preparados.
+4. Se o instalador solicitar, reinicie o computador.
+5. Clique no atalho Judicial Pipeline na area de trabalho.
 
-3. Clique duas vezes em INICIAR.bat.
+USO NORMAL
 
-4. Na primeira vez, o Bloco de Notas abrira o arquivo .env.
-   Troque todos os valores de exemplo pelas senhas, usuario e chave DataJud.
-   A senha de acesso ao sistema precisa ter pelo menos 12 caracteres.
+- Clique no atalho Judicial Pipeline.
+- Aguarde a pequena tela de preparacao desaparecer.
+- O painel abrira automaticamente no navegador.
+- Nao existe usuario, senha ou configuracao para preencher.
 
-5. Salve o arquivo .env e clique novamente em INICIAR.bat.
+AJUDA
 
-6. Ao terminar, o sistema abrira em http://localhost:8080.
+Se o painel nao abrir, reinicie o computador e tente novamente. Se continuar,
+envie ao responsavel tecnico:
 
-ATALHOS
-- INICIAR.bat: inicia e abre o sistema.
-- PARAR.bat: para o sistema sem apagar os dados.
-- VER-STATUS.bat: mostra o estado e os erros recentes.
+- instalacao.log e preparacao-docker.log de
+  C:\ProgramData\JudicialPipeline;
+- inicializacao.log e inicio.log de
+  %LOCALAPPDATA%\JudicialPipeline.
 
 IMPORTANTE
-- O Docker Desktop precisa ficar aberto durante o uso.
-- Nunca envie o arquivo .env para outras pessoas: ele contem credenciais.
-- Este pacote local funciona apenas no computador em que foi instalado.
 
+- Os dados ficam armazenados neste computador.
+- Nao apague a pasta C:\ProgramData\JudicialPipeline.
+- Nao remova volumes ou dados pelo Docker Desktop.
+- O programa precisa de internet para consultar novas oportunidades.

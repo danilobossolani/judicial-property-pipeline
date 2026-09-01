@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$DataJudApiKey = $env:DATAJUD_API_KEY,
 
@@ -20,6 +20,36 @@ if ($DataJudApiKey.Contains("`r") -or $DataJudApiKey.Contains("`n")) {
 try {
     New-Item -ItemType Directory -Path $temporaryDirectory -Force | Out-Null
     New-Item -ItemType Directory -Path ([System.IO.Path]::GetDirectoryName($outputFullPath)) -Force | Out-Null
+
+    $compilerCandidates = @(
+        "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe",
+        "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
+    )
+    $compiler = $compilerCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if (-not $compiler) {
+        throw "O compilador do Windows não foi encontrado."
+    }
+
+    $iconPath = Join-Path $PSScriptRoot "assets\judicial-pipeline-icon.ico"
+    if (-not (Test-Path -LiteralPath $iconPath)) {
+        throw "O ícone do instalador não foi encontrado."
+    }
+
+    $launcherPath = Join-Path $temporaryDirectory "Judicial Pipeline.exe"
+    $launcherSource = Join-Path $PSScriptRoot "JudicialPipelineLauncher.cs"
+    & $compiler `
+        /nologo `
+        /target:winexe `
+        /optimize+ `
+        "/out:$launcherPath" `
+        "/win32icon:$iconPath" `
+        /reference:System.Windows.Forms.dll `
+        /reference:System.Drawing.dll `
+        $launcherSource
+
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $launcherPath)) {
+        throw "O inicializador visual não foi gerado."
+    }
 
     $payloadPath = Join-Path $temporaryDirectory "payload.zip"
     Push-Location $projectRoot
@@ -46,24 +76,17 @@ try {
         } finally {
             $writer.Dispose()
         }
+
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+            $archive,
+            $launcherPath,
+            "Judicial-Pipeline/Judicial Pipeline.exe",
+            [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
     } finally {
         $archive.Dispose()
     }
 
-    $compilerCandidates = @(
-        "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe",
-        "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe"
-    )
-    $compiler = $compilerCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-    if (-not $compiler) {
-        throw "O compilador do Windows não foi encontrado."
-    }
-
     $bootstrapperSource = Join-Path $PSScriptRoot "Bootstrapper.cs"
-    $iconPath = Join-Path $PSScriptRoot "assets\judicial-pipeline-icon.ico"
-    if (-not (Test-Path -LiteralPath $iconPath)) {
-        throw "O ícone do instalador não foi encontrado."
-    }
     & $compiler `
         /nologo `
         /target:winexe `

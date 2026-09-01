@@ -8,6 +8,14 @@ using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
 
+[assembly: AssemblyTitle("Judicial Pipeline - Instalador")]
+[assembly: AssemblyDescription("Instalador automático do Judicial Pipeline")]
+[assembly: AssemblyCompany("Judicial Pipeline")]
+[assembly: AssemblyProduct("Judicial Pipeline")]
+[assembly: AssemblyCopyright("Copyright © 2026")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
+
 namespace JudicialPipelineInstaller
 {
     internal static class Bootstrapper
@@ -54,13 +62,25 @@ namespace JudicialPipelineInstaller
                     "installer",
                     "Instalar-JudicialPipeline.ps1");
                 string composeFile = Path.Combine(extractedRoot, "Judicial-Pipeline", "compose.yaml");
+                string launcherFile = Path.Combine(
+                    extractedRoot,
+                    "Judicial-Pipeline",
+                    "Judicial Pipeline.exe");
+                string windowsPreparationFile = Path.Combine(
+                    extractedRoot,
+                    "Judicial-Pipeline",
+                    "Preparar-Windows.ps1");
                 string settingsFile = Path.Combine(
                     extractedRoot,
                     "Judicial-Pipeline",
                     "installer",
                     "installer-settings.env");
 
-                return File.Exists(installerScript) && File.Exists(composeFile) && File.Exists(settingsFile)
+                return File.Exists(installerScript)
+                    && File.Exists(composeFile)
+                    && File.Exists(launcherFile)
+                    && File.Exists(windowsPreparationFile)
+                    && File.Exists(settingsFile)
                     ? 0
                     : 2;
             }
@@ -231,4 +251,3 @@ namespace JudicialPipelineInstaller
         }
     }
 }
-
