@@ -1113,8 +1113,23 @@
                     </div>
 
                     <h2 class="h5 mt-1 mb-3">
-                        Fontes
+                        Fontes e valores capturados
                     </h2>
+
+
+                    <p class="small text-secondary mb-3">
+                        Cada cartão preserva os dados publicados pela própria fonte. Divergências ficam visíveis para análise humana.
+                    </p>
+
+
+                    <div
+                            th:if="${detalhe.possuiDivergenciaEntreFontes()}"
+                            class="alert alert-warning"
+                            role="alert"
+                    >
+                        <strong>Fontes divergentes.</strong>
+                        Avaliação, valores de praça ou situação não coincidem. Revise cada origem antes da decisão humana.
+                    </div>
 
 
                     <div
@@ -1155,6 +1170,60 @@
                                         + fonte.dataCapturaFormatada()}"
                             >
                                 Capturado em
+                            </div>
+
+                        </div>
+
+
+                        <div class="fonte-valores mt-3">
+
+                            <div class="fonte-valor">
+                                <span>Avaliação</span>
+                                <strong
+                                        th:text="${fonte.valorAvaliacao != null
+                                            ? 'R$ ' + #numbers.formatDecimal(fonte.valorAvaliacao, 1, 'POINT', 2, 'COMMA')
+                                            : 'Não informado'}"
+                                >Não informado</strong>
+                            </div>
+
+
+                            <div class="fonte-valor">
+                                <span>1ª praça</span>
+                                <strong
+                                        th:text="${fonte.lanceInicial1Praca != null
+                                            ? 'R$ ' + #numbers.formatDecimal(fonte.lanceInicial1Praca, 1, 'POINT', 2, 'COMMA')
+                                            : 'Não informado'}"
+                                >Não informado</strong>
+                            </div>
+
+
+                            <div class="fonte-valor">
+                                <span>2ª praça</span>
+                                <strong
+                                        th:text="${fonte.lanceInicial2Praca != null
+                                            ? 'R$ ' + #numbers.formatDecimal(fonte.lanceInicial2Praca, 1, 'POINT', 2, 'COMMA')
+                                            : 'Não informado'}"
+                                >Não informado</strong>
+                            </div>
+
+
+                            <div class="fonte-valor">
+                                <span>Lance atual/mínimo</span>
+                                <strong
+                                        th:text="${fonte.lanceMinimo != null
+                                            ? 'R$ ' + #numbers.formatDecimal(fonte.lanceMinimo, 1, 'POINT', 2, 'COMMA')
+                                            : 'Não informado'}"
+                                >Não informado</strong>
+                            </div>
+
+
+                            <div class="fonte-valor">
+                                <span>Situação publicada</span>
+                                <strong
+                                        th:text="${fonte.statusLeilaoFormatado()
+                                            + ' / '
+                                            + fonte.resultadoLeilaoFormatado()}"
+                                >Desconhecido</strong>
                             </div>
 
                         </div>

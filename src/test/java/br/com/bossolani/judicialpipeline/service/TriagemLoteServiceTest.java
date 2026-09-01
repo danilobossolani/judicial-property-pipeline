@@ -1,17 +1,51 @@
 package br.com.bossolani.judicialpipeline.service;
 
 import br.com.bossolani.judicialpipeline.dto.ResultadoTriagemLoteDTO;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.LeiloeiroProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
 import org.junit.jupiter.api.Test;
+
+import java.net.URI;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class TriagemLoteServiceTest {
 
-    private final TriagemLoteService service =
-            new TriagemLoteService();
+    private final LeiloeiroProvider provider;
+
+    private final TriagemLoteService service;
+
+    TriagemLoteServiceTest() {
+
+        provider = mock(LeiloeiroProvider.class);
+
+        when(provider.suporta(any(URI.class)))
+                .thenReturn(true);
+
+        when(provider.normalizarUrl(any(URI.class)))
+                .thenAnswer(invocacao -> {
+                    URI uri = invocacao.getArgument(0);
+                    String caminho = uri.getPath();
+
+                    if (!caminho.endsWith("/")) {
+                        caminho += "/";
+                    }
+
+                    return "https://"
+                            + uri.getHost().toLowerCase()
+                            + caminho;
+                });
+
+        service = new TriagemLoteService(
+                List.of(provider)
+        );
+    }
 
     @Test
     void deveAceitarImovelEmSorocaba() {

@@ -50,10 +50,11 @@ Antes de integrar qualquer mudança ao branch `main`:
 - [x] Desativar `open-in-view` e validar que todas as telas carregam seus dados explicitamente.
 - [x] Reduzir logs SQL no ambiente de produção.
 - [x] Adicionar endpoint de saúde básico e seguro.
-- [ ] Adotar migrações versionadas de banco de dados antes do primeiro deploy público.
+- [x] Adotar migrações versionadas de banco de dados antes do primeiro deploy público.
 - [ ] Adicionar métricas operacionais sem expor dados sensíveis.
-- Implementar retentativas com espera progressiva para falhas transitórias das fontes.
-- Definir política de timeout, limite de requisições e retenção do histórico.
+- [x] Implementar retentativas com espera progressiva para falhas transitórias das fontes.
+- [x] Definir timeout e cadência conservadora de descoberta das fontes.
+- [ ] Definir retenção operacional do histórico após medir o volume do piloto.
 
 ### 2. Piloto supervisionado
 

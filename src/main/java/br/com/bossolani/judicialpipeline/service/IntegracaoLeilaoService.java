@@ -2,34 +2,39 @@ package br.com.bossolani.judicialpipeline.service;
 
 import br.com.bossolani.judicialpipeline.integration.DataJudClient;
 import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcessoDTO;
-import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.DadosDinamicosLeilaoDTO;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.ColetaLeiloeiroDTO;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.LeiloeiroProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteEnriquecidoDTO;
-import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteLeilaoDTO;
-import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesBrowser;
-import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesScraper;
-import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 
 @Service
 public class IntegracaoLeilaoService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(
+                    IntegracaoLeilaoService.class
+            );
+
     private static final int TAMANHO_NUMERO_PROCESSO_CNJ = 20;
 
-    private final SublimeLeiloesScraper sublimeScraper;
-    private final SublimeLeiloesBrowser sublimeBrowser;
+    private final List<LeiloeiroProvider> providers;
     private final DataJudClient dataJudClient;
 
 
     public IntegracaoLeilaoService(
-            SublimeLeiloesScraper sublimeScraper,
-            SublimeLeiloesBrowser sublimeBrowser,
+            List<LeiloeiroProvider> providers,
             DataJudClient dataJudClient
     ) {
 
-        this.sublimeScraper = sublimeScraper;
-        this.sublimeBrowser = sublimeBrowser;
+        this.providers = List.copyOf(
+                providers
+        );
         this.dataJudClient = dataJudClient;
     }
 
@@ -38,29 +43,34 @@ public class IntegracaoLeilaoService {
             String url
     ) throws IOException {
 
-        Document pagina =
-                sublimeScraper.buscarPagina(
+        LeiloeiroProvider provider =
+                resolverProvider(
                         url
                 );
 
 
-        LoteLeilaoDTO lote =
-                sublimeScraper.extrairLote(
-                        pagina,
-                        url
-                );
+        ColetaLeiloeiroDTO coleta;
 
 
-        String textoRenderizado =
-                sublimeBrowser.buscarTextoRenderizado(
-                        url
-                );
+        try {
 
+            coleta =
+                    provider.coletar(
+                            url
+                    );
 
-        DadosDinamicosLeilaoDTO leilao =
-                sublimeBrowser.extrairDados(
-                        textoRenderizado
-                );
+        } catch (IOException exception) {
+
+            throw exception;
+
+        } catch (Exception exception) {
+
+            throw new IOException(
+                    "Falha ao coletar dados da fonte "
+                            + provider.nome(),
+                    exception
+            );
+        }
 
 
         DataJudProcessoDTO processo = null;
@@ -69,7 +79,7 @@ public class IntegracaoLeilaoService {
 
         String numeroLeiloeiro =
                 normalizarNumeroProcesso(
-                        lote.getNumeroProcesso()
+                        coleta.lote().getNumeroProcesso()
                 );
 
 
@@ -95,20 +105,66 @@ public class IntegracaoLeilaoService {
                                 numeroDataJud
                         );
 
-            } catch (IllegalArgumentException exception) {
+            } catch (RuntimeException exception) {
 
                 processo = null;
                 processoConfirmado = false;
+
+
+                log.warn(
+                        "Não foi possível confirmar o processo {} no DataJud durante a coleta da fonte '{}': {}",
+                        numeroLeiloeiro,
+                        provider.nome(),
+                        exception.getMessage()
+                );
             }
         }
 
 
         return new LoteEnriquecidoDTO(
-                lote,
-                leilao,
+                coleta.lote(),
+                coleta.leilao(),
                 processo,
-                processoConfirmado
+                processoConfirmado,
+                provider.nome()
         );
+    }
+
+
+    private LeiloeiroProvider resolverProvider(
+            String url
+    ) {
+
+        URI uri;
+
+
+        try {
+
+            uri = URI.create(
+                    url
+            );
+
+        } catch (IllegalArgumentException exception) {
+
+            throw new IllegalArgumentException(
+                    "URL de leiloeiro inválida",
+                    exception
+            );
+        }
+
+
+        return providers.stream()
+                .filter(provider ->
+                        provider.suporta(
+                                uri
+                        )
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Nenhum provedor de leiloeiro suporta a URL informada"
+                        )
+                );
     }
 
 

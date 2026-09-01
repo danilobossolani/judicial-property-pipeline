@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+.env
+target
+*.log
+captures
+downloads
+exports

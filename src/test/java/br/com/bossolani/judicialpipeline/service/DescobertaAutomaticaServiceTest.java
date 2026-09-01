@@ -3,8 +3,8 @@ package br.com.bossolani.judicialpipeline.service;
 import br.com.bossolani.judicialpipeline.dto.ResultadoDescobertaDTO;
 import br.com.bossolani.judicialpipeline.exception.DescobertaEmAndamentoException;
 import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.LeiloeiroProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
-import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesDiscoveryBrowser;
 import br.com.bossolani.judicialpipeline.model.DecisaoLoteDescoberta;
 import br.com.bossolani.judicialpipeline.model.ExecucaoDescoberta;
 import br.com.bossolani.judicialpipeline.model.Fonte;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.net.URI;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -52,7 +53,7 @@ class DescobertaAutomaticaServiceTest {
                 "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/9997/";
 
 
-        when(dependencias.browser().descobrirLotes())
+        when(dependencias.provider().descobrirLotes())
                 .thenReturn(
                         List.of(
                                 lote(
@@ -155,7 +156,7 @@ class DescobertaAutomaticaServiceTest {
                 "https://www.sublimeleiloes.com.br/lote/galpao-em-votorantim/9998/";
 
 
-        when(dependencias.browser().descobrirLotes())
+        when(dependencias.provider().descobrirLotes())
                 .thenReturn(
                         List.of(
                                 lote(
@@ -186,11 +187,15 @@ class DescobertaAutomaticaServiceTest {
                 );
 
 
+        Fonte fonteDuplicada =
+                new Fonte();
+
+
         when(dependencias.fonteRepository().findByUrlOrigem(
                 urlDuplicada
         )).thenReturn(
                 Optional.of(
-                        new Fonte()
+                        fonteDuplicada
                 )
         );
 
@@ -199,6 +204,12 @@ class DescobertaAutomaticaServiceTest {
                 urlNova
         )).thenReturn(
                 new Fonte()
+        );
+
+        when(dependencias.persistencia().coletarESalvar(
+                urlDuplicada
+        )).thenReturn(
+                fonteDuplicada
         );
 
         when(dependencias.persistencia().coletarESalvar(
@@ -292,7 +303,7 @@ class DescobertaAutomaticaServiceTest {
         );
 
         assertEquals(
-                "URL normalizada já cadastrada como fonte do pipeline.",
+                "URL já cadastrada; os dados do imóvel e do leilão foram atualizados sem alterar a decisão humana.",
                 lotesPersistidos.get(1)
                         .getMotivo()
         );
@@ -314,7 +325,7 @@ class DescobertaAutomaticaServiceTest {
                 urlNova
         );
 
-        verify(dependencias.persistencia(), never()).coletarESalvar(
+        verify(dependencias.persistencia()).coletarESalvar(
                 urlDuplicada
         );
 
@@ -338,7 +349,7 @@ class DescobertaAutomaticaServiceTest {
                 "https://www.sublimeleiloes.com.br/lote/casa-em-sorocaba/2405/";
 
 
-        when(dependencias.browser().descobrirLotes())
+        when(dependencias.provider().descobrirLotes())
                 .thenReturn(
                         List.of(
                                 lote(
@@ -476,7 +487,7 @@ class DescobertaAutomaticaServiceTest {
                 new CountDownLatch(1);
 
 
-        when(dependencias.browser().descobrirLotes())
+        when(dependencias.provider().descobrirLotes())
                 .thenAnswer(invocacao -> {
 
                     browserIniciado.countDown();
@@ -538,11 +549,73 @@ class DescobertaAutomaticaServiceTest {
         }
     }
 
+    @Test
+    void deveContinuarNasDemaisFontesQuandoUmaDelasFalhar()
+            throws Exception {
+
+        LeiloeiroProvider fonteIndisponivel =
+                mock(LeiloeiroProvider.class);
+        LeiloeiroProvider fonteDisponivel =
+                mock(LeiloeiroProvider.class);
+        FonteRepository fonteRepository =
+                mock(FonteRepository.class);
+        PersistenciaLeilaoService persistencia =
+                mock(PersistenciaLeilaoService.class);
+        ExecucaoDescobertaRepository execucaoRepository =
+                mock(ExecucaoDescobertaRepository.class);
+        ResultadoLoteDescobertaRepository resultadoRepository =
+                mock(ResultadoLoteDescobertaRepository.class);
+
+        when(fonteIndisponivel.nome())
+                .thenReturn("Sublime Leilões");
+        when(fonteDisponivel.nome())
+                .thenReturn("Mega Leilões");
+        when(fonteIndisponivel.descobrirLotes())
+                .thenThrow(new IllegalStateException("fonte fora do ar"));
+        when(fonteDisponivel.descobrirLotes())
+                .thenReturn(List.of());
+        when(execucaoRepository.save(any(ExecucaoDescoberta.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
+        when(resultadoRepository.save(any(ResultadoLoteDescoberta.class)))
+                .thenAnswer(invocacao -> invocacao.getArgument(0));
+
+        DescobertaAutomaticaService service =
+                new DescobertaAutomaticaService(
+                        List.of(fonteIndisponivel, fonteDisponivel),
+                        new TriagemLoteService(
+                                List.of(fonteIndisponivel, fonteDisponivel)
+                        ),
+                        fonteRepository,
+                        persistencia,
+                        execucaoRepository,
+                        resultadoRepository
+                );
+
+        ResultadoDescobertaDTO resultado =
+                service.executarDescoberta();
+
+        assertEquals(0, resultado.encontrados());
+        assertEquals(1, resultado.falhas());
+        assertEquals(
+                StatusExecucaoDescoberta.CONCLUIDA_COM_FALHAS,
+                resultado.status()
+        );
+        verify(fonteDisponivel).descobrirLotes();
+
+        ArgumentCaptor<ResultadoLoteDescoberta> captor =
+                ArgumentCaptor.forClass(
+                        ResultadoLoteDescoberta.class
+                );
+        verify(resultadoRepository).save(captor.capture());
+        assertEquals("Sublime Leilões", captor.getValue().getFonte());
+        assertEquals(DecisaoLoteDescoberta.FALHA, captor.getValue().getDecisao());
+    }
+
     private Dependencias novasDependencias() {
 
-        SublimeLeiloesDiscoveryBrowser browser =
+        LeiloeiroProvider provider =
                 mock(
-                        SublimeLeiloesDiscoveryBrowser.class
+                        LeiloeiroProvider.class
                 );
 
         FonteRepository fonteRepository =
@@ -578,6 +651,33 @@ class DescobertaAutomaticaServiceTest {
                 invocacao.getArgument(0)
         );
 
+
+        when(provider.nome())
+                .thenReturn(
+                        "Sublime Leilões"
+                );
+
+        when(provider.suporta(
+                any(URI.class)
+        )).thenReturn(
+                true
+        );
+
+        when(provider.normalizarUrl(
+                any(URI.class)
+        )).thenAnswer(invocacao -> {
+            URI uri = invocacao.getArgument(0);
+            String caminho = uri.getPath();
+
+            if (!caminho.endsWith("/")) {
+                caminho += "/";
+            }
+
+            return "https://"
+                    + uri.getHost().toLowerCase()
+                    + caminho;
+        });
+
         when(resultadoRepository.save(
                 any(ResultadoLoteDescoberta.class)
         )).thenAnswer(invocacao ->
@@ -587,8 +687,10 @@ class DescobertaAutomaticaServiceTest {
 
         DescobertaAutomaticaService service =
                 new DescobertaAutomaticaService(
-                        browser,
-                        new TriagemLoteService(),
+                        List.of(provider),
+                        new TriagemLoteService(
+                                List.of(provider)
+                        ),
                         fonteRepository,
                         persistencia,
                         execucaoRepository,
@@ -598,7 +700,7 @@ class DescobertaAutomaticaServiceTest {
 
         return new Dependencias(
                 service,
-                browser,
+                provider,
                 fonteRepository,
                 persistencia,
                 execucaoRepository,
@@ -623,7 +725,7 @@ class DescobertaAutomaticaServiceTest {
 
     private record Dependencias(
             DescobertaAutomaticaService service,
-            SublimeLeiloesDiscoveryBrowser browser,
+            LeiloeiroProvider provider,
             FonteRepository fonteRepository,
             PersistenciaLeilaoService persistencia,
             ExecucaoDescobertaRepository execucaoRepository,

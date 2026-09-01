@@ -67,7 +67,9 @@ public class PersistenciaLeilaoService {
     }
 
 
-    @Transactional
+    @Transactional(
+            noRollbackFor = LoteDescartadoException.class
+    )
     public Fonte coletarESalvar(
             String url
     ) throws Exception {
@@ -96,14 +98,16 @@ public class PersistenciaLeilaoService {
                 coleta.processo();
 
 
+        String nomeFonte =
+                coleta.fonte() == null
+                        || coleta.fonte().isBlank()
+                        ? "Leiloeiro oficial"
+                        : coleta.fonte();
+
+
         validarColeta(
                 lote,
                 dadosLeilao
-        );
-
-
-        validarClasseProcessual(
-                dadosProcesso
         );
 
 
@@ -113,6 +117,14 @@ public class PersistenciaLeilaoService {
                                 urlNormalizada
                         )
                         .orElse(null);
+
+
+        validarClasseProcessual(
+                dadosProcesso,
+                fonteExistente,
+                lote,
+                nomeFonte
+        );
 
 
         /*
@@ -125,12 +137,18 @@ public class PersistenciaLeilaoService {
                     fonteExistente,
                     lote,
                     dadosLeilao,
-                    dadosProcesso
+                    dadosProcesso,
+                    nomeFonte
             );
 
 
             fonteExistente.setDataCaptura(
                     LocalDateTime.now()
+            );
+
+
+            fonteExistente.setOrigemNome(
+                    nomeFonte
             );
 
 
@@ -176,7 +194,8 @@ public class PersistenciaLeilaoService {
         /*
          * Deduplicação secundária por processo.
          * Se outra URL apontar para o processo já cadastrado,
-         * ela vira uma nova fonte do mesmo imóvel/leilão.
+         * ela vira uma nova fonte e um novo retrato de leilão
+         * do mesmo imóvel, sem sobrescrever valores divergentes.
          */
         Optional<Imovel> imovelExistente =
                 imovelRepository
@@ -205,26 +224,19 @@ public class PersistenciaLeilaoService {
                 );
 
 
-        Optional<Leilao> leilaoExistente =
-                imovelExistente.isPresent()
-                        ? leilaoRepository
-                        .findTopByImovelIdOrderByIdDesc(
-                                imovel.getId()
-                        )
-                        : Optional.empty();
-
-
         Leilao leilao =
-                leilaoExistente
-                        .orElseGet(
-                                Leilao::new
-                        );
+                new Leilao();
 
 
         preencherLeilao(
                 leilao,
                 dadosLeilao,
                 imovel
+        );
+
+
+        leilao.setValorAvaliacaoFonte(
+                lote.getValorAvaliacao()
         );
 
 
@@ -236,7 +248,8 @@ public class PersistenciaLeilaoService {
 
         atualizarAcompanhamento(
                 imovel,
-                leilao
+                leilao,
+                nomeFonte
         );
 
 
@@ -250,7 +263,7 @@ public class PersistenciaLeilaoService {
 
 
         fonte.setOrigemNome(
-                "Sublime Leilões"
+                nomeFonte
         );
 
 
@@ -283,7 +296,7 @@ public class PersistenciaLeilaoService {
         if (lote == null) {
 
             throw new IllegalArgumentException(
-                    "A Sublime não retornou os dados do lote"
+                    "A fonte não retornou os dados do lote"
             );
         }
 
@@ -291,7 +304,7 @@ public class PersistenciaLeilaoService {
         if (dadosLeilao == null) {
 
             throw new IllegalArgumentException(
-                    "A Sublime não retornou os dados do leilão"
+                    "A fonte não retornou os dados do leilão"
             );
         }
 
@@ -306,7 +319,8 @@ public class PersistenciaLeilaoService {
             Fonte fonte,
             LoteLeilaoDTO lote,
             DadosDinamicosLeilaoDTO dadosLeilao,
-            DataJudProcessoDTO dadosProcesso
+            DataJudProcessoDTO dadosProcesso,
+            String nomeFonte
     ) {
 
         Leilao leilao =
@@ -366,6 +380,11 @@ public class PersistenciaLeilaoService {
         );
 
 
+        leilao.setValorAvaliacaoFonte(
+                lote.getValorAvaliacao()
+        );
+
+
         processoRepository.save(
                 processo
         );
@@ -383,14 +402,16 @@ public class PersistenciaLeilaoService {
 
         atualizarAcompanhamento(
                 imovel,
-                leilao
+                leilao,
+                nomeFonte
         );
     }
 
 
     private void atualizarAcompanhamento(
             Imovel imovel,
-            Leilao leilao
+            Leilao leilao,
+            String nomeFonte
     ) {
 
         Acompanhamento acompanhamento =
@@ -462,7 +483,8 @@ public class PersistenciaLeilaoService {
         verificarHistorico(
                 acompanhamento,
                 leilao,
-                statusFinal
+                statusFinal,
+                nomeFonte
         );
     }
 
@@ -527,7 +549,8 @@ public class PersistenciaLeilaoService {
     private void verificarHistorico(
             Acompanhamento acompanhamento,
             Leilao leilao,
-            StatusPipeline statusPipelineAtual
+            StatusPipeline statusPipelineAtual,
+            String nomeFonte
     ) {
 
         Optional<HistoricoAcompanhamento> ultimoHistoricoOptional =
@@ -542,7 +565,8 @@ public class PersistenciaLeilaoService {
             registrarHistorico(
                     acompanhamento,
                     leilao,
-                    statusPipelineAtual
+                    statusPipelineAtual,
+                    nomeFonte
             );
 
 
@@ -598,7 +622,8 @@ public class PersistenciaLeilaoService {
             registrarHistorico(
                     acompanhamento,
                     leilao,
-                    statusPipelineAtual
+                    statusPipelineAtual,
+                    nomeFonte
             );
         }
     }
@@ -607,7 +632,8 @@ public class PersistenciaLeilaoService {
     private void registrarHistorico(
             Acompanhamento acompanhamento,
             Leilao leilao,
-            StatusPipeline statusPipeline
+            StatusPipeline statusPipeline,
+            String nomeFonte
     ) {
 
         HistoricoAcompanhamento historico =
@@ -640,7 +666,7 @@ public class PersistenciaLeilaoService {
 
 
         historico.setOrigem(
-                "Sublime Leilões"
+                nomeFonte
         );
 
 
@@ -1039,7 +1065,10 @@ public class PersistenciaLeilaoService {
 
 
     private void validarClasseProcessual(
-            DataJudProcessoDTO dadosProcesso
+            DataJudProcessoDTO dadosProcesso,
+            Fonte fonteExistente,
+            LoteLeilaoDTO lote,
+            String nomeFonte
     ) {
 
         if (dadosProcesso == null) {
@@ -1057,10 +1086,104 @@ public class PersistenciaLeilaoService {
                 "despejo"
         )) {
 
+            arquivarDespejoExistente(
+                    fonteExistente,
+                    lote,
+                    dadosProcesso,
+                    nomeFonte
+            );
+
             throw new LoteDescartadoException(
                     "Ação de despejo não representa oportunidade imobiliária."
             );
         }
+    }
+
+
+    private void arquivarDespejoExistente(
+            Fonte fonte,
+            LoteLeilaoDTO lote,
+            DataJudProcessoDTO dadosProcesso,
+            String nomeFonte
+    ) {
+
+        if (fonte == null
+                || fonte.getLeilao() == null
+                || fonte.getLeilao().getImovel() == null) {
+            return;
+        }
+
+
+        Leilao leilao =
+                fonte.getLeilao();
+
+        Imovel imovel =
+                leilao.getImovel();
+
+        Processo processo =
+                imovel.getProcesso();
+
+
+        if (processo != null) {
+
+            preencherProcesso(
+                    processo,
+                    lote,
+                    dadosProcesso
+            );
+
+            processoRepository.save(
+                    processo
+            );
+        }
+
+
+        fonte.setOrigemNome(
+                nomeFonte
+        );
+        fonte.setDataCaptura(
+                LocalDateTime.now()
+        );
+        fonteRepository.save(
+                fonte
+        );
+
+
+        acompanhamentoRepository
+                .findByImovelId(
+                        imovel.getId()
+                )
+                .ifPresent(acompanhamento -> {
+
+                    boolean jaDescartado =
+                            acompanhamento.getStatusPipeline()
+                                    == StatusPipeline.DESCARTADO;
+
+                    acompanhamento.setStatusPipeline(
+                            StatusPipeline.DESCARTADO
+                    );
+                    acompanhamento.setAtivo(
+                            false
+                    );
+                    acompanhamento.setUltimaVerificacao(
+                            LocalDateTime.now()
+                    );
+
+                    acompanhamentoRepository.save(
+                            acompanhamento
+                    );
+
+
+                    if (!jaDescartado) {
+
+                        registrarHistorico(
+                                acompanhamento,
+                                leilao,
+                                StatusPipeline.DESCARTADO,
+                                nomeFonte
+                        );
+                    }
+                });
     }
 
 

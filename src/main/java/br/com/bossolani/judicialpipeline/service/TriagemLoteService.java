@@ -1,27 +1,20 @@
 package br.com.bossolani.judicialpipeline.service;
 
 import br.com.bossolani.judicialpipeline.dto.ResultadoTriagemLoteDTO;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.LeiloeiroProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.Normalizer;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 @Service
 public class TriagemLoteService {
-
-    private static final String DOMINIO_SUBLIME =
-            "sublimeleiloes.com.br";
-
-    private static final Pattern CAMINHO_LOTE =
-            Pattern.compile(
-                    "^/lote/[^/]+/\\d+/?$",
-                    Pattern.CASE_INSENSITIVE
-            );
 
     private static final Set<String> CIDADES_PERMITIDAS =
             Set.of(
@@ -78,6 +71,19 @@ public class TriagemLoteService {
                     "vestuario"
             );
 
+    private final List<LeiloeiroProvider> providers;
+
+
+    public TriagemLoteService(
+            List<LeiloeiroProvider> providers
+    ) {
+
+        this.providers =
+                List.copyOf(
+                        providers
+                );
+    }
+
     public ResultadoTriagemLoteDTO avaliar(
             LoteDescobertoDTO lote
     ) {
@@ -120,7 +126,7 @@ public class TriagemLoteService {
 
             return new ResultadoTriagemLoteDTO(
                     false,
-                    "URL inválida ou fora do domínio oficial da Sublime Leilões.",
+                    "URL inválida ou fora das fontes oficiais permitidas.",
                     null
             );
         }
@@ -224,54 +230,29 @@ public class TriagemLoteService {
                     );
 
 
-            String host =
-                    uri.getHost();
+            LeiloeiroProvider provider =
+                    providers.stream()
+                            .filter(item ->
+                                    item.suporta(
+                                            uri
+                                    )
+                            )
+                            .findFirst()
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "URL fora das fontes oficiais permitidas"
+                                    )
+                            );
 
 
-            if (!"https".equalsIgnoreCase(
-                    uri.getScheme()
-            )
-                    || host == null
-                    || !(host.equalsIgnoreCase(
-                    DOMINIO_SUBLIME
-            )
-                    || host.toLowerCase(
-                            Locale.ROOT
-                    ).endsWith(
-                            "." + DOMINIO_SUBLIME
-                    ))
-                    || !CAMINHO_LOTE.matcher(
-                    uri.getPath()
-            ).matches()) {
-
-                throw new IllegalArgumentException(
-                        "URL de lote da Sublime inválida"
-                );
-            }
-
-
-            String caminho =
-                    uri.getPath().endsWith("/")
-                            ? uri.getPath()
-                            : uri.getPath() + "/";
-
-
-            return new URI(
-                    "https",
-                    null,
-                    host.toLowerCase(
-                            Locale.ROOT
-                    ),
-                    -1,
-                    caminho,
-                    null,
-                    null
-            ).toASCIIString();
+            return provider.normalizarUrl(
+                    uri
+            );
 
         } catch (URISyntaxException exception) {
 
             throw new IllegalArgumentException(
-                    "URL de lote da Sublime inválida",
+                    "URL de lote inválida",
                     exception
             );
         }

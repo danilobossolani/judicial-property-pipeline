@@ -101,6 +101,36 @@ hr {
     padding-top: 0;
 }
 
+.fonte-valores {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.fonte-valor {
+    background: var(--fundo-secundario);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    min-width: 0;
+    padding: 12px;
+}
+
+.fonte-valor span,
+.fonte-valor strong {
+    display: block;
+}
+
+.fonte-valor span {
+    color: var(--texto-secundario);
+    font-size: 0.76rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.fonte-valor strong {
+    overflow-wrap: anywhere;
+}
+
 .timeline {
     position: relative;
 }

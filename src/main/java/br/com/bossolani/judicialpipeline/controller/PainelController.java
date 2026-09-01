@@ -68,6 +68,16 @@ public class PainelController {
                         .count();
 
 
+        long totalOportunidades =
+                imoveis
+                        .stream()
+                        .filter(imovel ->
+                                imovel.statusPipeline()
+                                        == StatusPipeline.OPORTUNIDADE
+                        )
+                        .count();
+
+
         model.addAttribute(
                 "imoveis",
                 imoveis
@@ -89,6 +99,12 @@ public class PainelController {
         model.addAttribute(
                 "totalSemLances",
                 totalSemLances
+        );
+
+
+        model.addAttribute(
+                "totalOportunidades",
+                totalOportunidades
         );
 
 

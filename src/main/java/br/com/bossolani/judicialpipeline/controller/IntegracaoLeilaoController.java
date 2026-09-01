@@ -18,8 +18,8 @@ public class IntegracaoLeilaoController {
         this.integracaoLeilaoService = integracaoLeilaoService;
     }
 
-    @GetMapping("/sublime")
-    public LoteEnriquecidoDTO buscarLoteSublime(
+    @GetMapping({"", "/sublime"})
+    public LoteEnriquecidoDTO buscarLote(
             @RequestParam String url
     ) throws IOException {
 

@@ -6,6 +6,23 @@ public record LoteEnriquecidoDTO(
         LoteLeilaoDTO lote,
         DadosDinamicosLeilaoDTO leilao,
         DataJudProcessoDTO processo,
-        boolean processoConfirmado
+        boolean processoConfirmado,
+        String fonte
 ) {
+
+    public LoteEnriquecidoDTO(
+            LoteLeilaoDTO lote,
+            DadosDinamicosLeilaoDTO leilao,
+            DataJudProcessoDTO processo,
+            boolean processoConfirmado
+    ) {
+
+        this(
+                lote,
+                leilao,
+                processo,
+                processoConfirmado,
+                null
+        );
+    }
 }

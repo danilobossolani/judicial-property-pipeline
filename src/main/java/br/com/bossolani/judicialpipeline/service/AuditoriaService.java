@@ -226,6 +226,7 @@ public class AuditoriaService {
 
         return new LoteDescobertaAuditoriaDTO(
                 resultado.getId(),
+                resultado.getFonte(),
                 resultado.getTitulo(),
                 resultado.getCidade(),
                 resultado.getUrlOriginal(),

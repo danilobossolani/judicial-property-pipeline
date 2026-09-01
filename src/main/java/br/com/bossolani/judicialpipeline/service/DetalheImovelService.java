@@ -94,7 +94,7 @@ public class DetalheImovelService {
 
         List<DetalheImovelDTO.FonteResumo> fontes =
                 carregarFontes(
-                        leilaoOptional
+                        imovelId
                 );
 
 
@@ -298,24 +298,17 @@ public class DetalheImovelService {
 
 
     private List<DetalheImovelDTO.FonteResumo> carregarFontes(
-            Optional<Leilao> leilaoOptional
+            Long imovelId
     ) {
 
-        if (leilaoOptional.isEmpty()) {
+        if (imovelId == null) {
             return List.of();
         }
 
-
-        Long leilaoId =
-                leilaoOptional
-                        .get()
-                        .getId();
-
-
         List<Fonte> fontes =
                 fonteRepository
-                        .findByLeilaoIdOrderByDataCapturaDesc(
-                                leilaoId
+                        .findByLeilaoImovelIdOrderByDataCapturaDesc(
+                                imovelId
                         );
 
 
@@ -324,6 +317,9 @@ public class DetalheImovelService {
 
 
         for (Fonte fonte : fontes) {
+
+            Leilao leilao =
+                    fonte.getLeilao();
 
             resultado.add(
                     new DetalheImovelDTO.FonteResumo(
@@ -336,7 +332,31 @@ public class DetalheImovelService {
 
                             fonte.getUrlOrigem(),
 
-                            fonte.getDataCaptura()
+                            fonte.getDataCaptura(),
+
+                            leilao != null
+                                    ? leilao.getValorAvaliacaoFonte()
+                                    : null,
+
+                            leilao != null
+                                    ? leilao.getLanceInicial1Praca()
+                                    : null,
+
+                            leilao != null
+                                    ? leilao.getLanceInicial2Praca()
+                                    : null,
+
+                            leilao != null
+                                    ? leilao.getLanceMinimo()
+                                    : null,
+
+                            leilao != null
+                                    ? leilao.getStatusLeilao()
+                                    : null,
+
+                            leilao != null
+                                    ? leilao.getResultadoLeilao()
+                                    : null
                     )
             );
         }

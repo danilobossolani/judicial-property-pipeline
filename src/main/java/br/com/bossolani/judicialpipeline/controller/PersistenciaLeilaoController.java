@@ -16,8 +16,8 @@ public class PersistenciaLeilaoController {
         this.persistenciaLeilaoService = persistenciaLeilaoService;
     }
 
-    @PostMapping("/sublime")
-    public Fonte coletarESalvarSublime(
+    @PostMapping({"", "/sublime"})
+    public Fonte coletarESalvar(
             @RequestParam String url
     ) throws Exception {
 

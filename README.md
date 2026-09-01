@@ -1,0 +1,62 @@
+# Judicial Pipeline
+
+Aplicação Spring Boot para descobrir, organizar e acompanhar imóveis de leilões judiciais em Sorocaba e Votorantim. O sistema reúne evidências; a classificação comercial continua sendo uma decisão humana.
+
+## Regras permanentes
+
+- somente imóveis em Sorocaba ou Votorantim;
+- ações de despejo são descartadas e não aparecem como oportunidade;
+- “sem lances” nunca vira oportunidade automaticamente;
+- URLs e processos são deduplicados sem apagar fontes divergentes;
+- decisões humanas e histórico são preservados nas atualizações automáticas.
+
+## Fontes atuais
+
+- [Sublime Leilões](https://www.sublimeleiloes.com.br/): descoberta e coleta de lotes;
+- [Mega Leilões](https://www.megaleiloes.com.br/sp/sorocaba): segunda fonte de descoberta e coleta de lotes;
+- DataJud/CNJ: complemento processual, não fonte de lotes.
+
+Cada leiloeiro implementa `LeiloeiroProvider`. Uma falha de fonte ou lote é registrada na Central de Auditoria e não interrompe as demais coletas.
+
+## Requisitos
+
+- Java 21;
+- PostgreSQL;
+- Maven 3.9+ ou Maven Wrapper;
+- Chromium do Playwright para a coleta da Sublime.
+
+Variáveis obrigatórias:
+
+```text
+DB_URL=jdbc:postgresql://localhost:5432/judicial_pipeline
+DB_USER=...
+DB_PASSWORD=...
+DATAJUD_API_KEY=...
+```
+
+Execução local:
+
+```powershell
+./mvnw spring-boot:run
+```
+
+As migrações Flyway são aplicadas na inicialização. O Hibernate apenas valida o esquema.
+
+## Testes e pacote
+
+```powershell
+./mvnw verify
+```
+
+O CI executa o mesmo portão de qualidade em pushes e pull requests.
+O pacote executável é gerado como `target/judicial-pipeline-0.0.1-SNAPSHOT-exec.jar`.
+
+## Docker Compose
+
+1. Copie `.env.example` para `.env` e substitua os valores.
+2. Execute `docker compose up --build -d`.
+3. Consulte `http://localhost:8080/actuator/health`.
+
+O compose é uma preparação reproduzível, não um deploy público. Servidor, domínio, HTTPS, controle de acesso e PostgreSQL de produção ainda precisam ser escolhidos e configurados.
+
+Consulte [OPERATIONS.md](OPERATIONS.md) para backup, restauração, agendamento, logs, atualização e rollback.

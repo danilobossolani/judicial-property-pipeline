@@ -4,8 +4,8 @@ import br.com.bossolani.judicialpipeline.dto.ResultadoDescobertaDTO;
 import br.com.bossolani.judicialpipeline.dto.ResultadoTriagemLoteDTO;
 import br.com.bossolani.judicialpipeline.exception.DescobertaEmAndamentoException;
 import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.LeiloeiroProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
-import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesDiscoveryBrowser;
 import br.com.bossolani.judicialpipeline.model.DecisaoLoteDescoberta;
 import br.com.bossolani.judicialpipeline.model.ExecucaoDescoberta;
 import br.com.bossolani.judicialpipeline.model.Fonte;
@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @Service
 public class DescobertaAutomaticaService {
@@ -37,10 +38,7 @@ public class DescobertaAutomaticaService {
                     DescobertaAutomaticaService.class
             );
 
-    private static final String FONTE =
-            "Sublime Leilões";
-
-    private final SublimeLeiloesDiscoveryBrowser discoveryBrowser;
+    private final List<LeiloeiroProvider> providers;
     private final TriagemLoteService triagemLoteService;
     private final FonteRepository fonteRepository;
     private final PersistenciaLeilaoService persistenciaLeilaoService;
@@ -50,7 +48,7 @@ public class DescobertaAutomaticaService {
             new AtomicBoolean(false);
 
     public DescobertaAutomaticaService(
-            SublimeLeiloesDiscoveryBrowser discoveryBrowser,
+            List<LeiloeiroProvider> providers,
             TriagemLoteService triagemLoteService,
             FonteRepository fonteRepository,
             PersistenciaLeilaoService persistenciaLeilaoService,
@@ -58,38 +56,23 @@ public class DescobertaAutomaticaService {
             ResultadoLoteDescobertaRepository resultadoLoteRepository
     ) {
 
-        this.discoveryBrowser =
-                discoveryBrowser;
-
-        this.triagemLoteService =
-                triagemLoteService;
-
-        this.fonteRepository =
-                fonteRepository;
-
-        this.persistenciaLeilaoService =
-                persistenciaLeilaoService;
-
-        this.execucaoRepository =
-                execucaoRepository;
-
-        this.resultadoLoteRepository =
-                resultadoLoteRepository;
+        this.providers = List.copyOf(providers);
+        this.triagemLoteService = triagemLoteService;
+        this.fonteRepository = fonteRepository;
+        this.persistenciaLeilaoService = persistenciaLeilaoService;
+        this.execucaoRepository = execucaoRepository;
+        this.resultadoLoteRepository = resultadoLoteRepository;
     }
 
     @Scheduled(
-            initialDelayString = "${descoberta.sublime.atraso-inicial-ms:120000}",
-            fixedDelayString = "${descoberta.sublime.intervalo-ms:21600000}"
+            initialDelayString = "${descoberta.atraso-inicial-ms:${descoberta.sublime.atraso-inicial-ms:120000}}",
+            fixedDelayString = "${descoberta.intervalo-ms:${descoberta.sublime.intervalo-ms:21600000}}"
     )
     public void executarAgendamento() {
 
         try {
-
             ResultadoDescobertaDTO resultado =
-                    executarDescoberta(
-                            OrigemExecucaoDescoberta.AGENDADA
-                    );
-
+                    executarDescoberta(OrigemExecucaoDescoberta.AGENDADA);
 
             log.info(
                     "Descoberta automática concluída. Execução={}, status={}, encontrados={}, elegíveis={}, importados={}, duplicados={}, descartados={}, falhas={}.",
@@ -104,7 +87,6 @@ public class DescobertaAutomaticaService {
             );
 
         } catch (DescobertaEmAndamentoException exception) {
-
             log.info(
                     "Agendamento ignorado porque já existe uma descoberta em execução."
             );
@@ -112,7 +94,6 @@ public class DescobertaAutomaticaService {
     }
 
     public ResultadoDescobertaDTO executarDescoberta() {
-
         return executarDescoberta(
                 OrigemExecucaoDescoberta.MANUAL
         );
@@ -122,60 +103,34 @@ public class DescobertaAutomaticaService {
             OrigemExecucaoDescoberta origem
     ) {
 
-        if (!emExecucao.compareAndSet(
-                false,
-                true
-        )) {
-
+        if (!emExecucao.compareAndSet(false, true)) {
             throw new DescobertaEmAndamentoException();
         }
 
-
         ExecucaoDescoberta execucao =
-                iniciarExecucao(
-                        origem
-                );
-
+                iniciarExecucao(origem);
 
         try {
+            execucaoRepository.save(execucao);
 
-            execucaoRepository.save(
-                    execucao
-            );
-
-
-            log.info(
-                    "Iniciando execução {} da descoberta de lotes imobiliários da Sublime em Sorocaba e Votorantim.",
-                    execucao.getId()
-            );
-
-
-            List<LoteDescobertoDTO> lotes =
-                    Optional.ofNullable(
-                            discoveryBrowser.descobrirLotes()
-                    ).orElseGet(
-                            List::of
-                    );
-
-
-            execucao.setTotalEncontrado(
-                    lotes.size()
-            );
-
-
-            execucaoRepository.save(
-                    execucao
-            );
-
-
-            for (LoteDescobertoDTO lote : lotes) {
-
-                processarLote(
-                        execucao,
-                        lote
+            if (providers.isEmpty()) {
+                throw new IllegalStateException(
+                        "Nenhuma fonte de leilão está configurada"
                 );
             }
 
+            log.info(
+                    "Iniciando execução {} da descoberta multifuente de imóveis em Sorocaba e Votorantim. Fontes: {}.",
+                    execucao.getId(),
+                    execucao.getFonte()
+            );
+
+            for (LeiloeiroProvider provider : providers) {
+                descobrirEProcessarFonte(
+                        execucao,
+                        provider
+                );
+            }
 
             execucao.setStatus(
                     execucao.getTotalFalha() > 0
@@ -183,60 +138,88 @@ public class DescobertaAutomaticaService {
                             : StatusExecucaoDescoberta.CONCLUIDA
             );
 
+            finalizarExecucao(execucao);
+            execucaoRepository.save(execucao);
 
-            finalizarExecucao(
-                    execucao
-            );
-
-
-            execucaoRepository.save(
-                    execucao
-            );
-
-
-            return ResultadoDescobertaDTO.de(
-                    execucao
-            );
+            return ResultadoDescobertaDTO.de(execucao);
 
         } catch (Exception exception) {
-
             execucao.setStatus(
                     StatusExecucaoDescoberta.FALHOU
             );
-
             execucao.setErroResumo(
-                    resumirErro(
-                            exception
-                    )
+                    resumirErro(exception)
             );
 
+            finalizarExecucao(execucao);
+            salvarFalhaFatal(execucao, exception);
 
-            finalizarExecucao(
-                    execucao
-            );
-
-
-            salvarFalhaFatal(
-                    execucao,
-                    exception
-            );
-
-
-            return ResultadoDescobertaDTO.de(
-                    execucao
-            );
+            return ResultadoDescobertaDTO.de(execucao);
 
         } finally {
-
-            emExecucao.set(
-                    false
-            );
+            emExecucao.set(false);
         }
     }
 
     public boolean estaEmExecucao() {
-
         return emExecucao.get();
+    }
+
+    private void descobrirEProcessarFonte(
+            ExecucaoDescoberta execucao,
+            LeiloeiroProvider provider
+    ) {
+
+        List<LoteDescobertoDTO> lotes;
+
+        try {
+            lotes = Optional.ofNullable(
+                    provider.descobrirLotes()
+            ).orElseGet(List::of);
+
+        } catch (Exception exception) {
+            registrarFalhaFonte(
+                    execucao,
+                    provider,
+                    exception
+            );
+            return;
+        }
+
+        execucao.setTotalEncontrado(
+                execucao.getTotalEncontrado() + lotes.size()
+        );
+        execucaoRepository.save(execucao);
+
+        for (LoteDescobertoDTO lote : lotes) {
+            processarLote(
+                    execucao,
+                    assegurarFonte(lote, provider.nome())
+            );
+        }
+    }
+
+    private LoteDescobertoDTO assegurarFonte(
+            LoteDescobertoDTO lote,
+            String fonte
+    ) {
+
+        if (lote == null) {
+            return null;
+        }
+
+        if (lote.fonte() != null
+                && !lote.fonte().isBlank()) {
+            return lote;
+        }
+
+        return new LoteDescobertoDTO(
+                lote.url(),
+                lote.titulo(),
+                lote.cidade(),
+                lote.resumo(),
+                fonte
+        );
     }
 
     private ExecucaoDescoberta iniciarExecucao(
@@ -246,25 +229,26 @@ public class DescobertaAutomaticaService {
         ExecucaoDescoberta execucao =
                 new ExecucaoDescoberta();
 
+        String fontes =
+                providers.stream()
+                        .map(LeiloeiroProvider::nome)
+                        .distinct()
+                        .collect(Collectors.joining(" + "));
 
         execucao.setFonte(
-                FONTE
+                fontes.isBlank()
+                        ? "Nenhuma fonte configurada"
+                        : fontes
         );
-
-        execucao.setInicio(
-                LocalDateTime.now()
-        );
-
+        execucao.setInicio(LocalDateTime.now());
         execucao.setOrigem(
                 origem == null
                         ? OrigemExecucaoDescoberta.MANUAL
                         : origem
         );
-
         execucao.setStatus(
                 StatusExecucaoDescoberta.EM_EXECUCAO
         );
-
 
         return execucao;
     }
@@ -275,111 +259,75 @@ public class DescobertaAutomaticaService {
     ) {
 
         ResultadoLoteDescoberta resultado =
-                novoResultado(
-                        execucao,
-                        lote
-                );
-
-
-        ResultadoTriagemLoteDTO triagem =
-                triagemLoteService.avaliar(
-                        lote
-                );
-
-
-        resultado.setUrlNormalizada(
-                triagem.urlNormalizada()
-        );
-
-
-        if (!triagem.elegivel()) {
-
-            resultado.setDecisao(
-                    DecisaoLoteDescoberta.DESCARTADO
-            );
-
-            resultado.setMotivo(
-                    triagem.motivo()
-            );
-
-            execucao.setTotalDescartado(
-                    execucao.getTotalDescartado() + 1
-            );
-
-
-            persistirProgresso(
-                    execucao,
-                    resultado
-            );
-
-
-            return;
-        }
-
-
-        execucao.setTotalElegivel(
-                execucao.getTotalElegivel() + 1
-        );
-
+                novoResultado(execucao, lote);
 
         String urlNormalizada =
-                triagem.urlNormalizada();
-
-
-        Optional<Fonte> fonteExistente =
-                fonteRepository.findByUrlOrigem(
-                        urlNormalizada
-                );
-
-
-        if (fonteExistente.isPresent()) {
-
-            Fonte fonte =
-                    fonteExistente.get();
-
-
-            relacionarResultado(
-                    resultado,
-                    fonte
-            );
-
-            resultado.setDecisao(
-                    DecisaoLoteDescoberta.DUPLICADO
-            );
-
-            resultado.setMotivo(
-                    "URL normalizada já cadastrada como fonte do pipeline."
-            );
-
-            execucao.setTotalDuplicado(
-                    execucao.getTotalDuplicado() + 1
-            );
-
-
-            persistirProgresso(
-                    execucao,
-                    resultado
-            );
-
-
-            return;
-        }
-
+                lote != null
+                        ? lote.url()
+                        : "lote sem URL";
 
         try {
+            ResultadoTriagemLoteDTO triagem =
+                    triagemLoteService.avaliar(lote);
+
+            resultado.setUrlNormalizada(
+                    triagem.urlNormalizada()
+            );
+
+            if (!triagem.elegivel()) {
+                resultado.setDecisao(
+                        DecisaoLoteDescoberta.DESCARTADO
+                );
+                resultado.setMotivo(triagem.motivo());
+                execucao.setTotalDescartado(
+                        execucao.getTotalDescartado() + 1
+                );
+
+                persistirProgresso(execucao, resultado);
+                return;
+            }
+
+            execucao.setTotalElegivel(
+                    execucao.getTotalElegivel() + 1
+            );
+
+            urlNormalizada = triagem.urlNormalizada();
+
+            Optional<Fonte> fonteExistente =
+                    fonteRepository.findByUrlOrigem(
+                            urlNormalizada
+                    );
 
             Fonte fonte =
                     persistenciaLeilaoService.coletarESalvar(
                             urlNormalizada
                     );
 
+            Fonte fonteRelacionada =
+                    fonte != null
+                            ? fonte
+                            : fonteExistente.orElse(null);
 
             Imovel imovel =
                     relacionarResultado(
                             resultado,
-                            fonte
+                            fonteRelacionada
                     );
 
+            if (fonteExistente.isPresent()) {
+                resultado.setDecisao(
+                        DecisaoLoteDescoberta.DUPLICADO
+                );
+                resultado.setMotivo(
+                        "URL já cadastrada; os dados do imóvel e do leilão foram atualizados sem alterar a decisão humana."
+                );
+                execucao.setTotalDuplicado(
+                        execucao.getTotalDuplicado() + 1
+                );
+
+                persistirProgresso(execucao, resultado);
+                return;
+            }
 
             boolean processoDuplicado =
                     imovel != null
@@ -388,102 +336,125 @@ public class DescobertaAutomaticaService {
                             imovel.getId()
                     ) > 1;
 
-
             if (processoDuplicado) {
-
                 resultado.setDecisao(
                         DecisaoLoteDescoberta.DUPLICADO
                 );
-
                 resultado.setMotivo(
                         "Número do processo já cadastrado; a nova fonte foi preservada e vinculada ao imóvel existente."
                 );
-
                 execucao.setTotalDuplicado(
                         execucao.getTotalDuplicado() + 1
                 );
 
             } else {
-
                 resultado.setDecisao(
                         DecisaoLoteDescoberta.IMPORTADO
                 );
-
                 resultado.setMotivo(
                         "Lote elegível importado e relacionado ao imóvel."
                 );
-
                 execucao.setTotalImportado(
                         execucao.getTotalImportado() + 1
                 );
             }
 
         } catch (LoteDescartadoException exception) {
-
             resultado.setDecisao(
                     DecisaoLoteDescoberta.DESCARTADO
             );
-
-            resultado.setMotivo(
-                    exception.getMessage()
-            );
-
+            resultado.setMotivo(exception.getMessage());
             execucao.setTotalElegivel(
                     Math.max(
                             0,
                             execucao.getTotalElegivel() - 1
                     )
             );
-
             execucao.setTotalDescartado(
                     execucao.getTotalDescartado() + 1
             );
 
         } catch (Exception exception) {
-
-            String erro =
-                    resumirErro(
-                            exception
-                    );
-
+            String erro = resumirErro(exception);
 
             resultado.setDecisao(
                     DecisaoLoteDescoberta.FALHA
             );
-
             resultado.setMotivo(
                     "Falha ao coletar ou persistir o lote: " + erro
             );
-
             execucao.setTotalFalha(
                     execucao.getTotalFalha() + 1
             );
 
-
-            if (execucao.getErroResumo() == null) {
-
-                execucao.setErroResumo(
-                        limitarTexto(
-                                "Falha em " + urlNormalizada + ": " + erro,
-                                1000
-                        )
-                );
-            }
-
+            registrarPrimeiroErro(
+                    execucao,
+                    "Falha em " + urlNormalizada + ": " + erro
+            );
 
             log.error(
-                    "Falha ao importar lote descoberto '{}': {}",
+                    "Falha ao importar lote descoberto '{}' da fonte '{}': {}",
                     urlNormalizada,
+                    resultado.getFonte(),
                     exception.getMessage(),
                     exception
             );
         }
 
+        persistirProgresso(execucao, resultado);
+    }
 
-        persistirProgresso(
-                execucao,
-                resultado
+    private void registrarFalhaFonte(
+            ExecucaoDescoberta execucao,
+            LeiloeiroProvider provider,
+            Exception exception
+    ) {
+
+        String erro = resumirErro(exception);
+
+        ResultadoLoteDescoberta resultado =
+                new ResultadoLoteDescoberta();
+
+        resultado.setExecucao(execucao);
+        resultado.setFonte(provider.nome());
+        resultado.setTitulo(
+                "Falha ao consultar " + provider.nome()
         );
+        resultado.setDecisao(
+                DecisaoLoteDescoberta.FALHA
+        );
+        resultado.setMotivo(
+                "A fonte não pôde ser consultada nesta execução: " + erro
+        );
+
+        execucao.setTotalFalha(
+                execucao.getTotalFalha() + 1
+        );
+        registrarPrimeiroErro(
+                execucao,
+                "Falha na fonte " + provider.nome() + ": " + erro
+        );
+
+        persistirProgresso(execucao, resultado);
+
+        log.error(
+                "Falha ao descobrir lotes na fonte '{}'; as demais fontes continuarão: {}",
+                provider.nome(),
+                exception.getMessage(),
+                exception
+        );
+    }
+
+    private void registrarPrimeiroErro(
+            ExecucaoDescoberta execucao,
+            String erro
+    ) {
+
+        if (execucao.getErroResumo() == null) {
+            execucao.setErroResumo(
+                    limitarTexto(erro, 1000)
+            );
+        }
     }
 
     private ResultadoLoteDescoberta novoResultado(
@@ -494,27 +465,14 @@ public class DescobertaAutomaticaService {
         ResultadoLoteDescoberta resultado =
                 new ResultadoLoteDescoberta();
 
-
-        resultado.setExecucao(
-                execucao
-        );
-
+        resultado.setExecucao(execucao);
 
         if (lote != null) {
-
-            resultado.setTitulo(
-                    lote.titulo()
-            );
-
-            resultado.setCidade(
-                    lote.cidade()
-            );
-
-            resultado.setUrlOriginal(
-                    lote.url()
-            );
+            resultado.setFonte(lote.fonte());
+            resultado.setTitulo(lote.titulo());
+            resultado.setCidade(lote.cidade());
+            resultado.setUrlOriginal(lote.url());
         }
-
 
         return resultado;
     }
@@ -528,12 +486,10 @@ public class DescobertaAutomaticaService {
                 fonte != null
                         ? fonte.getLeilao()
                         : null;
-
         Imovel imovel =
                 leilao != null
                         ? leilao.getImovel()
                         : null;
-
         Processo processo =
                 imovel != null
                         ? imovel.getProcesso()
@@ -541,17 +497,12 @@ public class DescobertaAutomaticaService {
                         ? fonte.getProcesso()
                         : null;
 
-
-        resultado.setImovel(
-                imovel
-        );
-
+        resultado.setImovel(imovel);
         resultado.setNumeroProcesso(
                 processo != null
                         ? processo.getNumeroProcesso()
                         : null
         );
-
 
         return imovel;
     }
@@ -561,27 +512,17 @@ public class DescobertaAutomaticaService {
             ResultadoLoteDescoberta resultado
     ) {
 
-        resultadoLoteRepository.save(
-                resultado
-        );
-
-        execucaoRepository.save(
-                execucao
-        );
+        resultadoLoteRepository.save(resultado);
+        execucaoRepository.save(execucao);
     }
 
     private void finalizarExecucao(
             ExecucaoDescoberta execucao
     ) {
 
-        LocalDateTime termino =
-                LocalDateTime.now();
+        LocalDateTime termino = LocalDateTime.now();
 
-
-        execucao.setTermino(
-                termino
-        );
-
+        execucao.setTermino(termino);
         execucao.setDuracaoMs(
                 Math.max(
                         0,
@@ -599,19 +540,14 @@ public class DescobertaAutomaticaService {
     ) {
 
         try {
-
-            execucaoRepository.save(
-                    execucao
-            );
+            execucaoRepository.save(execucao);
 
         } catch (Exception exception) {
-
             log.error(
                     "Não foi possível persistir o encerramento da execução de descoberta após a falha fatal.",
                     exception
             );
         }
-
 
         log.error(
                 "A execução {} da descoberta falhou antes de concluir os lotes: {}",
@@ -625,30 +561,16 @@ public class DescobertaAutomaticaService {
             Exception exception
     ) {
 
-        String mensagem =
-                exception.getMessage();
+        String mensagem = exception.getMessage();
 
-
-        if (mensagem == null
-                || mensagem.isBlank()) {
-
-            mensagem =
-                    exception.getClass()
-                            .getSimpleName();
+        if (mensagem == null || mensagem.isBlank()) {
+            mensagem = exception.getClass().getSimpleName();
         }
 
-
         String resumo =
-                mensagem.replaceAll(
-                        "\\s+",
-                        " "
-                ).trim();
+                mensagem.replaceAll("\\s+", " ").trim();
 
-
-        return limitarTexto(
-                resumo,
-                900
-        );
+        return limitarTexto(resumo, 900);
     }
 
     private String limitarTexto(
@@ -657,10 +579,7 @@ public class DescobertaAutomaticaService {
     ) {
 
         return valor.length() > limite
-                ? valor.substring(
-                0,
-                limite
-        )
+                ? valor.substring(0, limite)
                 : valor;
     }
 }

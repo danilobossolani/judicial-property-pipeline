@@ -32,6 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const filtroDecisaoDescoberta =
         document.getElementById("filtroDecisaoDescoberta");
 
+    const filtroFonteDescoberta =
+        document.getElementById("filtroFonteDescoberta");
+
     const botaoLimparDescoberta =
         document.getElementById("botaoLimparDescoberta");
 
@@ -252,7 +255,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function filtrarLotes() {
 
         if (!filtroBuscaDescoberta
-            || !filtroDecisaoDescoberta) {
+            || !filtroDecisaoDescoberta
+            || !filtroFonteDescoberta) {
 
             return;
         }
@@ -266,10 +270,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const decisao =
             filtroDecisaoDescoberta.value;
 
+        const fonte =
+            normalizarTexto(
+                filtroFonteDescoberta.value
+            );
+
         const filtroAtivo =
             Boolean(
                 busca
                 || decisao
+                || fonte
             );
 
 
@@ -284,7 +294,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         lote.dataset.conteudo
                     ).includes(busca))
                 && (!decisao
-                    || lote.dataset.decisao === decisao);
+                    || lote.dataset.decisao === decisao)
+                && (!fonte
+                    || normalizarTexto(lote.dataset.fonte) === fonte);
 
 
             lote.classList.toggle(
@@ -350,7 +362,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function limparLotes() {
 
         if (!filtroBuscaDescoberta
-            || !filtroDecisaoDescoberta) {
+            || !filtroDecisaoDescoberta
+            || !filtroFonteDescoberta) {
 
             return;
         }
@@ -358,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         filtroBuscaDescoberta.value = "";
         filtroDecisaoDescoberta.value = "";
+        filtroFonteDescoberta.value = "";
 
         filtrarLotes();
         filtroBuscaDescoberta.focus();
@@ -416,7 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         atualizarEstadoExecucao(
             true,
-            "Consultando a Sublime Leilões. O histórico será atualizado ao concluir.",
+            "Consultando as fontes oficiais configuradas. O histórico será atualizado ao concluir.",
             ""
         );
 
@@ -425,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const resposta =
                 await fetch(
-                    "/api/descobertas/sublime",
+                    "/api/descobertas",
                     {
                         method: "POST",
                         headers: {
@@ -468,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 atualizarEstadoExecucao(
                     false,
-                    `Execução #${corpo.execucaoId} concluída: ${corpo.importados} importado(s), ${corpo.duplicados} duplicado(s), ${corpo.descartados} descartado(s) e ${corpo.falhas} falha(s).`,
+                    `Execução #${corpo.execucaoId} concluída: ${corpo.importados} importado(s), ${corpo.duplicados} já cadastrado(s) e atualizado(s), ${corpo.descartados} descartado(s) e ${corpo.falhas} falha(s).`,
                     "sucesso"
                 );
             }
@@ -532,6 +546,11 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     filtroDecisaoDescoberta?.addEventListener(
+        "change",
+        filtrarLotes
+    );
+
+    filtroFonteDescoberta?.addEventListener(
         "change",
         filtrarLotes
     );

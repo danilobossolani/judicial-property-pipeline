@@ -19,17 +19,70 @@ class HealthEndpointTest {
     private int port;
 
     @Test
-    void deveExporSomenteEstadoBasicoDeSaude() throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:" + port + "/actuator/health"))
-                .GET()
-                .build();
+    void deveExporSomenteEstadoBasicoDeSaude()
+            throws IOException, InterruptedException {
 
-        HttpResponse<String> response = HttpClient.newHttpClient()
-                .send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response =
+                requisitar("/actuator/health");
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("\"status\":\"UP\"");
-        assertThat(response.body()).doesNotContain("db", "database", "diskSpace", "components");
+        assertThat(response.body()).doesNotContain(
+                "db",
+                "database",
+                "diskSpace",
+                "components"
+        );
+    }
+
+    @Test
+    void deveRenderizarPainelResponsivoEmEstadoVazio()
+            throws IOException, InterruptedException {
+
+        HttpResponse<String> response =
+                requisitar("/");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("Pipeline Judicial")
+                .contains("Oportunidades aprovadas")
+                .contains("width=device-width");
+    }
+
+    @Test
+    void deveRenderizarCentralDeAuditoriaComDescobertaMultifuente()
+            throws IOException, InterruptedException {
+
+        HttpResponse<String> response =
+                requisitar("/auditoria");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("Central de auditoria")
+                .contains("Descoberta automática")
+                .contains("Nenhuma descoberta foi executada");
+    }
+
+    private HttpResponse<String> requisitar(
+            String caminho
+    ) throws IOException, InterruptedException {
+
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(
+                                URI.create(
+                                        "http://localhost:"
+                                                + port
+                                                + caminho
+                                )
+                        )
+                        .GET()
+                        .build();
+
+        return HttpClient.newHttpClient()
+                .send(
+                        request,
+                        HttpResponse.BodyHandlers.ofString()
+                );
     }
 }

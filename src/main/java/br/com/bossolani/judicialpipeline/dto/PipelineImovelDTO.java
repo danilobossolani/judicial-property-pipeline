@@ -16,6 +16,8 @@ public record PipelineImovelDTO(
         String cidade,
         BigDecimal valorAvaliacao,
         String numeroProcesso,
+        BigDecimal lanceInicial1Praca,
+        BigDecimal lanceInicial2Praca,
         BigDecimal lanceMinimo,
         Integer percentualDesconto,
         StatusLeilao statusLeilao,

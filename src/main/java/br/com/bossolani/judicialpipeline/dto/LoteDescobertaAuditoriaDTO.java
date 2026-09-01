@@ -4,6 +4,7 @@ import br.com.bossolani.judicialpipeline.model.DecisaoLoteDescoberta;
 
 public record LoteDescobertaAuditoriaDTO(
         Long id,
+        String fonte,
         String titulo,
         String cidade,
         String urlOriginal,
@@ -14,8 +15,14 @@ public record LoteDescobertaAuditoriaDTO(
         Long imovelId
 ) {
 
-    public String tituloFormatado() {
+    public String fonteFormatada() {
+        return valorOuPadrao(
+                fonte,
+                "Fonte não identificada"
+        );
+    }
 
+    public String tituloFormatado() {
         return valorOuPadrao(
                 titulo,
                 "Lote sem título"
@@ -23,7 +30,6 @@ public record LoteDescobertaAuditoriaDTO(
     }
 
     public String cidadeFormatada() {
-
         return valorOuPadrao(
                 cidade,
                 "Cidade não informada"
@@ -34,22 +40,15 @@ public record LoteDescobertaAuditoriaDTO(
 
         if (numeroProcesso == null
                 || numeroProcesso.isBlank()) {
-
             return "Processo não identificado";
         }
 
-
         String digitos =
-                numeroProcesso.replaceAll(
-                        "\\D",
-                        ""
-                );
-
+                numeroProcesso.replaceAll("\\D", "");
 
         if (digitos.length() != 20) {
             return numeroProcesso;
         }
-
 
         return digitos.substring(0, 7)
                 + "-" + digitos.substring(7, 9)
@@ -65,30 +64,25 @@ public record LoteDescobertaAuditoriaDTO(
             return "Não classificado";
         }
 
-
         return switch (decisao) {
             case IMPORTADO -> "Importado";
-            case DUPLICADO -> "Duplicado";
+            case DUPLICADO -> "Já cadastrado / atualizado";
             case DESCARTADO -> "Descartado";
             case FALHA -> "Falha";
         };
     }
 
     public String decisaoCss() {
-
         return decisao == null
                 ? "nao-classificado"
-                : decisao.name()
-                .toLowerCase();
+                : decisao.name().toLowerCase();
     }
 
     private String valorOuPadrao(
             String valor,
             String padrao
     ) {
-
-        return valor == null
-                || valor.isBlank()
+        return valor == null || valor.isBlank()
                 ? padrao
                 : valor;
     }

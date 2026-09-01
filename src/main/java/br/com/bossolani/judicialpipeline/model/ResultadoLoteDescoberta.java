@@ -23,6 +23,9 @@ public class ResultadoLoteDescoberta {
     @JoinColumn(name = "execucao_id", nullable = false)
     private ExecucaoDescoberta execucao;
 
+    @Column(length = 120)
+    private String fonte;
+
     @Column(length = 500)
     private String titulo;
 
@@ -62,6 +65,14 @@ public class ResultadoLoteDescoberta {
 
     public void setExecucao(ExecucaoDescoberta execucao) {
         this.execucao = execucao;
+    }
+
+    public String getFonte() {
+        return fonte;
+    }
+
+    public void setFonte(String fonte) {
+        this.fonte = fonte;
     }
 
     public String getTitulo() {

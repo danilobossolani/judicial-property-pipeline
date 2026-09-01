@@ -5,13 +5,19 @@ import br.com.bossolani.judicialpipeline.model.Acompanhamento;
 import br.com.bossolani.judicialpipeline.model.Fonte;
 import br.com.bossolani.judicialpipeline.model.Imovel;
 import br.com.bossolani.judicialpipeline.model.Leilao;
+import br.com.bossolani.judicialpipeline.model.Processo;
 import br.com.bossolani.judicialpipeline.repository.AcompanhamentoRepository;
 import br.com.bossolani.judicialpipeline.repository.FonteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class PainelService {
@@ -30,10 +36,24 @@ public class PainelService {
     @Transactional(readOnly = true)
     public List<PipelineImovelDTO> listarImoveis() {
 
-        List<Fonte> fontes = fonteRepository.findAll();
+        List<Fonte> fontes =
+                new ArrayList<>(
+                        fonteRepository.findAll()
+                );
 
-        List<PipelineImovelDTO> imoveisPainel =
-                new ArrayList<>();
+
+        fontes.sort(
+                Comparator.comparing(
+                        Fonte::getDataCaptura,
+                        Comparator.nullsLast(
+                                Comparator.reverseOrder()
+                        )
+                )
+        );
+
+
+        Map<Long, PipelineImovelDTO> imoveisPorId =
+                new LinkedHashMap<>();
 
         for (Fonte fonte : fontes) {
 
@@ -46,6 +66,13 @@ public class PainelService {
             Imovel imovel = leilao.getImovel();
 
             if (imovel == null) {
+                continue;
+            }
+
+
+            if (processoDeDespejo(
+                    imovel.getProcesso()
+            )) {
                 continue;
             }
 
@@ -62,12 +89,16 @@ public class PainelService {
                             imovel.getNumero(),
                             imovel.getBairro(),
                             imovel.getCidade(),
-                            imovel.getValorAvaliacao(),
+                            leilao.getValorAvaliacaoFonte() != null
+                                    ? leilao.getValorAvaliacaoFonte()
+                                    : imovel.getValorAvaliacao(),
 
                             imovel.getProcesso() != null
                                     ? imovel.getProcesso().getNumeroProcesso()
                                     : null,
 
+                            leilao.getLanceInicial1Praca(),
+                            leilao.getLanceInicial2Praca(),
                             leilao.getLanceMinimo(),
                             leilao.getPercentualDescontoFonte(),
                             leilao.getStatusLeilao(),
@@ -81,9 +112,44 @@ public class PainelService {
                             fonte.getUrlOrigem()
                     );
 
-            imoveisPainel.add(dto);
+            imoveisPorId.putIfAbsent(
+                    imovel.getId(),
+                    dto
+            );
         }
 
-        return imoveisPainel;
+
+        return new ArrayList<>(
+                imoveisPorId.values()
+        );
+    }
+
+    private boolean processoDeDespejo(
+            Processo processo
+    ) {
+
+        if (processo == null
+                || processo.getClasse() == null) {
+            return false;
+        }
+
+
+        String classeNormalizada =
+                Normalizer.normalize(
+                                processo.getClasse(),
+                                Normalizer.Form.NFD
+                        )
+                        .replaceAll(
+                                "\\p{M}",
+                                ""
+                        )
+                        .toLowerCase(
+                                Locale.ROOT
+                        );
+
+
+        return classeNormalizada.contains(
+                "despejo"
+        );
     }
 }

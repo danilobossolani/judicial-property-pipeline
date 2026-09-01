@@ -35,6 +35,12 @@ public class Leilao {
     )
     private BigDecimal lanceInicial2Praca;
 
+    @Column(
+            precision = 15,
+            scale = 2
+    )
+    private BigDecimal valorAvaliacaoFonte;
+
     // Desconto informado pelo próprio leiloeiro
     private Integer percentualDescontoFonte;
 
@@ -122,6 +128,14 @@ public class Leilao {
 
     public void setLanceInicial2Praca(BigDecimal lanceInicial2Praca) {
         this.lanceInicial2Praca = lanceInicial2Praca;
+    }
+
+    public BigDecimal getValorAvaliacaoFonte() {
+        return valorAvaliacaoFonte;
+    }
+
+    public void setValorAvaliacaoFonte(BigDecimal valorAvaliacaoFonte) {
+        this.valorAvaliacaoFonte = valorAvaliacaoFonte;
     }
 
     public Integer getPercentualDescontoFonte() {

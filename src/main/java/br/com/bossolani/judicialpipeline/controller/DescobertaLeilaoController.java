@@ -21,8 +21,8 @@ public class DescobertaLeilaoController {
                 descobertaAutomaticaService;
     }
 
-    @PostMapping("/sublime")
-    public ResultadoDescobertaDTO descobrirLotesSublime() {
+    @PostMapping({"", "/sublime"})
+    public ResultadoDescobertaDTO descobrirLotes() {
 
         return descobertaAutomaticaService
                 .executarDescoberta(

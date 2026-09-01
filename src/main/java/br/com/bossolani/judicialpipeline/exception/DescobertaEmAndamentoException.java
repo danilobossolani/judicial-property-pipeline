@@ -6,7 +6,7 @@ public class DescobertaEmAndamentoException
     public DescobertaEmAndamentoException() {
 
         super(
-                "Já existe uma descoberta da Sublime Leilões em execução. Aguarde a conclusão antes de iniciar outra."
+                "Já existe uma descoberta multifuente em execução. Aguarde a conclusão antes de iniciar outra."
         );
     }
 }

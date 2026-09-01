@@ -101,7 +101,7 @@
     <div class="row g-3 mb-4">
 
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-3">
 
             <div class="card stat-card">
 
@@ -126,7 +126,7 @@
         </div>
 
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-3">
 
             <div class="card stat-card">
 
@@ -151,7 +151,7 @@
         </div>
 
 
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-6 col-xl-3">
 
             <div class="card stat-card">
 
@@ -165,6 +165,31 @@
                             id="totalSemLances"
                             class="display-6 fw-semibold"
                             th:text="${totalSemLances}"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12 col-md-6 col-xl-3">
+
+            <div class="card stat-card">
+
+                <div class="card-body">
+
+                    <div class="label">
+                        Oportunidades aprovadas
+                    </div>
+
+                    <div
+                            id="totalOportunidades"
+                            class="display-6 fw-semibold"
+                            th:text="${totalOportunidades}"
                     >
                         0
                     </div>
@@ -433,7 +458,7 @@
 
                         <!-- PROCESSO -->
 
-                        <div class="col-12 col-md-6 col-xl-3">
+                        <div class="col-12 col-md-6 col-xl-2">
 
                             <div class="label">
                                 Processo
@@ -477,16 +502,16 @@
 
                         <!-- LANCE MÍNIMO -->
 
-                        <div class="col-6 col-md-3 col-xl-2">
+                        <div class="col-12 col-md-6 col-xl-3">
 
                             <div class="label">
-                                Lance mínimo
+                                Valores do leilão
                             </div>
 
                             <div
                                     class="valor mt-1"
                                     th:text="${imovel.lanceMinimo != null
-                                        ? 'R$ ' + #numbers.formatDecimal(
+                                        ? 'Atual: R$ ' + #numbers.formatDecimal(
                                             imovel.lanceMinimo,
                                             1,
                                             'POINT',
@@ -498,14 +523,37 @@
                                 R$ 0,00
                             </div>
 
-                            <small
-                                    class="text-secondary"
-                                    th:if="${imovel.percentualDesconto != null}"
-                                    th:text="${imovel.percentualDesconto
-                                        + '% informado pela fonte'}"
-                            >
-                                40% informado pela fonte
-                            </small>
+                            <div class="small text-secondary mt-1">
+
+                                <div
+                                        th:if="${imovel.lanceInicial1Praca != null}"
+                                        th:text="${'1ª praça: R$ ' + #numbers.formatDecimal(
+                                            imovel.lanceInicial1Praca,
+                                            1,
+                                            'POINT',
+                                            2,
+                                            'COMMA'
+                                        )}"
+                                >
+                                    1ª praça: R$ 0,00
+                                </div>
+
+                                <div
+                                        th:if="${imovel.lanceInicial2Praca != null}"
+                                        th:text="${'2ª praça: R$ ' + #numbers.formatDecimal(
+                                            imovel.lanceInicial2Praca,
+                                            1,
+                                            'POINT',
+                                            2,
+                                            'COMMA'
+                                        ) + (imovel.percentualDesconto != null
+                                            ? ' (' + imovel.percentualDesconto + '%)'
+                                            : '')}"
+                                >
+                                    2ª praça: R$ 0,00
+                                </div>
+
+                            </div>
 
                         </div>
 

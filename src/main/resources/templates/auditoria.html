@@ -135,7 +135,7 @@
                 </h2>
 
                 <p class="text-secondary mb-0">
-                    Execuções da busca de imóveis da Sublime Leilões em Sorocaba e Votorantim.
+                    Execuções da busca de imóveis judiciais nas fontes habilitadas em Sorocaba e Votorantim.
                 </p>
 
             </div>
@@ -255,7 +255,7 @@
                     </div>
 
                     <div>
-                        <span>Duplicados</span>
+                        <span>Já cadastrados / atualizados</span>
                         <strong th:text="${central.descoberta.ultimaExecucao.totalDuplicado}">0</strong>
                     </div>
 
@@ -311,7 +311,7 @@
             <div class="col-6 col-lg">
                 <div class="card indicador-descoberta h-100 indicador-duplicado">
                     <div class="card-body p-3">
-                        <div class="campo-label">Duplicados</div>
+                        <div class="campo-label">Atualizados</div>
                         <strong th:text="${central.descoberta.totalDuplicados}">0</strong>
                     </div>
                 </div>
@@ -382,9 +382,9 @@
 
                     <div class="row g-3 align-items-end">
 
-                        <div class="col-12 col-md-7">
+                        <div class="col-12 col-md-5">
                             <label for="filtroBuscaDescoberta" class="form-label campo-label">
-                                Título, cidade, processo, URL ou motivo
+                                Fonte, título, cidade, processo, URL ou motivo
                             </label>
                             <input
                                     id="filtroBuscaDescoberta"
@@ -395,20 +395,31 @@
                             >
                         </div>
 
-                        <div class="col-8 col-md-3">
+                        <div class="col-6 col-md-3">
+                            <label for="filtroFonteDescoberta" class="form-label campo-label">
+                                Fonte
+                            </label>
+                            <select id="filtroFonteDescoberta" class="form-select">
+                                <option value="">Todas</option>
+                                <option value="sublime leiloes">Sublime Leilões</option>
+                                <option value="mega leiloes">Mega Leilões</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6 col-md-2">
                             <label for="filtroDecisaoDescoberta" class="form-label campo-label">
                                 Decisão
                             </label>
                             <select id="filtroDecisaoDescoberta" class="form-select">
                                 <option value="">Todas</option>
                                 <option value="importado">Importado</option>
-                                <option value="duplicado">Duplicado</option>
+                                <option value="duplicado">Já cadastrado / atualizado</option>
                                 <option value="descartado">Descartado</option>
                                 <option value="falha">Falha</option>
                             </select>
                         </div>
 
-                        <div class="col-4 col-md-2 d-grid">
+                        <div class="col-12 col-md-2 d-grid">
                             <button id="botaoLimparDescoberta"
                                     type="button"
                                     class="btn btn-outline-secondary">
@@ -494,7 +505,8 @@
                                     th:each="lote : ${execucao.lotes}"
                                     th:attr="
                                         data-decisao=${lote.decisaoCss()},
-                                        data-conteudo=${lote.tituloFormatado() + ' ' + lote.cidadeFormatada() + ' ' + lote.numeroProcessoFormatado() + ' ' + (lote.urlOriginal != null ? lote.urlOriginal : '') + ' ' + (lote.urlNormalizada != null ? lote.urlNormalizada : '') + ' ' + lote.motivo}
+                                        data-fonte=${lote.fonteFormatada()},
+                                        data-conteudo=${lote.fonteFormatada() + ' ' + lote.tituloFormatado() + ' ' + lote.cidadeFormatada() + ' ' + lote.numeroProcessoFormatado() + ' ' + (lote.urlOriginal != null ? lote.urlOriginal : '') + ' ' + (lote.urlNormalizada != null ? lote.urlNormalizada : '') + ' ' + lote.motivo}
                                     "
                             >
 
@@ -502,7 +514,8 @@
 
                                     <div class="min-width-0">
                                         <h4 class="h6 mb-1" th:text="${lote.tituloFormatado()}">Título do lote</h4>
-                                        <div class="small text-secondary" th:text="${lote.cidadeFormatada()}">Cidade</div>
+                                        <div class="small text-secondary"
+                                             th:text="${lote.fonteFormatada() + ' · ' + lote.cidadeFormatada()}">Fonte · Cidade</div>
                                     </div>
 
                                     <span class="badge decisao-lote"

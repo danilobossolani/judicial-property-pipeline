@@ -4,6 +4,23 @@ public record LoteDescobertoDTO(
         String url,
         String titulo,
         String cidade,
-        String resumo
+        String resumo,
+        String fonte
 ) {
+
+    public LoteDescobertoDTO(
+            String url,
+            String titulo,
+            String cidade,
+            String resumo
+    ) {
+
+        this(
+                url,
+                titulo,
+                cidade,
+                resumo,
+                null
+        );
+    }
 }

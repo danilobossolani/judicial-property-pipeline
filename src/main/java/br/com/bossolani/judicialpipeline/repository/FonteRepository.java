@@ -24,4 +24,8 @@ public interface FonteRepository
     List<Fonte> findByLeilaoIdOrderByDataCapturaDesc(
             Long leilaoId
     );
+
+    List<Fonte> findByLeilaoImovelIdOrderByDataCapturaDesc(
+            Long imovelId
+    );
 }

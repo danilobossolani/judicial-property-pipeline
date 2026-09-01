@@ -37,6 +37,49 @@ public record DetalheImovelDTO(
     private static final DateTimeFormatter FORMATO_DATAJUD_DATA =
             DateTimeFormatter.ofPattern("yyyyMMdd");
 
+    public boolean possuiMultiplasFontes() {
+        return fontes != null
+                && fontes.size() > 1;
+    }
+
+    public boolean possuiDivergenciaEntreFontes() {
+
+        if (!possuiMultiplasFontes()) {
+            return false;
+        }
+
+        return fontes.stream()
+                .map(FonteResumo::valorAvaliacao)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count() > 1
+                || fontes.stream()
+                .map(FonteResumo::lanceInicial1Praca)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count() > 1
+                || fontes.stream()
+                .map(FonteResumo::lanceInicial2Praca)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count() > 1
+                || fontes.stream()
+                .map(FonteResumo::lanceMinimo)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count() > 1
+                || fontes.stream()
+                .map(FonteResumo::statusLeilao)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count() > 1
+                || fontes.stream()
+                .map(FonteResumo::resultadoLeilao)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count() > 1;
+    }
+
 
     public record ImovelResumo(
 
@@ -317,7 +360,19 @@ public record DetalheImovelDTO(
 
             String urlOrigem,
 
-            LocalDateTime dataCaptura
+            LocalDateTime dataCaptura,
+
+            BigDecimal valorAvaliacao,
+
+            BigDecimal lanceInicial1Praca,
+
+            BigDecimal lanceInicial2Praca,
+
+            BigDecimal lanceMinimo,
+
+            StatusLeilao statusLeilao,
+
+            ResultadoLeilao resultadoLeilao
 
     ) {
 
@@ -337,6 +392,37 @@ public record DetalheImovelDTO(
 
         public String dataCapturaFormatada() {
             return formatarData(dataCaptura);
+        }
+
+        public String statusLeilaoFormatado() {
+
+            if (statusLeilao == null) {
+                return "Desconhecido";
+            }
+
+            return switch (statusLeilao) {
+                case AGENDADO -> "Agendado";
+                case EM_ANDAMENTO -> "Em andamento";
+                case ENCERRADO -> "Encerrado";
+                case SUSPENSO -> "Suspenso";
+                case CANCELADO -> "Cancelado";
+                case DESCONHECIDO -> "Desconhecido";
+            };
+        }
+
+        public String resultadoLeilaoFormatado() {
+
+            if (resultadoLeilao == null) {
+                return "Desconhecido";
+            }
+
+            return switch (resultadoLeilao) {
+                case COM_LANCES -> "Com lances";
+                case SEM_LANCES -> "Sem lances";
+                case ARREMATADO -> "Arrematado";
+                case DESERTO -> "Deserto";
+                case DESCONHECIDO -> "Desconhecido";
+            };
         }
     }
 

@@ -10,8 +10,14 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
 
 management:
   endpoints:
@@ -29,6 +35,11 @@ datajud:
   api-key: ${DATAJUD_API_KEY}
 
 descoberta:
-  sublime:
-    atraso-inicial-ms: 120000
-    intervalo-ms: 21600000
+  atraso-inicial-ms: 120000
+  intervalo-ms: 21600000
+
+integracao:
+  fontes:
+    timeout-ms: 15000
+    max-tentativas: 3
+    espera-inicial-ms: 400
