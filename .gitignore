@@ -44,3 +44,7 @@ logs/
 captures/
 downloads/
 exports/
+
+### Instalador personalizado
+dist/
+installer/installer-settings.env

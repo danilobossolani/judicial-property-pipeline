@@ -1,0 +1,42 @@
+JUDICIAL PIPELINE - GUIA PARA O CLIENTE
+
+PRIMEIRA INSTALACAO
+
+1. Baixe o arquivo Judicial-Pipeline-Instalador.exe.
+2. Clique duas vezes no arquivo.
+3. Quando o Windows perguntar, permita que o instalador faça alterações.
+4. Aguarde. A primeira instalação baixa os componentes necessários e pode
+   demorar conforme a velocidade da internet.
+5. Se aparecer a orientação para reiniciar, reinicie o computador.
+6. Depois da reinicialização, clique no atalho Judicial Pipeline que estará na
+   área de trabalho.
+
+USO NORMAL
+
+- Clique duas vezes no atalho Judicial Pipeline.
+- Aguarde o navegador abrir.
+- Não é necessário informar usuário ou senha.
+- O endereço local é http://localhost:8080.
+
+SE O WINDOWS MOSTRAR UMA PROTECAO
+
+O instalador é personalizado e ainda não possui certificado comercial de
+assinatura. Caso o Windows SmartScreen mostre um aviso, confira se o nome do
+arquivo é Judicial-Pipeline-Instalador.exe e use "Mais informações" e
+"Executar assim mesmo". Não faça isso com outros arquivos desconhecidos.
+
+SE O SISTEMA NAO ABRIR
+
+1. Aguarde dois minutos e clique novamente no atalho Judicial Pipeline.
+2. Confirme que o Docker Desktop está aberto e mostra o mecanismo em execução.
+3. Execute VER-STATUS.bat dentro da pasta
+   C:\ProgramData\JudicialPipeline e envie a tela ao responsável técnico.
+4. Se solicitado pelo responsável técnico, envie também os arquivos
+   instalacao.log e preparacao-docker.log dessa mesma pasta.
+
+DADOS E ATUALIZACOES
+
+- Os dados ficam neste computador.
+- Não apague a pasta C:\ProgramData\JudicialPipeline.
+- Não use a opção de remover volumes/dados dentro do Docker.
+- Mantenha uma cópia de segurança conforme a orientação do responsável técnico.

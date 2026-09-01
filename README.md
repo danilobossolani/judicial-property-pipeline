@@ -77,6 +77,12 @@ No Windows, o pacote local também fornece `INICIAR.bat`, `PARAR.bat` e
 [ENTREGA-LOCAL.md](ENTREGA-LOCAL.md). O arquivo `.env` com credenciais nunca
 deve ser incluído no ZIP ou enviado por mensagens.
 
+Para um cliente leigo, existe também um instalador personalizado que baixa os
+componentes, configura o ambiente sem login e cria o atalho do programa. O
+processo de build e suas limitações de segurança estão documentados em
+[installer/README.md](installer/README.md). O instalador limita a porta ao
+próprio computador (`127.0.0.1`) porque o acesso local não exige senha.
+
 Em produção, `/actuator/health` permanece público e retorna apenas `UP` ou
 `DOWN`. `/actuator/prometheus` exige autenticação do operador e publica
 somente métricas técnicas e contadores agregados, sem URLs, processos ou dados
