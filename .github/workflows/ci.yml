@@ -60,6 +60,31 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
+      - name: Validate Windows preparation and official WSL metadata
+        shell: pwsh
+        run: |
+          $scriptPath = Resolve-Path "Preparar-Windows.ps1"
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            $scriptPath,
+            [ref]$null,
+            [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            throw ($parseErrors | Out-String)
+          }
+
+          $content = Get-Content -LiteralPath $scriptPath -Raw
+          if ($content -notmatch 'github\.com/microsoft/WSL/releases/download/') {
+            throw "A origem oficial do reparo WSL não foi encontrada."
+          }
+          if ($content -notmatch '\$officialWslMsiSha256 = "[A-F0-9]{64}"') {
+            throw "O SHA-256 fixado do reparo WSL é inválido."
+          }
+          if ($content -notmatch '\$officialWslMsiSize = [1-9][0-9]{8,}L') {
+            throw "O tamanho fixado do reparo WSL é inválido."
+          }
+
       - name: Build installer with CI-only test key
         shell: pwsh
         run: ./installer/build-installer.ps1 -DataJudApiKey "ci-structural-test-key"

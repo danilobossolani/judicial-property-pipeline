@@ -12,8 +12,8 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Judicial Pipeline")]
 [assembly: AssemblyProduct("Judicial Pipeline")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.1.1.0")]
-[assembly: AssemblyFileVersion("1.1.1.0")]
+[assembly: AssemblyVersion("1.1.2.0")]
+[assembly: AssemblyFileVersion("1.1.2.0")]
 
 namespace JudicialPipelineLauncher
 {

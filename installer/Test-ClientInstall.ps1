@@ -192,7 +192,20 @@ try {
     if (Test-Path -LiteralPath (Join-Path $destination "compose.yaml")) {
         Push-Location $destination
         try {
-            & docker compose -p $projectName down --remove-orphans *> $null
+            # O Docker envia mensagens normais de progresso para stderr. No
+            # Windows PowerShell 5.1 isso pode virar NativeCommandError quando
+            # ErrorActionPreference=Stop, mesmo com código de saída zero.
+            $previousPreference = $ErrorActionPreference
+            try {
+                $ErrorActionPreference = "Continue"
+                & docker compose -p $projectName down --remove-orphans *> $null
+                $cleanupExitCode = $LASTEXITCODE
+            } finally {
+                $ErrorActionPreference = $previousPreference
+            }
+            if ($cleanupExitCode -ne 0) {
+                Write-Warning "A limpeza do ambiente Docker de teste retornou código $cleanupExitCode."
+            }
         } finally {
             Pop-Location
         }

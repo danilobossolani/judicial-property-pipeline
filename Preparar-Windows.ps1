@@ -3,12 +3,24 @@ param(
     [switch]$Silencioso,
 
     [ValidateRange(120, 1800)]
-    [int]$MaxUpdateSeconds = 600
+    [int]$MaxUpdateSeconds = 600,
+
+    [ValidateRange(300, 3600)]
+    [int]$MaxMsiDownloadSeconds = 1800,
+
+    [switch]$ValidarDownloadOficial
 )
 
 $ErrorActionPreference = "Stop"
 $minimumWslVersion = [version]"2.1.5"
+$officialWslVersion = "2.7.12.0"
+$officialWslMsiFileName = "wsl.$officialWslVersion.x64.msi"
+$officialWslMsiUrl = "https://github.com/microsoft/WSL/releases/download/2.7.12/$officialWslMsiFileName"
+$officialWslMsiSha256 = "A460D4560215F2EFE003C136244B78EA3415D773824D7A688EA9DED36DBE9145"
+$officialWslMsiSize = 258998272L
 $script:wslUpdateTimedOut = $false
+$script:wslVersionExitCode = $null
+$script:restartRequired = $false
 $logDirectory = if ($env:LOCALAPPDATA) {
     Join-Path $env:LOCALAPPDATA "JudicialPipeline"
 } else {
@@ -116,6 +128,7 @@ function Invoke-NativeProcess {
 function Get-WslVersion {
     $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
     if (-not $wsl) {
+        $script:wslVersionExitCode = $null
         return $null
     }
 
@@ -124,6 +137,7 @@ function Get-WslVersion {
         -Arguments @("--version") `
         -TimeoutSeconds 30 `
         -CaptureOutput
+    $script:wslVersionExitCode = $result.ExitCode
     if ($result.ExitCode -ne 0) {
         return $null
     }
@@ -146,7 +160,8 @@ function Invoke-ElevatedSelf {
         "-ExecutionPolicy", "Bypass",
         "-File", ('"' + $PSCommandPath + '"'),
         "-Silencioso",
-        "-MaxUpdateSeconds", $MaxUpdateSeconds
+        "-MaxUpdateSeconds", $MaxUpdateSeconds,
+        "-MaxMsiDownloadSeconds", $MaxMsiDownloadSeconds
     )
 
     try {
@@ -205,6 +220,24 @@ function Invoke-WslUpdate {
 function Enable-WslFeatures {
     Write-Status "Ativando os componentes necessários do Windows..."
 
+    $featureNames = @(
+        "Microsoft-Windows-Subsystem-Linux",
+        "VirtualMachinePlatform"
+    )
+    foreach ($featureName in $featureNames) {
+        try {
+            $feature = Get-WindowsOptionalFeature `
+                -Online `
+                -FeatureName $featureName `
+                -ErrorAction Stop
+            if ($feature.State -ne "Enabled") {
+                $script:restartRequired = $true
+            }
+        } catch {
+            Write-Log -Message "Não foi possível consultar o estado de $featureName."
+        }
+    }
+
     $wslFeature = Invoke-NativeProcess `
         -FilePath "dism.exe" `
         -Arguments @(
@@ -215,8 +248,11 @@ function Enable-WslFeatures {
             "/norestart"
         ) `
         -TimeoutSeconds 300
-    if ($wslFeature.ExitCode -ne 0) {
+    if ($wslFeature.ExitCode -notin @(0, 1641, 3010)) {
         return $false
+    }
+    if ($wslFeature.ExitCode -in @(1641, 3010)) {
+        $script:restartRequired = $true
     }
 
     $virtualMachineFeature = Invoke-NativeProcess `
@@ -229,7 +265,247 @@ function Enable-WslFeatures {
             "/norestart"
         ) `
         -TimeoutSeconds 300
-    return $virtualMachineFeature.ExitCode -eq 0
+    if ($virtualMachineFeature.ExitCode -in @(1641, 3010)) {
+        $script:restartRequired = $true
+    }
+    return $virtualMachineFeature.ExitCode -in @(0, 1641, 3010)
+}
+
+function Get-FileSha256 {
+    param([string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return $null
+    }
+
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToUpperInvariant()
+}
+
+function Test-OfficialWslPackage {
+    param([string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return $false
+    }
+
+    $file = Get-Item -LiteralPath $Path
+    if ($file.Length -ne $officialWslMsiSize) {
+        Write-Log -Message "Pacote WSL rejeitado por tamanho incorreto: $($file.Length)."
+        return $false
+    }
+
+    $actualHash = Get-FileSha256 -Path $Path
+    if ($actualHash -ne $officialWslMsiSha256) {
+        Write-Log -Message "Pacote WSL rejeitado por SHA-256 incorreto: $actualHash."
+        return $false
+    }
+
+    return $true
+}
+
+function Invoke-DownloadWithProgress {
+    param(
+        [string]$Uri,
+        [string]$OutputPath,
+        [ValidateRange(300, 3600)]
+        [int]$TimeoutSeconds
+    )
+
+    [Net.ServicePointManager]::SecurityProtocol =
+        [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+
+    $partialPath = "$OutputPath.part"
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        $request = $null
+        $response = $null
+        $input = $null
+        $output = $null
+        try {
+            Remove-Item -LiteralPath $partialPath -Force -ErrorAction SilentlyContinue
+            Write-Status "Baixando o reparo oficial do Windows (aprox. 247 MB)..."
+
+            $request = [System.Net.HttpWebRequest]::Create($Uri)
+            $request.AllowAutoRedirect = $true
+            $request.UserAgent = "JudicialPipelineInstaller/1.1.2"
+            $request.Timeout = 60000
+            $request.ReadWriteTimeout = 60000
+            $response = $request.GetResponse()
+            $contentLength = [int64]$response.ContentLength
+            $input = $response.GetResponseStream()
+            $output = [System.IO.File]::Open(
+                $partialPath,
+                [System.IO.FileMode]::Create,
+                [System.IO.FileAccess]::Write,
+                [System.IO.FileShare]::None)
+
+            $buffer = New-Object byte[] (1024 * 1024)
+            $downloaded = 0L
+            $nextProgress = 10
+            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+            while (($read = $input.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                $output.Write($buffer, 0, $read)
+                $downloaded += $read
+
+                if ($stopwatch.Elapsed.TotalSeconds -gt $TimeoutSeconds) {
+                    throw "O download do reparo ultrapassou o limite automático."
+                }
+
+                if ($contentLength -gt 0) {
+                    $percentage = [int][Math]::Floor(($downloaded * 100.0) / $contentLength)
+                    if ($percentage -ge $nextProgress) {
+                        Write-Status "Download do reparo: $percentage%"
+                        $nextProgress = ([Math]::Floor($percentage / 10) + 1) * 10
+                    }
+                }
+            }
+            $stopwatch.Stop()
+            $output.Flush()
+            $output.Dispose()
+            $output = $null
+            $input.Dispose()
+            $input = $null
+            $response.Dispose()
+            $response = $null
+
+            Move-Item -LiteralPath $partialPath -Destination $OutputPath -Force
+            Write-Log -Message "Download do pacote WSL concluído: $downloaded bytes."
+            return
+        } catch {
+            Write-Log -Message "Tentativa $attempt de download do WSL falhou: $($_.Exception.Message)"
+            if ($attempt -eq 3) {
+                throw "Não foi possível baixar o reparo oficial do Windows. Verifique a internet e execute novamente."
+            }
+            Write-Status "O download foi interrompido. Tentando novamente..."
+            Start-Sleep -Seconds (5 * $attempt)
+        } finally {
+            if ($output) { $output.Dispose() }
+            if ($input) { $input.Dispose() }
+            if ($response) { $response.Dispose() }
+            Remove-Item -LiteralPath $partialPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Install-OfficialWslPackage {
+    New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
+    $msiPath = Join-Path $logDirectory $officialWslMsiFileName
+    $msiLogPath = Join-Path $logDirectory "reparo-wsl-msi.log"
+    $installationAccepted = $false
+
+    try {
+        if (-not (Test-OfficialWslPackage -Path $msiPath)) {
+            Remove-Item -LiteralPath $msiPath -Force -ErrorAction SilentlyContinue
+            Invoke-DownloadWithProgress `
+                -Uri $officialWslMsiUrl `
+                -OutputPath $msiPath `
+                -TimeoutSeconds $MaxMsiDownloadSeconds
+        } else {
+            Write-Status "Usando o reparo oficial já baixado e validado."
+        }
+
+        if (-not (Test-OfficialWslPackage -Path $msiPath)) {
+            throw "O reparo baixado não passou na validação de segurança."
+        }
+
+        Write-Status "Instalando o reparo oficial da Microsoft. Aguarde..."
+        $installResult = Invoke-NativeProcess `
+            -FilePath "msiexec.exe" `
+            -Arguments @(
+                "/i",
+                ('"' + $msiPath + '"'),
+                "/qn",
+                "/norestart",
+                "/L*v",
+                ('"' + $msiLogPath + '"')
+            ) `
+            -TimeoutSeconds 900
+        if ($installResult.TimedOut) {
+            throw "A instalação do reparo ultrapassou o limite automático."
+        }
+        if ($installResult.ExitCode -notin @(0, 1641, 3010)) {
+            throw "O reparo oficial não pôde ser instalado. Código: $($installResult.ExitCode)."
+        }
+        $installationAccepted = $true
+        if ($installResult.ExitCode -in @(1641, 3010)) {
+            $script:restartRequired = $true
+        }
+
+        $repairedVersion = Get-WslVersion
+        if (-not $repairedVersion -and -not $script:restartRequired) {
+            Write-Status "Concluindo a reparação dos arquivos do Windows..."
+            $repairResult = Invoke-NativeProcess `
+                -FilePath "msiexec.exe" `
+                -Arguments @(
+                    "/fa",
+                    ('"' + $msiPath + '"'),
+                    "/qn",
+                    "/norestart",
+                    "/L*v",
+                    ('"' + $msiLogPath + '"')
+                ) `
+                -TimeoutSeconds 900
+            if ($repairResult.TimedOut) {
+                throw "A reparação dos arquivos ultrapassou o limite automático."
+            }
+            if ($repairResult.ExitCode -notin @(0, 1641, 3010)) {
+                throw "A reparação dos arquivos não foi concluída. Código: $($repairResult.ExitCode)."
+            }
+            if ($repairResult.ExitCode -in @(1641, 3010)) {
+                $script:restartRequired = $true
+            }
+            $repairedVersion = Get-WslVersion
+        }
+
+        if ($repairedVersion -and $repairedVersion -ge $minimumWslVersion) {
+            Write-Status "Componente do Windows reparado com sucesso."
+            return $true
+        }
+
+        # Algumas correções do Windows só ficam visíveis depois do reinício,
+        # mesmo quando o MSI retorna sucesso sem o código 3010.
+        $script:restartRequired = $true
+        Write-Info "O reparo será concluído após a reinicialização."
+        return $true
+    } finally {
+        if ($installationAccepted) {
+            Remove-Item -LiteralPath $msiPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Complete-WslConfiguration {
+    $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
+    if (-not $wsl) {
+        return
+    }
+
+    Invoke-NativeProcess `
+        -FilePath $wsl.Source `
+        -Arguments @("--set-default-version", "2") `
+        -TimeoutSeconds 60 | Out-Null
+    Invoke-NativeProcess `
+        -FilePath $wsl.Source `
+        -Arguments @("--shutdown") `
+        -TimeoutSeconds 60 | Out-Null
+}
+
+if ($ValidarDownloadOficial) {
+    $validationPath = Join-Path $env:TEMP (
+        "JudicialPipeline-WslValidation-" + [Guid]::NewGuid().ToString("N") + ".msi")
+    try {
+        Invoke-DownloadWithProgress `
+            -Uri $officialWslMsiUrl `
+            -OutputPath $validationPath `
+            -TimeoutSeconds $MaxMsiDownloadSeconds
+        if (-not (Test-OfficialWslPackage -Path $validationPath)) {
+            throw "O pacote oficial baixado não passou na validação."
+        }
+        Write-Output "OFFICIAL_WSL_DOWNLOAD=OK"
+        exit 0
+    } finally {
+        Remove-Item -LiteralPath $validationPath -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath "$validationPath.part" -Force -ErrorAction SilentlyContinue
+    }
 }
 
 try {
@@ -249,39 +525,44 @@ try {
     Write-Host "Não feche esta janela. O processo será encerrado automaticamente se exceder o limite."
     Write-Host ""
 
-    if (Invoke-WslUpdate) {
-        $updatedVersion = Get-WslVersion
-        if ($updatedVersion -and $updatedVersion -ge $minimumWslVersion) {
-            Write-Log -Message "WSL atualizado para $updatedVersion."
-            exit 0
+    # Quando `wsl --version` falha (como em instalações legadas ou quebradas),
+    # insistir em `wsl --update` costuma apenas travar. Nesse caso usamos
+    # diretamente o pacote MSI oficial, fixado por versão, tamanho e SHA-256.
+    if ($installedVersion) {
+        if (Invoke-WslUpdate) {
+            $updatedVersion = Get-WslVersion
+            if ($updatedVersion -and $updatedVersion -ge $minimumWslVersion) {
+                Complete-WslConfiguration
+                Write-Log -Message "WSL atualizado para $updatedVersion."
+                exit 0
+            }
         }
-    }
-
-    if ($script:wslUpdateTimedOut) {
-        throw "A atualização demorou além do limite. Verifique a internet e execute novamente o instalador."
+    } else {
+        Write-Log -Message "WSL sem versão válida. Código detectado: $script:wslVersionExitCode."
+        Write-Status "A instalação atual do Windows precisa de reparação automática."
     }
 
     if (-not (Enable-WslFeatures)) {
         throw "O Windows não conseguiu ativar os componentes necessários."
     }
 
-    $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
-    if ($wsl) {
-        Write-Status "Concluindo a instalação do componente do Windows..."
-        $installResult = Invoke-NativeProcess `
-            -FilePath $wsl.Source `
-            -Arguments @("--install", "--no-distribution") `
-            -TimeoutSeconds $MaxUpdateSeconds
-        if ($installResult.TimedOut) {
-            throw "A instalação do componente demorou além do limite. Verifique a internet e tente novamente."
-        }
-        if ($installResult.ExitCode -ne 0) {
-            Write-Info "O componente será concluído após a reinicialização."
-        }
+    if (-not (Install-OfficialWslPackage)) {
+        throw "O Windows não conseguiu aplicar o reparo automático."
     }
 
-    Write-Status "A primeira etapa foi concluída. Reinicie o computador."
-    exit 10
+    if ($script:restartRequired) {
+        Write-Status "A primeira etapa foi concluída. Reinicie o computador."
+        exit 10
+    }
+
+    $finalVersion = Get-WslVersion
+    if (-not $finalVersion -or $finalVersion -lt $minimumWslVersion) {
+        throw "O componente do Windows continuou indisponível após a reparação."
+    }
+
+    Complete-WslConfiguration
+    Write-Log -Message "WSL reparado e atualizado para $finalVersion."
+    exit 0
 } catch {
     Write-Log -Message ("Falha: " + $_.Exception.Message)
     Write-Host $_.Exception.Message -ForegroundColor Red

@@ -26,8 +26,10 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 ## Comportamento no computador do cliente
 
 - solicita elevação administrativa pelo UAC;
-- verifica, ativa e atualiza o WSL automaticamente, com mensagens de progresso,
-  log e limite de tempo; o cliente nunca precisa executar `wsl --update`;
+- verifica, ativa, atualiza e, se necessário, repara o WSL automaticamente;
+  instalações incompletas usam o MSI oficial da Microsoft, validado por tamanho
+  e SHA-256, com progresso, repetição automática, log e limite de tempo; o
+  cliente nunca precisa executar `wsl --update`;
 - instala Docker Desktop quando necessário;
 - cria `C:\ProgramData\JudicialPipeline`;
 - gera senhas internas aleatórias e desabilita o login somente no ambiente
@@ -43,6 +45,8 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 
 O diagnóstico da preparação do Windows fica em
 `%LOCALAPPDATA%\JudicialPipeline\preparacao-windows.log`.
+Quando a reparação direta é necessária, o log detalhado do Windows Installer
+fica em `%LOCALAPPDATA%\JudicialPipeline\reparo-wsl-msi.log`.
 
 O executável não possui assinatura Authenticode comercial. O cliente pode
 receber aviso do SmartScreen até que seja adquirido e aplicado um certificado

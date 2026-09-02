@@ -272,7 +272,7 @@ def build_manual():
         ], [
             Spacer(1, 2.8 * cm),
         ], [
-            p("Versão 1.1.1 - Setembro de 2026", "subtitle"),
+            p("Versão 1.1.2 - Setembro de 2026", "subtitle"),
         ]],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.4 * cm, 1.2 * cm, 0.8 * cm, 0.5 * cm, 1.4 * cm, 3 * cm, 0.8 * cm],
@@ -300,7 +300,7 @@ def build_manual():
             p("Primeira instalação", "h2"),
             step(1, "Abra o instalador", "Dê dois cliques em <b>Judicial-Pipeline-Instalador.exe</b>."),
             step(2, "Autorize o Windows", "Quando aparecer a pergunta de segurança, escolha <b>Sim</b>."),
-            step(3, "Aguarde", "O programa baixa e prepara os componentes necessários. A primeira vez pode demorar conforme a internet."),
+            step(3, "Aguarde", "O programa baixa e prepara os componentes necessários. Se o Windows precisar de reparo, o instalador baixa e valida automaticamente o componente oficial da Microsoft."),
             step(4, "Reinicie, se solicitado", "Depois da reinicialização, clique no atalho <b>Judicial Pipeline</b> na área de trabalho."),
             p("Uso diário", "h2"),
             step(1, "Clique no atalho", "Uma pequena janela mostrará que o sistema está sendo preparado."),
@@ -308,7 +308,7 @@ def build_manual():
             step(3, "Use normalmente", "Não há login ou configuração no computador do cliente."),
             Spacer(1, 0.2 * cm),
             callout(
-                "Se aparecer uma tela mencionando WSL, não digite wsl --update. Execute novamente o instalador atualizado; ele faz essa atualização sozinho.",
+                "Se aparecer uma tela mencionando WSL, não digite comandos. O instalador atualizado detecta, repara e atualiza esse componente sozinho.",
                 GOLD,
             ),
             PageBreak(),
@@ -463,7 +463,7 @@ def build_manual():
             step(3, "Reinstale por cima", "Execute o instalador atualizado. Os dados existentes são preservados."),
             p("O Docker mostrou wsl --update", "h2"),
             callout(
-                "Não abra terminal e não digite comandos. Feche o aviso e execute novamente o instalador atualizado; ele atualiza o WSL automaticamente.",
+                "Não abra terminal e não digite comandos. Feche o aviso e execute novamente o instalador atualizado; ele repara e atualiza o WSL automaticamente.",
                 GOLD,
             ),
             p("Arquivos para o suporte", "h2"),
@@ -474,7 +474,7 @@ def build_manual():
                 "<b>C:\\ProgramData\\JudicialPipeline</b><br/>instalacao.log<br/>preparacao-docker.log",
             ),
             p(
-                "<b>%LOCALAPPDATA%\\JudicialPipeline</b><br/>preparacao-windows.log<br/>inicializacao.log<br/>inicio.log",
+                "<b>%LOCALAPPDATA%\\JudicialPipeline</b><br/>preparacao-windows.log<br/>reparo-wsl-msi.log<br/>inicializacao.log<br/>inicio.log",
             ),
             Spacer(1, 0.4 * cm),
             callout(
