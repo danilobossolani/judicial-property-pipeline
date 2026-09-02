@@ -112,7 +112,8 @@ function Test-SystemRequirements {
 function Invoke-DockerCommand {
     param(
         [string[]]$Arguments,
-        [string]$OutputPath
+        [string]$OutputPath,
+        [switch]$AppendOutput
     )
 
     # No Windows PowerShell 5.1, mensagens normais do Docker enviadas para
@@ -121,7 +122,11 @@ function Invoke-DockerCommand {
     try {
         $ErrorActionPreference = "Continue"
         if ($OutputPath) {
-            & docker @Arguments *> $OutputPath
+            if ($AppendOutput) {
+                & docker @Arguments *>> $OutputPath
+            } else {
+                & docker @Arguments *> $OutputPath
+            }
         } else {
             & docker @Arguments *> $null
         }
@@ -129,6 +134,87 @@ function Invoke-DockerCommand {
     } finally {
         $ErrorActionPreference = $previousPreference
     }
+}
+
+function Test-TransientDockerPreparationFailure {
+    param([string]$LogPath)
+
+    if (-not (Test-Path -LiteralPath $LogPath)) {
+        return $false
+    }
+
+    $recentOutput = Get-Content -LiteralPath $LogPath -Tail 300 -ErrorAction SilentlyContinue
+    if (-not $recentOutput) {
+        return $false
+    }
+
+    $transientPatterns = @(
+        "unexpected EOF",
+        "short read",
+        "connection reset",
+        "connection was reset",
+        "TLS handshake timeout",
+        "i/o timeout",
+        "context deadline exceeded",
+        "temporary failure",
+        "network is unreachable",
+        "failed to copy",
+        "failed to fetch",
+        "use of closed network connection"
+    )
+    $combinedOutput = $recentOutput -join "`n"
+
+    foreach ($pattern in $transientPatterns) {
+        if ($combinedOutput.IndexOf($pattern, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Start-ApplicationEnvironment {
+    param(
+        [string]$LogPath,
+        [ValidateRange(1, 5)]
+        [int]$MaximumAttempts = 3
+    )
+
+    @(
+        "Judicial Pipeline - preparação do ambiente local",
+        "Início: $([DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss'))",
+        ""
+    ) | Set-Content -LiteralPath $LogPath -Encoding UTF8
+
+    for ($attempt = 1; $attempt -le $MaximumAttempts; $attempt++) {
+        if ($attempt -gt 1) {
+            $waitSeconds = 10 * ($attempt - 1)
+            Write-Host "A internet oscilou. O instalador retomará automaticamente em $waitSeconds segundos..." -ForegroundColor Yellow
+            Start-Sleep -Seconds $waitSeconds
+        }
+
+        @(
+            "",
+            "===== Tentativa $attempt de $MaximumAttempts - $([DateTime]::Now.ToString('yyyy-MM-dd HH:mm:ss')) ====="
+        ) | Add-Content -LiteralPath $LogPath -Encoding UTF8
+
+        Write-Host "Baixando e preparando os componentes ($attempt/$MaximumAttempts)." -ForegroundColor Cyan
+        Write-Host "Na primeira instalação esta etapa pode demorar vários minutos. Não feche a janela."
+
+        $exitCode = Invoke-DockerCommand `
+            -Arguments @("compose", "up", "--build", "-d") `
+            -OutputPath $LogPath `
+            -AppendOutput
+        if ($exitCode -eq 0) {
+            return $true
+        }
+
+        if (-not (Test-TransientDockerPreparationFailure -LogPath $LogPath)) {
+            return $false
+        }
+    }
+
+    return $false
 }
 
 function Test-DockerReady {
@@ -440,10 +526,7 @@ try {
     Push-Location $Destino
     try {
         $composeLog = Join-Path $Destino "preparacao-docker.log"
-        $composeExitCode = Invoke-DockerCommand `
-            -Arguments @("compose", "up", "--build", "-d") `
-            -OutputPath $composeLog
-        if ($composeExitCode -ne 0) {
+        if (-not (Start-ApplicationEnvironment -LogPath $composeLog)) {
             throw "O ambiente local não pôde ser iniciado. Consulte preparacao-docker.log."
         }
     } finally {

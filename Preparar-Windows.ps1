@@ -331,7 +331,7 @@ function Invoke-DownloadWithProgress {
 
             $request = [System.Net.HttpWebRequest]::Create($Uri)
             $request.AllowAutoRedirect = $true
-            $request.UserAgent = "JudicialPipelineInstaller/1.1.3"
+            $request.UserAgent = "JudicialPipelineInstaller/1.1.4"
             $request.Timeout = 60000
             $request.ReadWriteTimeout = 60000
             $response = $request.GetResponse()

@@ -85,6 +85,10 @@ jobs:
             throw "O tamanho fixado do reparo WSL é inválido."
           }
 
+      - name: Validate Docker download retry logic
+        shell: pwsh
+        run: ./installer/Test-DockerRetryLogic.ps1
+
       - name: Build installer with CI-only test key
         shell: pwsh
         run: ./installer/build-installer.ps1 -DataJudApiKey "ci-structural-test-key"

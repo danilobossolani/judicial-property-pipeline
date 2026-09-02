@@ -272,7 +272,7 @@ def build_manual():
         ], [
             Spacer(1, 2.8 * cm),
         ], [
-            p("Versão 1.1.3 - Setembro de 2026", "subtitle"),
+            p("Versão 1.1.4 - Setembro de 2026", "subtitle"),
         ]],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.4 * cm, 1.2 * cm, 0.8 * cm, 0.5 * cm, 1.4 * cm, 3 * cm, 0.8 * cm],
@@ -300,7 +300,7 @@ def build_manual():
             p("Primeira instalação", "h2"),
             step(1, "Abra o instalador", "Dê dois cliques em <b>Judicial-Pipeline-Instalador.exe</b>."),
             step(2, "Autorize o Windows", "Quando aparecer a pergunta de segurança, escolha <b>Sim</b>."),
-            step(3, "Aguarde", "O programa prepara os componentes necessários. O reparo oficial do Windows já acompanha o instalador e é validado automaticamente, sem depender do GitHub."),
+            step(3, "Aguarde", "O programa prepara os componentes necessários. Na primeira instalação, alguns downloads podem demorar vários minutos. Se a internet oscilar, o instalador tenta novamente sozinho. O reparo oficial do Windows já acompanha o instalador."),
             step(4, "Reinicie, se solicitado", "Depois da reinicialização, clique no atalho <b>Judicial Pipeline</b> na área de trabalho."),
             p("Uso diário", "h2"),
             step(1, "Clique no atalho", "Uma pequena janela mostrará que o sistema está sendo preparado."),

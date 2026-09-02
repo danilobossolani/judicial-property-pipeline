@@ -42,6 +42,8 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 - abre `http://localhost:8080` quando o health check estiver `UP`;
 - preserva a senha interna e o volume do PostgreSQL quando o instalador é
   executado novamente para atualizar a aplicação;
+- retoma automaticamente até três vezes os downloads do ambiente local quando
+  a conexão é interrompida e registra no log cada tentativa;
 - se Docker/WSL exigir reinicialização, preserva a instalação e orienta o
   usuário a reiniciar e clicar no atalho.
 
