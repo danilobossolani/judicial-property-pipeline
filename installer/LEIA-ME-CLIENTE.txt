@@ -31,7 +31,7 @@ SE O SISTEMA NAO ABRIR
 2. Se continuar, envie ao responsável técnico:
    - instalacao.log e preparacao-docker.log da pasta
      C:\ProgramData\JudicialPipeline;
-   - inicializacao.log e inicio.log da pasta
+   - preparacao-windows.log, inicializacao.log e inicio.log da pasta
      %LOCALAPPDATA%\JudicialPipeline.
 3. O cliente não precisa editar configurações nem executar comandos.
 

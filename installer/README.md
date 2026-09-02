@@ -26,19 +26,23 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 ## Comportamento no computador do cliente
 
 - solicita elevação administrativa pelo UAC;
-- verifica, ativa e atualiza o WSL automaticamente; o cliente nunca precisa
-  executar `wsl --update`;
+- verifica, ativa e atualiza o WSL automaticamente, com mensagens de progresso,
+  log e limite de tempo; o cliente nunca precisa executar `wsl --update`;
 - instala Docker Desktop quando necessário;
 - cria `C:\ProgramData\JudicialPipeline`;
 - gera senhas internas aleatórias e desabilita o login somente no ambiente
   local, que fica limitado a `127.0.0.1`;
 - cria um inicializador visual e atalhos na área de trabalho e no menu Iniciar;
+- remove atalhos legados duplicados durante a atualização;
 - inicia PostgreSQL e aplicação via Docker Compose;
 - abre `http://localhost:8080` quando o health check estiver `UP`;
 - preserva a senha interna e o volume do PostgreSQL quando o instalador é
   executado novamente para atualizar a aplicação;
 - se Docker/WSL exigir reinicialização, preserva a instalação e orienta o
   usuário a reiniciar e clicar no atalho.
+
+O diagnóstico da preparação do Windows fica em
+`%LOCALAPPDATA%\JudicialPipeline\preparacao-windows.log`.
 
 O executável não possui assinatura Authenticode comercial. O cliente pode
 receber aviso do SmartScreen até que seja adquirido e aplicado um certificado

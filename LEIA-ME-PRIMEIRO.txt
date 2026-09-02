@@ -22,7 +22,7 @@ envie ao responsavel tecnico:
 
 - instalacao.log e preparacao-docker.log de
   C:\ProgramData\JudicialPipeline;
-- inicializacao.log e inicio.log de
+- preparacao-windows.log, inicializacao.log e inicio.log de
   %LOCALAPPDATA%\JudicialPipeline.
 
 IMPORTANTE

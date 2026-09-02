@@ -264,6 +264,8 @@ function Install-Shortcuts {
     Write-Step "Criando o atalho na área de trabalho"
     $desktop = [Environment]::GetFolderPath("CommonDesktopDirectory")
     $startMenu = [Environment]::GetFolderPath("CommonPrograms")
+    $userDesktop = [Environment]::GetFolderPath("Desktop")
+    $userStartMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
     $iconPath = Join-Path $Destino "installer\assets\judicial-pipeline-icon.ico"
     $launcherPath = Join-Path $Destino "Judicial Pipeline.exe"
     if (-not (Test-Path -LiteralPath $launcherPath)) {
@@ -272,6 +274,22 @@ function Install-Shortcuts {
     $manualPath = Join-Path $Destino "output\pdf\Manual-do-Usuario-Judicial-Pipeline.pdf"
     if (-not (Test-Path -LiteralPath $manualPath)) {
         $manualPath = Join-Path $Destino "LEIA-ME-PRIMEIRO.txt"
+    }
+
+    # Versões anteriores criavam atalhos somente para o usuário atual. Eles
+    # apontavam para o arquivo BAT e podiam deixar dois ícones na área de
+    # trabalho após a atualização. Removemos apenas esses atalhos legados.
+    @(
+        (Join-Path $userDesktop "Judicial Pipeline.lnk"),
+        (Join-Path $userStartMenu "Judicial Pipeline.lnk"),
+        (Join-Path $userStartMenu "Judicial Pipeline - Ajuda.lnk")
+    ) | Where-Object {
+        $_ -ne (Join-Path $desktop "Judicial Pipeline.lnk") -and
+        $_ -ne (Join-Path $startMenu "Judicial Pipeline.lnk")
+    } | ForEach-Object {
+        if (Test-Path -LiteralPath $_) {
+            Remove-Item -LiteralPath $_ -Force
+        }
     }
 
     New-Shortcut `

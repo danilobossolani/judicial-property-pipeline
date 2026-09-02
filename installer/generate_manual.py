@@ -272,7 +272,7 @@ def build_manual():
         ], [
             Spacer(1, 2.8 * cm),
         ], [
-            p("Versão 1.1 - Setembro de 2026", "subtitle"),
+            p("Versão 1.1.1 - Setembro de 2026", "subtitle"),
         ]],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.4 * cm, 1.2 * cm, 0.8 * cm, 0.5 * cm, 1.4 * cm, 3 * cm, 0.8 * cm],
@@ -474,7 +474,7 @@ def build_manual():
                 "<b>C:\\ProgramData\\JudicialPipeline</b><br/>instalacao.log<br/>preparacao-docker.log",
             ),
             p(
-                "<b>%LOCALAPPDATA%\\JudicialPipeline</b><br/>inicializacao.log<br/>inicio.log",
+                "<b>%LOCALAPPDATA%\\JudicialPipeline</b><br/>preparacao-windows.log<br/>inicializacao.log<br/>inicio.log",
             ),
             Spacer(1, 0.4 * cm),
             callout(
