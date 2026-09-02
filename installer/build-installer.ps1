@@ -9,6 +9,9 @@ $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $outputFullPath = [System.IO.Path]::GetFullPath($OutputPath)
 $temporaryDirectory = Join-Path $env:TEMP ("judicial-pipeline-installer-build-" + [Guid]::NewGuid().ToString("N"))
+$wslOfflineFileName = "wsl.2.7.12.0.x64.msi"
+$wslCacheDirectory = Join-Path $projectRoot "dist\cache"
+$wslPackagePath = Join-Path $wslCacheDirectory $wslOfflineFileName
 
 if ([string]::IsNullOrWhiteSpace($DataJudApiKey)) {
     throw "Defina DATAJUD_API_KEY no ambiente antes de gerar o instalador personalizado."
@@ -51,6 +54,16 @@ try {
         throw "O inicializador visual não foi gerado."
     }
 
+    $windowsPreparationScript = Join-Path $projectRoot "Preparar-Windows.ps1"
+    & powershell.exe `
+        -NoProfile `
+        -ExecutionPolicy Bypass `
+        -File $windowsPreparationScript `
+        -ExportarReparoOficial $wslPackagePath
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $wslPackagePath)) {
+        throw "O reparo offline oficial do WSL não pôde ser preparado."
+    }
+
     $payloadPath = Join-Path $temporaryDirectory "payload.zip"
     Push-Location $projectRoot
     try {
@@ -82,6 +95,12 @@ try {
             $launcherPath,
             "Judicial-Pipeline/Judicial Pipeline.exe",
             [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
+
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+            $archive,
+            $wslPackagePath,
+            "Judicial-Pipeline/installer/runtime/$wslOfflineFileName",
+            [System.IO.Compression.CompressionLevel]::NoCompression) | Out-Null
     } finally {
         $archive.Dispose()
     }
@@ -113,6 +132,7 @@ try {
         SizeBytes = (Get-Item -LiteralPath $outputFullPath).Length
         Sha256 = $hash.Hash
         HashFile = $hashPath
+        OfflineWslPackage = $true
     }
 } finally {
     if (Test-Path -LiteralPath $temporaryDirectory) {

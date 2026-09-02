@@ -1,8 +1,10 @@
 # Instalador personalizado para Windows
 
-O instalador é um bootstrapper pequeno: ele contém o código versionado da
-aplicação, configura o ambiente local sem tela de login e baixa Docker,
-PostgreSQL e imagens necessárias na primeira execução.
+O instalador contém o código versionado da aplicação e o pacote oficial de
+reparo do WSL, configura o ambiente local sem tela de login e baixa Docker,
+PostgreSQL e imagens necessárias na primeira execução. O arquivo é maior por
+carregar o reparo do Windows, mas essa etapa funciona mesmo quando o computador
+do cliente não consegue baixar arquivos do GitHub.
 
 ## Gerar
 
@@ -27,9 +29,9 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 
 - solicita elevação administrativa pelo UAC;
 - verifica, ativa, atualiza e, se necessário, repara o WSL automaticamente;
-  instalações incompletas usam o MSI oficial da Microsoft, validado por tamanho
-  e SHA-256, com progresso, repetição automática, log e limite de tempo; o
-  cliente nunca precisa executar `wsl --update`;
+  o MSI oficial da Microsoft acompanha o instalador e é validado novamente por
+  tamanho e SHA-256 antes do uso, sem depender do GitHub no computador do
+  cliente; o cliente nunca precisa executar `wsl --update`;
 - instala Docker Desktop quando necessário;
 - cria `C:\ProgramData\JudicialPipeline`;
 - gera senhas internas aleatórias e desabilita o login somente no ambiente

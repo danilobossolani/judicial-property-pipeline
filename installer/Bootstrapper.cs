@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
@@ -13,14 +14,18 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Judicial Pipeline")]
 [assembly: AssemblyProduct("Judicial Pipeline")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.1.2.0")]
-[assembly: AssemblyFileVersion("1.1.2.0")]
+[assembly: AssemblyVersion("1.1.3.0")]
+[assembly: AssemblyFileVersion("1.1.3.0")]
 
 namespace JudicialPipelineInstaller
 {
     internal static class Bootstrapper
     {
         private const string PayloadResource = "JudicialPipeline.Payload.zip";
+        private const string OfflineWslFileName = "wsl.2.7.12.0.x64.msi";
+        private const long OfflineWslFileSize = 258998272L;
+        private const string OfflineWslSha256 =
+            "A460D4560215F2EFE003C136244B78EA3415D773824D7A688EA9DED36DBE9145";
 
         [STAThread]
         private static int Main(string[] args)
@@ -75,18 +80,46 @@ namespace JudicialPipelineInstaller
                     "Judicial-Pipeline",
                     "installer",
                     "installer-settings.env");
+                string offlineWslPackage = Path.Combine(
+                    extractedRoot,
+                    "Judicial-Pipeline",
+                    "installer",
+                    "runtime",
+                    OfflineWslFileName);
 
                 return File.Exists(installerScript)
                     && File.Exists(composeFile)
                     && File.Exists(launcherFile)
                     && File.Exists(windowsPreparationFile)
                     && File.Exists(settingsFile)
+                    && IsValidOfflineWslPackage(offlineWslPackage)
                     ? 0
                     : 2;
             }
             finally
             {
                 DeleteTemporaryDirectory(temporaryDirectory);
+            }
+        }
+
+        private static bool IsValidOfflineWslPackage(string path)
+        {
+            var file = new FileInfo(path);
+            if (!file.Exists || file.Length != OfflineWslFileSize)
+            {
+                return false;
+            }
+
+            using (SHA256 sha256 = SHA256.Create())
+            using (FileStream stream = File.OpenRead(path))
+            {
+                string actualHash = BitConverter
+                    .ToString(sha256.ComputeHash(stream))
+                    .Replace("-", string.Empty);
+                return string.Equals(
+                    actualHash,
+                    OfflineWslSha256,
+                    StringComparison.OrdinalIgnoreCase);
             }
         }
 

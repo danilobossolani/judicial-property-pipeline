@@ -8,7 +8,9 @@ param(
     [ValidateRange(300, 3600)]
     [int]$MaxMsiDownloadSeconds = 1800,
 
-    [switch]$ValidarDownloadOficial
+    [switch]$ValidarDownloadOficial,
+
+    [string]$ExportarReparoOficial
 )
 
 $ErrorActionPreference = "Stop"
@@ -18,6 +20,9 @@ $officialWslMsiFileName = "wsl.$officialWslVersion.x64.msi"
 $officialWslMsiUrl = "https://github.com/microsoft/WSL/releases/download/2.7.12/$officialWslMsiFileName"
 $officialWslMsiSha256 = "A460D4560215F2EFE003C136244B78EA3415D773824D7A688EA9DED36DBE9145"
 $officialWslMsiSize = 258998272L
+$bundledWslMsiPath = Join-Path `
+    $PSScriptRoot `
+    "installer\runtime\$officialWslMsiFileName"
 $script:wslUpdateTimedOut = $false
 $script:wslVersionExitCode = $null
 $script:restartRequired = $false
@@ -326,7 +331,7 @@ function Invoke-DownloadWithProgress {
 
             $request = [System.Net.HttpWebRequest]::Create($Uri)
             $request.AllowAutoRedirect = $true
-            $request.UserAgent = "JudicialPipelineInstaller/1.1.2"
+            $request.UserAgent = "JudicialPipelineInstaller/1.1.3"
             $request.Timeout = 60000
             $request.ReadWriteTimeout = 60000
             $response = $request.GetResponse()
@@ -386,25 +391,47 @@ function Invoke-DownloadWithProgress {
     }
 }
 
+function Export-OfficialWslPackage {
+    param([string]$OutputPath)
+
+    $fullOutputPath = [System.IO.Path]::GetFullPath($OutputPath)
+    $parentDirectory = [System.IO.Path]::GetDirectoryName($fullOutputPath)
+    New-Item -ItemType Directory -Path $parentDirectory -Force | Out-Null
+
+    if (Test-OfficialWslPackage -Path $fullOutputPath) {
+        Write-Status "Usando o reparo oficial já baixado e validado."
+        return $fullOutputPath
+    }
+
+    Remove-Item -LiteralPath $fullOutputPath -Force -ErrorAction SilentlyContinue
+    Invoke-DownloadWithProgress `
+        -Uri $officialWslMsiUrl `
+        -OutputPath $fullOutputPath `
+        -TimeoutSeconds $MaxMsiDownloadSeconds
+
+    if (-not (Test-OfficialWslPackage -Path $fullOutputPath)) {
+        throw "O reparo baixado não passou na validação de segurança."
+    }
+
+    return $fullOutputPath
+}
+
 function Install-OfficialWslPackage {
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
-    $msiPath = Join-Path $logDirectory $officialWslMsiFileName
+    $cachedMsiPath = Join-Path $logDirectory $officialWslMsiFileName
     $msiLogPath = Join-Path $logDirectory "reparo-wsl-msi.log"
     $installationAccepted = $false
+    $msiPath = $null
 
     try {
-        if (-not (Test-OfficialWslPackage -Path $msiPath)) {
-            Remove-Item -LiteralPath $msiPath -Force -ErrorAction SilentlyContinue
-            Invoke-DownloadWithProgress `
-                -Uri $officialWslMsiUrl `
-                -OutputPath $msiPath `
-                -TimeoutSeconds $MaxMsiDownloadSeconds
+        if (Test-OfficialWslPackage -Path $bundledWslMsiPath) {
+            $msiPath = $bundledWslMsiPath
+            Write-Status "Usando o reparo oficial já incluído no instalador."
         } else {
-            Write-Status "Usando o reparo oficial já baixado e validado."
-        }
-
-        if (-not (Test-OfficialWslPackage -Path $msiPath)) {
-            throw "O reparo baixado não passou na validação de segurança."
+            if (Test-Path -LiteralPath $bundledWslMsiPath) {
+                Remove-Item -LiteralPath $bundledWslMsiPath -Force -ErrorAction SilentlyContinue
+            }
+            $msiPath = Export-OfficialWslPackage -OutputPath $cachedMsiPath
         }
 
         Write-Status "Instalando o reparo oficial da Microsoft. Aguarde..."
@@ -467,7 +494,7 @@ function Install-OfficialWslPackage {
         Write-Info "O reparo será concluído após a reinicialização."
         return $true
     } finally {
-        if ($installationAccepted) {
+        if ($installationAccepted -and $msiPath) {
             Remove-Item -LiteralPath $msiPath -Force -ErrorAction SilentlyContinue
         }
     }
@@ -489,17 +516,24 @@ function Complete-WslConfiguration {
         -TimeoutSeconds 60 | Out-Null
 }
 
+if (-not [string]::IsNullOrWhiteSpace($ExportarReparoOficial)) {
+    try {
+        $exportedPath = Export-OfficialWslPackage -OutputPath $ExportarReparoOficial
+        Write-Output "OFFICIAL_WSL_EXPORT=OK"
+        Write-Output $exportedPath
+        exit 0
+    } catch {
+        Write-Log -Message ("Falha ao exportar o pacote WSL: " + $_.Exception.Message)
+        Write-Host $_.Exception.Message -ForegroundColor Red
+        exit 1
+    }
+}
+
 if ($ValidarDownloadOficial) {
     $validationPath = Join-Path $env:TEMP (
         "JudicialPipeline-WslValidation-" + [Guid]::NewGuid().ToString("N") + ".msi")
     try {
-        Invoke-DownloadWithProgress `
-            -Uri $officialWslMsiUrl `
-            -OutputPath $validationPath `
-            -TimeoutSeconds $MaxMsiDownloadSeconds
-        if (-not (Test-OfficialWslPackage -Path $validationPath)) {
-            throw "O pacote oficial baixado não passou na validação."
-        }
+        Export-OfficialWslPackage -OutputPath $validationPath | Out-Null
         Write-Output "OFFICIAL_WSL_DOWNLOAD=OK"
         exit 0
     } finally {

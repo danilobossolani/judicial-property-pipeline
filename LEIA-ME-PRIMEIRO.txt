@@ -4,8 +4,8 @@ PRIMEIRA INSTALACAO
 
 1. Clique duas vezes em Judicial-Pipeline-Instalador.exe.
 2. Autorize a instalacao quando o Windows perguntar.
-3. Aguarde enquanto os componentes necessarios sao preparados. Se o Windows
-   precisar de reparo, o instalador baixa e valida o componente oficial.
+3. Aguarde enquanto os componentes necessarios sao preparados. O reparo
+   oficial do Windows ja acompanha o instalador e e validado automaticamente.
 4. Se o instalador solicitar, reinicie o computador.
 5. Clique no atalho Judicial Pipeline na area de trabalho.
 
