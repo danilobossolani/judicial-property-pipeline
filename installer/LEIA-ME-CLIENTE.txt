@@ -18,6 +18,17 @@ USO NORMAL
 - Aguarde o navegador abrir.
 - Não é necessário informar usuário ou senha.
 - O endereço local é http://localhost:8080.
+- O painel principal mostra somente os imóveis ainda ativos.
+- Use "Arquivados / inativos" para consultar leilões cujo prazo terminou.
+- A busca consulta Sublime, Mega, SPY e editais PublicJud automaticamente.
+
+AO TERMINAR O USO
+
+- Fechar apenas o navegador não encerra o mecanismo local.
+- Se quiser liberar a memória usada pelo Docker, clique com o botão direito no
+  ícone do Docker perto do relógio do Windows e escolha "Quit Docker Desktop".
+- No próximo uso, clique normalmente no atalho Judicial Pipeline; ele iniciará
+  o mecanismo outra vez.
 
 SE O WINDOWS MOSTRAR UMA PROTECAO
 

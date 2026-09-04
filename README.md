@@ -9,14 +9,22 @@ Aplicação Spring Boot para descobrir, organizar e acompanhar imóveis de leil�
 - “sem lances” nunca vira oportunidade automaticamente;
 - URLs e processos são deduplicados sem apagar fontes divergentes;
 - decisões humanas e histórico são preservados nas atualizações automáticas.
+- leilões cujo último prazo publicado já terminou saem do painel principal e
+  permanecem disponíveis em **Arquivados / inativos**.
 
 ## Fontes atuais
 
 - [Sublime Leilões](https://www.sublimeleiloes.com.br/): descoberta e coleta de lotes;
 - [Mega Leilões](https://www.megaleiloes.com.br/sp/sorocaba): segunda fonte de descoberta e coleta de lotes;
+- [SPY Leilões](https://spyleiloes.com.br/imoveis-leilao/sp/sorocaba/modalidade/judicial): descoberta de imóveis judiciais e terrenos;
+- [PublicJud](https://www.publicjud.com.br/): descoberta em editais judiciais;
 - DataJud/CNJ: complemento processual, não fonte de lotes.
 
 Cada leiloeiro implementa `LeiloeiroProvider`. Uma falha de fonte ou lote é registrada na Central de Auditoria e não interrompe as demais coletas.
+
+A descoberta automática roda a cada seis horas. O ciclo de vida é verificado a
+cada minuto: depois da última praça, o item deixa o painel ativo, mas seus
+dados, fontes, observações e histórico continuam preservados.
 
 ## Requisitos
 

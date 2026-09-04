@@ -1,5 +1,6 @@
 package br.com.bossolani.judicialpipeline.integration.leiloeiro;
 
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +55,10 @@ public class ResilienciaFonteService {
             try {
 
                 return operacao.executar();
+
+            } catch (LoteDescartadoException exception) {
+
+                throw exception;
 
             } catch (Exception exception) {
 

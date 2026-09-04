@@ -123,6 +123,20 @@ class TriagemLoteServiceTest {
     }
 
     @Test
+    void deveAceitarTerrenoQuandoEditalContemTermoMovelNoTextoPadrao() {
+
+        LoteDescobertoDTO lote =
+                new LoteDescobertoDTO(
+                        "https://www.publicjud.com.br/edital/118783",
+                        "Terreno em Sorocaba - edital 118783",
+                        "Sorocaba",
+                        "Imóvel objeto do leilão. O texto padrão também menciona veículo e bem móvel em regras gerais."
+                );
+
+        assertTrue(service.elegivel(lote));
+    }
+
+    @Test
     void deveRecusarAcaoDeDespejoMesmoQuandoMencionaImovel() {
 
         LoteDescobertoDTO lote =

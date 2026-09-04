@@ -67,6 +67,24 @@
 
 
                 <a
+                        th:if="${!modoInativos}"
+                        th:href="@{/inativos}"
+                        class="link-auditoria"
+                >
+                    Arquivados / inativos
+                </a>
+
+
+                <a
+                        th:if="${modoInativos}"
+                        th:href="@{/}"
+                        class="link-auditoria"
+                >
+                    ← Voltar aos ativos
+                </a>
+
+
+                <a
                         th:href="@{/auditoria}"
                         class="link-auditoria"
                 >
@@ -120,8 +138,11 @@
 
                 <div class="card-body">
 
-                    <div class="label">
-                        Imóveis cadastrados
+                    <div
+                            class="label"
+                            th:text="${rotuloTotal}"
+                    >
+                        Imóveis ativos
                     </div>
 
                     <div
@@ -145,14 +166,21 @@
 
                 <div class="card-body">
 
-                    <div class="label">
+                    <div
+                            class="label"
+                            th:text="${modoInativos
+                                ? 'Fora da tela inicial'
+                                : 'Em acompanhamento'}"
+                    >
                         Em acompanhamento
                     </div>
 
                     <div
                             id="totalMonitorando"
                             class="display-6 fw-semibold"
-                            th:text="${totalMonitorando}"
+                            th:text="${modoInativos
+                                ? totalImoveis
+                                : totalMonitorando}"
                     >
                         0
                     </div>
@@ -373,11 +401,17 @@
 
     <div class="mb-3">
 
-        <h2 class="h4 mb-1">
+        <h2
+                class="h4 mb-1"
+                th:text="${tituloLista}"
+        >
             Imóveis monitorados
         </h2>
 
-        <p class="text-secondary mb-0">
+        <p
+                class="text-secondary mb-0"
+                th:text="${subtituloLista}"
+        >
             Leads encontrados e acompanhados pelo sistema.
         </p>
 
@@ -390,7 +424,9 @@
             class="alert alert-secondary"
             th:if="${#lists.isEmpty(imoveis)}"
     >
-        Nenhum imóvel cadastrado.
+        <span th:text="${mensagemVazia}">
+            Nenhum imóvel ativo cadastrado.
+        </span>
     </div>
 
 

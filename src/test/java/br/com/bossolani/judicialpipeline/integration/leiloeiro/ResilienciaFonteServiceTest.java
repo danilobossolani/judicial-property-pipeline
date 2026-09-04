@@ -1,5 +1,6 @@
 package br.com.bossolani.judicialpipeline.integration.leiloeiro;
 
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,6 +9,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ResilienciaFonteServiceTest {
+
+    @Test
+    void naoDeveRepetirLoteDescartadoPorRegraDeNegocio() {
+
+        AtomicInteger tentativas = new AtomicInteger();
+        ResilienciaFonteService service =
+                new ResilienciaFonteService(3, 0);
+
+        assertThrows(
+                LoteDescartadoException.class,
+                () -> service.executar("Fonte de teste", () -> {
+                    tentativas.incrementAndGet();
+                    throw new LoteDescartadoException("Sem processo CNJ");
+                })
+        );
+
+        assertEquals(1, tentativas.get());
+    }
 
     @Test
     void deveRepetirFalhaTransitoriaAteObterSucesso()

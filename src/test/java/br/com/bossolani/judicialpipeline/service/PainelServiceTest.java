@@ -1,10 +1,12 @@
 package br.com.bossolani.judicialpipeline.service;
 
 import br.com.bossolani.judicialpipeline.dto.PipelineImovelDTO;
+import br.com.bossolani.judicialpipeline.model.Acompanhamento;
 import br.com.bossolani.judicialpipeline.model.Fonte;
 import br.com.bossolani.judicialpipeline.model.Imovel;
 import br.com.bossolani.judicialpipeline.model.Leilao;
 import br.com.bossolani.judicialpipeline.model.Processo;
+import br.com.bossolani.judicialpipeline.model.StatusPipeline;
 import br.com.bossolani.judicialpipeline.repository.AcompanhamentoRepository;
 import br.com.bossolani.judicialpipeline.repository.FonteRepository;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,44 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class PainelServiceTest {
+
+    @Test
+    void deveSepararImoveisAtivosDosArquivados() {
+
+        FonteRepository fonteRepository = mock(FonteRepository.class);
+        AcompanhamentoRepository acompanhamentoRepository =
+                mock(AcompanhamentoRepository.class);
+        Imovel imovel = imovel(
+                20L,
+                "Execução de Título Extrajudicial"
+        );
+        Fonte fonte = fonte(
+                imovel,
+                "https://spyleiloes.com.br/leilao/12345/casa-em-sorocaba",
+                LocalDateTime.of(2026, 9, 3, 12, 0)
+        );
+        Acompanhamento acompanhamento = new Acompanhamento();
+        acompanhamento.setImovel(imovel);
+        acompanhamento.setStatusPipeline(
+                StatusPipeline.AGUARDANDO_RESULTADO
+        );
+        acompanhamento.setAtivo(false);
+
+        when(fonteRepository.findAll()).thenReturn(List.of(fonte));
+        when(acompanhamentoRepository.findByImovelId(20L))
+                .thenReturn(Optional.of(acompanhamento));
+
+        PainelService service = new PainelService(
+                fonteRepository,
+                acompanhamentoRepository
+        );
+
+        assertThat(service.listarImoveis()).isEmpty();
+        assertThat(service.listarImoveisInativos())
+                .singleElement()
+                .extracting(PipelineImovelDTO::imovelId)
+                .isEqualTo(20L);
+    }
 
     @Test
     void deveOcultarDespejoEDeduplicarImovelPelaFonteMaisRecente() {

@@ -272,7 +272,7 @@ def build_manual():
         ], [
             Spacer(1, 2.8 * cm),
         ], [
-            p("Versão 1.1.4 - Setembro de 2026", "subtitle"),
+            p("Versão 1.2.0 - Setembro de 2026", "subtitle"),
         ]],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.4 * cm, 1.2 * cm, 0.8 * cm, 0.5 * cm, 1.4 * cm, 3 * cm, 0.8 * cm],
@@ -321,6 +321,9 @@ def build_manual():
             p(
                 "O painel reúne somente os imóveis elegíveis que passaram pela triagem. Itens duplicados, descartados ou com falha ficam registrados na Central de Auditoria.",
             ),
+            p(
+                "A busca automática consulta Sublime Leilões, Mega Leilões, SPY Leilões e editais do PublicJud. Casas, apartamentos, galpões e terrenos podem ser acompanhados quando atendem ao escopo.",
+            ),
             screenshot("painel.png", "Painel principal com indicadores, filtros e imóveis monitorados."),
             Spacer(1, 0.25 * cm),
             p("Indicadores superiores", "h2"),
@@ -328,6 +331,10 @@ def build_manual():
                 "<b>Imóveis cadastrados:</b> total acompanhado. <b>Em acompanhamento:</b> itens ainda ativos. <b>Sem lances:</b> leilões sem arrematação confirmada. <b>Oportunidades aprovadas:</b> imóveis aprovados manualmente.",
             ),
             callout("Sem lances não significa oportunidade. A oportunidade depende de análise humana.", RED),
+            p("Arquivados / inativos", "h2"),
+            p(
+                "Quando a última praça publicada já terminou, o imóvel sai automaticamente do painel principal. Use <b>Arquivados / inativos</b> para consultar o registro, as fontes, as observações e todo o histórico preservado.",
+            ),
             PageBreak(),
         ]
     )
@@ -449,6 +456,10 @@ def build_manual():
             p("Atualizações das fontes", "h2"),
             p(
                 "Sites de leilão podem mudar a estrutura das páginas. Se uma fonte parar de responder, a falha aparecerá na auditoria e poderá exigir atualização técnica do programa.",
+            ),
+            p("Liberar memória ao terminar", "h2"),
+            p(
+                "Fechar a aba do navegador não encerra o mecanismo local. Se não for usar mais o sistema e quiser liberar a memória, clique com o botão direito no ícone do Docker perto do relógio do Windows e escolha <b>Quit Docker Desktop</b>. No próximo uso, o atalho Judicial Pipeline iniciará tudo novamente.",
             ),
             PageBreak(),
         ]

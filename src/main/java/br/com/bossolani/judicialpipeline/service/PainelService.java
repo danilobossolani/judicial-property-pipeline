@@ -36,11 +36,21 @@ public class PainelService {
     @Transactional(readOnly = true)
     public List<PipelineImovelDTO> listarImoveis() {
 
-        List<Fonte> fontes =
-                new ArrayList<>(
-                        fonteRepository.findAll()
-                );
+        return listarPorAtividade(true);
+    }
 
+    @Transactional(readOnly = true)
+    public List<PipelineImovelDTO> listarImoveisInativos() {
+
+        return listarPorAtividade(false);
+    }
+
+    private List<PipelineImovelDTO> listarPorAtividade(
+            boolean ativos
+    ) {
+
+        List<Fonte> fontes =
+                new ArrayList<>(fonteRepository.findAll());
 
         fontes.sort(
                 Comparator.comparing(
@@ -51,12 +61,10 @@ public class PainelService {
                 )
         );
 
-
         Map<Long, PipelineImovelDTO> imoveisPorId =
                 new LinkedHashMap<>();
 
         for (Fonte fonte : fontes) {
-
             Leilao leilao = fonte.getLeilao();
 
             if (leilao == null) {
@@ -65,14 +73,8 @@ public class PainelService {
 
             Imovel imovel = leilao.getImovel();
 
-            if (imovel == null) {
-                continue;
-            }
-
-
-            if (processoDeDespejo(
-                    imovel.getProcesso()
-            )) {
+            if (imovel == null
+                    || processoDeDespejo(imovel.getProcesso())) {
                 continue;
             }
 
@@ -80,6 +82,10 @@ public class PainelService {
                     acompanhamentoRepository
                             .findByImovelId(imovel.getId())
                             .orElse(null);
+
+            if (!correspondeAtividade(acompanhamento, ativos)) {
+                continue;
+            }
 
             PipelineImovelDTO dto =
                     new PipelineImovelDTO(
@@ -92,36 +98,41 @@ public class PainelService {
                             leilao.getValorAvaliacaoFonte() != null
                                     ? leilao.getValorAvaliacaoFonte()
                                     : imovel.getValorAvaliacao(),
-
                             imovel.getProcesso() != null
                                     ? imovel.getProcesso().getNumeroProcesso()
                                     : null,
-
                             leilao.getLanceInicial1Praca(),
                             leilao.getLanceInicial2Praca(),
                             leilao.getLanceMinimo(),
                             leilao.getPercentualDescontoFonte(),
                             leilao.getStatusLeilao(),
                             leilao.getResultadoLeilao(),
-
                             acompanhamento != null
                                     ? acompanhamento.getStatusPipeline()
                                     : null,
-
                             fonte.getOrigemNome(),
                             fonte.getUrlOrigem()
                     );
 
-            imoveisPorId.putIfAbsent(
-                    imovel.getId(),
-                    dto
-            );
+            imoveisPorId.putIfAbsent(imovel.getId(), dto);
         }
 
+        return new ArrayList<>(imoveisPorId.values());
+    }
 
-        return new ArrayList<>(
-                imoveisPorId.values()
-        );
+    private boolean correspondeAtividade(
+            Acompanhamento acompanhamento,
+            boolean ativos
+    ) {
+
+        boolean acompanhamentoAtivo =
+                acompanhamento == null
+                        || acompanhamento.isAtivo();
+
+        return ativos
+                ? acompanhamentoAtivo
+                : acompanhamento != null
+                && !acompanhamentoAtivo;
     }
 
     private boolean processoDeDespejo(
@@ -133,23 +144,14 @@ public class PainelService {
             return false;
         }
 
-
         String classeNormalizada =
                 Normalizer.normalize(
                                 processo.getClasse(),
                                 Normalizer.Form.NFD
                         )
-                        .replaceAll(
-                                "\\p{M}",
-                                ""
-                        )
-                        .toLowerCase(
-                                Locale.ROOT
-                        );
+                        .replaceAll("\\p{M}", "")
+                        .toLowerCase(Locale.ROOT);
 
-
-        return classeNormalizada.contains(
-                "despejo"
-        );
+        return classeNormalizada.contains("despejo");
     }
 }

@@ -8,6 +8,8 @@
 | Fuso horário | `America/Sao_Paulo` | Definido no contêiner e no PostgreSQL. |
 | Primeira descoberta | 2 minutos após iniciar | `descoberta.atraso-inicial-ms`. |
 | Intervalo de descoberta | 6 horas após concluir | `descoberta.intervalo-ms`. |
+| Primeira verificação de prazos | 10 segundos após iniciar | `ciclo-vida.atraso-inicial-ms`. |
+| Intervalo de verificação de prazos | 1 minuto | `ciclo-vida.intervalo-ms`. |
 | Timeout por requisição | 15 segundos | `integracao.fontes.timeout-ms`. |
 | Retentativas | 3 | Espera progressiva a partir de 400 ms. |
 | Health check | `/actuator/health` | Não expõe detalhes internos. |
@@ -49,7 +51,9 @@ origem, status e resultado. Fonte, processo, endereço e URL nunca são tags.
 6. Confirme que `/actuator/prometheus` responde somente com autenticação.
 7. Execute uma descoberta manual supervisionada.
 8. Confirme contadores, fonte por lote, descartes, falhas e ausência de despejos.
-9. Aprove ou descarte um item de teste e confirme o evento no histórico.
+9. Confirme que o painel principal mostra apenas acompanhamentos ativos e que
+   `/inativos` preserva os itens cujo último prazo já terminou.
+10. Aprove ou descarte um item de teste e confirme o evento no histórico.
 
 ## Backup e restauração
 
@@ -73,6 +77,8 @@ Em produção, prefira PostgreSQL gerenciado com backup automático, retenção 
 - use a Central de Auditoria para falhas por fonte/lote e decisões registradas;
 - não registre corpo completo de páginas, chave DataJud ou credenciais;
 - uma fonte indisponível deve resultar em `CONCLUIDA_COM_FALHAS`, mantendo as demais fontes em execução.
+- ausência de processo identificável em um anúncio deve ser registrada como
+  descarte explicado, não como falha técnica nem como oportunidade.
 
 ## Atualização e rollback
 
@@ -92,7 +98,7 @@ Em produção, prefira PostgreSQL gerenciado com backup automático, retenção 
 - [ ] acesso externo adicionalmente protegido por HTTPS, proxy ou VPN;
 - [ ] logs, monitoramento e alerta de indisponibilidade configurados;
 - [ ] CI verde no commit implantado;
-- [ ] descoberta real supervisionada validada;
+- [x] descoberta real supervisionada validada nas quatro fontes habilitadas;
 - [ ] responsável pela análise humana e rotina operacional definidos.
 
 Sem esses itens, a aplicação está preparada para piloto/local, mas não deve ser declarada em produção pública.

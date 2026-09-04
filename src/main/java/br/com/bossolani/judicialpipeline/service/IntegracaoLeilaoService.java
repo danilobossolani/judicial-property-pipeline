@@ -1,5 +1,6 @@
 package br.com.bossolani.judicialpipeline.service;
 
+import br.com.bossolani.judicialpipeline.exception.LoteDescartadoException;
 import br.com.bossolani.judicialpipeline.integration.DataJudClient;
 import br.com.bossolani.judicialpipeline.integration.datajud.dto.DataJudProcessoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.ColetaLeiloeiroDTO;
@@ -58,6 +59,10 @@ public class IntegracaoLeilaoService {
                     provider.coletar(
                             url
                     );
+
+        } catch (LoteDescartadoException exception) {
+
+            throw exception;
 
         } catch (IOException exception) {
 

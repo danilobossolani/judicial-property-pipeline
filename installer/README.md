@@ -6,6 +6,9 @@ PostgreSQL e imagens necessárias na primeira execução. O arquivo é maior por
 carregar o reparo do Windows, mas essa etapa funciona mesmo quando o computador
 do cliente não consegue baixar arquivos do GitHub.
 
+A versão 1.2.0 habilita descoberta em Sublime, Mega, SPY e editais PublicJud,
+além do arquivamento automático de leilões após o último prazo publicado.
+
 ## Gerar
 
 Defina `DATAJUD_API_KEY` apenas no processo local de build e execute:

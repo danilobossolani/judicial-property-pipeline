@@ -132,6 +132,11 @@ public class TriagemLoteService {
         }
 
 
+        String titulo =
+                normalizarTexto(
+                        valorOuVazio(lote.titulo())
+                );
+
         String texto =
                 textoDoLote(
                         lote
@@ -151,7 +156,27 @@ public class TriagemLoteService {
         }
 
 
-        boolean bemMovel =
+        boolean tituloDeImovel =
+                INDICADORES_DE_IMOVEL
+                        .stream()
+                        .anyMatch(indicador ->
+                                contemPalavra(
+                                        titulo,
+                                        indicador
+                                )
+                        );
+
+        boolean bemMovelNoTitulo =
+                INDICADORES_DE_BEM_MOVEL
+                        .stream()
+                        .anyMatch(indicador ->
+                                contemPalavra(
+                                        titulo,
+                                        indicador
+                                )
+                        );
+
+        boolean bemMovelNoTexto =
                 INDICADORES_DE_BEM_MOVEL
                         .stream()
                         .anyMatch(indicador ->
@@ -162,7 +187,8 @@ public class TriagemLoteService {
                         );
 
 
-        if (bemMovel) {
+        if (bemMovelNoTitulo
+                || !tituloDeImovel && bemMovelNoTexto) {
 
             return new ResultadoTriagemLoteDTO(
                     false,
@@ -173,7 +199,8 @@ public class TriagemLoteService {
 
 
         boolean imovel =
-                INDICADORES_DE_IMOVEL
+                tituloDeImovel
+                        || INDICADORES_DE_IMOVEL
                         .stream()
                         .anyMatch(indicador ->
                                 contemPalavra(

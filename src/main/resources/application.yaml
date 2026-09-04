@@ -44,6 +44,10 @@ descoberta:
   atraso-inicial-ms: 120000
   intervalo-ms: 21600000
 
+ciclo-vida:
+  atraso-inicial-ms: 10000
+  intervalo-ms: 60000
+
 integracao:
   fontes:
     timeout-ms: 15000
