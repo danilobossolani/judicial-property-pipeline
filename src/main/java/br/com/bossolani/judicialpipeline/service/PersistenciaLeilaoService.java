@@ -258,7 +258,9 @@ public class PersistenciaLeilaoService {
 
 
         fonte.setTipo(
-                FonteTipo.LEILOEIRO_OFICIAL
+                coleta.fonteTipo() == null
+                        ? FonteTipo.LEILOEIRO_OFICIAL
+                        : coleta.fonteTipo()
         );
 
 

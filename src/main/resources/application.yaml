@@ -53,3 +53,6 @@ integracao:
     timeout-ms: 15000
     max-tentativas: 3
     espera-inicial-ms: 400
+  djen:
+    janela-dias: 45
+    max-paginas: 2

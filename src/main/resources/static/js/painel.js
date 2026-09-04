@@ -1,5 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    const CHAVE_APRESENTACAO =
+        "judicialPipelineApresentacaoV1";
+
+    const apresentacao =
+        document.getElementById("apresentacaoInicial");
+
+    const botaoEntrarPainel =
+        document.getElementById("botaoEntrarPainel");
+
+    const botaoComoFunciona =
+        document.getElementById("botaoComoFunciona");
+
     const filtroProcesso =
         document.getElementById("filtroProcesso");
 
@@ -28,6 +40,67 @@ document.addEventListener("DOMContentLoaded", () => {
         Array.from(
             document.querySelectorAll(".imovel-item")
         );
+
+
+    function apresentacaoJaVista() {
+
+        try {
+            return localStorage.getItem(CHAVE_APRESENTACAO)
+                === "true";
+
+        } catch (erro) {
+            console.warn(
+                "Não foi possível ler a apresentação inicial.",
+                erro
+            );
+            return false;
+        }
+    }
+
+
+    function registrarApresentacaoVista() {
+
+        try {
+            localStorage.setItem(
+                CHAVE_APRESENTACAO,
+                "true"
+            );
+
+        } catch (erro) {
+            console.warn(
+                "Não foi possível salvar a apresentação inicial.",
+                erro
+            );
+        }
+    }
+
+
+    function abrirApresentacao() {
+
+        if (!apresentacao) {
+            return;
+        }
+
+        apresentacao.hidden = false;
+        document.body.classList.add("apresentacao-aberta");
+
+        window.requestAnimationFrame(() => {
+            botaoEntrarPainel?.focus();
+        });
+    }
+
+
+    function fecharApresentacao() {
+
+        if (!apresentacao) {
+            return;
+        }
+
+        registrarApresentacaoVista();
+        apresentacao.hidden = true;
+        document.body.classList.remove("apresentacao-aberta");
+        botaoComoFunciona?.focus();
+    }
 
 
     function normalizarTexto(valor) {
@@ -246,6 +319,27 @@ document.addEventListener("DOMContentLoaded", () => {
         limparFiltros
     );
 
+    botaoEntrarPainel?.addEventListener(
+        "click",
+        fecharApresentacao
+    );
+
+    botaoComoFunciona?.addEventListener(
+        "click",
+        abrirApresentacao
+    );
+
+    document.addEventListener(
+        "keydown",
+        event => {
+            if (event.key === "Escape"
+                && apresentacao
+                && !apresentacao.hidden) {
+                fecharApresentacao();
+            }
+        }
+    );
+
 
     carregarOpcoes(
         filtroCidade,
@@ -269,4 +363,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     filtrarImoveis();
+
+    if (!apresentacaoJaVista()) {
+        abrirApresentacao();
+    }
 });

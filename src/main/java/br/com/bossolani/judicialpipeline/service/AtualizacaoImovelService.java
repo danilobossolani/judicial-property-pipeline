@@ -10,199 +10,87 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 @Service
 public class AtualizacaoImovelService {
 
-    private static final String DOMINIO_SUBLIME =
-            "sublimeleiloes.com.br";
-
     private final LeilaoRepository leilaoRepository;
     private final FonteRepository fonteRepository;
     private final PersistenciaLeilaoService persistenciaLeilaoService;
-
+    private final TriagemLoteService triagemLoteService;
 
     public AtualizacaoImovelService(
             LeilaoRepository leilaoRepository,
             FonteRepository fonteRepository,
-            PersistenciaLeilaoService persistenciaLeilaoService
+            PersistenciaLeilaoService persistenciaLeilaoService,
+            TriagemLoteService triagemLoteService
     ) {
-
-        this.leilaoRepository =
-                leilaoRepository;
-
-        this.fonteRepository =
-                fonteRepository;
-
-        this.persistenciaLeilaoService =
-                persistenciaLeilaoService;
+        this.leilaoRepository = leilaoRepository;
+        this.fonteRepository = fonteRepository;
+        this.persistenciaLeilaoService = persistenciaLeilaoService;
+        this.triagemLoteService = triagemLoteService;
     }
-
 
     /*
-     * Não mantemos esta transação aberta durante toda
-     * a chamada externa.
-     *
-     * O PersistenciaLeilaoService já possui a própria
-     * transação para salvar os dados coletados.
+     * Não mantemos transação aberta durante a chamada externa.
+     * PersistenciaLeilaoService controla a transação da atualização.
      */
-    public void atualizarDados(
-            Long imovelId
-    ) throws Exception {
+    public void atualizarDados(Long imovelId) throws Exception {
+        Leilao leilao = buscarLeilao(imovelId);
+        Fonte fonte = buscarFonteDeColeta(leilao.getId());
+        String urlNormalizada = validarENormalizarUrl(fonte.getUrlOrigem());
 
-        Leilao leilao =
-                buscarLeilao(
-                        imovelId
-                );
-
-
-        Fonte fonte =
-                buscarFonteDeColeta(
-                        leilao.getId()
-                );
-
-
-        validarUrlDaFonte(
-                fonte.getUrlOrigem()
-        );
-
-
-        persistenciaLeilaoService.coletarESalvar(
-                fonte.getUrlOrigem()
-        );
+        persistenciaLeilaoService.coletarESalvar(urlNormalizada);
     }
 
-
     @Transactional(readOnly = true)
-    protected Leilao buscarLeilao(
-            Long imovelId
-    ) {
-
+    protected Leilao buscarLeilao(Long imovelId) {
         return leilaoRepository
-                .findTopByImovelIdOrderByIdDesc(
-                        imovelId
-                )
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Nenhum leilão encontrado para este imóvel"
-                        )
-                );
+                .findTopByImovelIdOrderByIdDesc(imovelId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nenhum leilão encontrado para este imóvel"
+                ));
     }
-
 
     @Transactional(readOnly = true)
-    protected Fonte buscarFonteDeColeta(
-            Long leilaoId
-    ) {
+    protected Fonte buscarFonteDeColeta(Long leilaoId) {
+        List<Fonte> fontes = fonteRepository
+                .findByLeilaoIdOrderByDataCapturaDesc(leilaoId);
 
-        List<Fonte> fontes =
-                fonteRepository
-                        .findByLeilaoIdOrderByDataCapturaDesc(
-                                leilaoId
-                        );
-
-
-        return fontes
-                .stream()
-                .filter(fonte ->
-                        fonte.getTipo()
-                                == FonteTipo.LEILOEIRO_OFICIAL
-                )
-                .filter(fonte ->
-                        fonte.getUrlOrigem() != null
-                                && !fonte.getUrlOrigem().isBlank()
-                )
+        return fontes.stream()
+                .filter(this::fonteAtualizavel)
+                .filter(fonte -> fonte.getUrlOrigem() != null
+                        && !fonte.getUrlOrigem().isBlank())
                 .findFirst()
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Nenhuma fonte de leiloeiro encontrada para este imóvel"
-                        )
-                );
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Nenhuma fonte atualizável encontrada para este imóvel"
+                ));
     }
 
+    private boolean fonteAtualizavel(Fonte fonte) {
+        return fonte.getTipo() == FonteTipo.LEILOEIRO_OFICIAL
+                || fonte.getTipo() == FonteTipo.DJE_TJSP;
+    }
 
-    private void validarUrlDaFonte(
-            String url
-    ) {
-
-        if (url == null
-                || url.isBlank()) {
-
+    private String validarENormalizarUrl(String url) {
+        if (url == null || url.isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "A fonte não possui uma URL válida"
             );
         }
 
-
         try {
-
-            URI uri =
-                    new URI(
-                            url
-                    );
-
-
-            String esquema =
-                    uri.getScheme();
-
-
-            String host =
-                    uri.getHost();
-
-
-            if (!"https".equalsIgnoreCase(
-                    esquema
-            )) {
-
-                throw fonteNaoPermitida();
-            }
-
-
-            if (host == null) {
-
-                throw fonteNaoPermitida();
-            }
-
-
-            String hostNormalizado =
-                    host.toLowerCase();
-
-
-            boolean dominioPermitido =
-                    hostNormalizado.equals(
-                            DOMINIO_SUBLIME
-                    )
-                            || hostNormalizado.endsWith(
-                            "." + DOMINIO_SUBLIME
-                    );
-
-
-            if (!dominioPermitido) {
-
-                throw fonteNaoPermitida();
-            }
-
-        } catch (URISyntaxException e) {
-
+            return triagemLoteService.normalizarUrl(url);
+        } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A URL cadastrada para a fonte é inválida"
+                    "Fonte não permitida para atualização automática",
+                    exception
             );
         }
-    }
-
-
-    private ResponseStatusException fonteNaoPermitida() {
-
-        return new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Fonte não permitida para atualização automática"
-        );
     }
 }

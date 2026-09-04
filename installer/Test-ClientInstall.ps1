@@ -132,7 +132,7 @@ try {
         -Uri "http://127.0.0.1:$Porta/" `
         -UseBasicParsing `
         -TimeoutSec 15
-    if ($page.StatusCode -ne 200 -or $page.Content -notmatch "Pipeline Judicial") {
+    if ($page.StatusCode -ne 200 -or $page.Content -notmatch "Judicial Pipeline") {
         throw "O painel não abriu corretamente."
     }
     if ($page.Content -match "form-login|Entrar no sistema") {

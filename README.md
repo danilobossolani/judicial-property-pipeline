@@ -17,10 +17,13 @@ Aplicação Spring Boot para descobrir, organizar e acompanhar imóveis de leil�
 - [Sublime Leilões](https://www.sublimeleiloes.com.br/): descoberta e coleta de lotes;
 - [Mega Leilões](https://www.megaleiloes.com.br/sp/sorocaba): segunda fonte de descoberta e coleta de lotes;
 - [SPY Leilões](https://spyleiloes.com.br/imoveis-leilao/sp/sorocaba/modalidade/judicial): descoberta de imóveis judiciais e terrenos;
+- [Portal Zuk](https://www.portalzuk.com.br/leilao-de-imoveis/v/leilao-judicial-sao-paulo-tjsp/c/todos-imoveis/sp/interior/sorocaba): descoberta e coleta de imóveis judiciais;
+- [GL Leilões](https://www.glleiloes.com.br/lotes/imovel): descoberta e coleta de lotes imobiliários judiciais;
 - [PublicJud](https://www.publicjud.com.br/): descoberta em editais judiciais;
+- [DJEN/CNJ](https://comunica.pje.jus.br/): consulta oficial de comunicações judiciais, com triagem estrita de editais de leilão imobiliário;
 - DataJud/CNJ: complemento processual, não fonte de lotes.
 
-Cada leiloeiro implementa `LeiloeiroProvider`. Uma falha de fonte ou lote é registrada na Central de Auditoria e não interrompe as demais coletas.
+Cada integração de descoberta implementa `LeiloeiroProvider`. Uma falha de fonte ou lote é registrada na Central de Auditoria e não interrompe as demais coletas.
 
 A descoberta automática roda a cada seis horas. O ciclo de vida é verificado a
 cada minuto: depois da última praça, o item deixa o painel ativo, mas seus

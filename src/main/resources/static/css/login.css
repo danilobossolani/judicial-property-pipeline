@@ -30,17 +30,10 @@
 }
 
 .login-marca {
-    align-items: center;
-    background: #2563eb;
-    border-radius: 0.85rem;
-    color: #fff;
-    display: inline-flex;
-    font-size: 0.9rem;
-    font-weight: 800;
-    height: 2.75rem;
-    justify-content: center;
-    letter-spacing: 0.05em;
-    width: 2.75rem;
+    display: block;
+    height: 5.5rem;
+    object-fit: contain;
+    width: 5.5rem;
 }
 
 .login-sobretitulo {

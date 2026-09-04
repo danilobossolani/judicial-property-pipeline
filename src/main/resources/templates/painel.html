@@ -9,7 +9,9 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1">
 
-    <title>Pipeline Judicial</title>
+    <title>Judicial Pipeline</title>
+
+    <link rel="icon" th:href="@{/favicon.ico}" href="/favicon.ico">
 
     <script th:src="@{/js/tema.js}"></script>
 
@@ -32,6 +34,83 @@
 
 <body>
 
+<section
+        id="apresentacaoInicial"
+        class="apresentacao-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tituloApresentacao"
+        hidden
+>
+    <div class="apresentacao-card">
+        <div class="apresentacao-marca">
+            <img
+                    th:src="@{/images/judicial-pipeline-logo.png}"
+                    src="/images/judicial-pipeline-logo.png"
+                    alt=""
+                    class="apresentacao-logo"
+            >
+
+            <div>
+                <div class="apresentacao-selo">Bem-vindo ao</div>
+                <div class="apresentacao-nome">Judicial Pipeline</div>
+            </div>
+        </div>
+
+        <div class="apresentacao-conteudo">
+            <p class="apresentacao-sobretitulo">
+                Inteligência para acompanhamento imobiliário judicial
+            </p>
+
+            <h1 id="tituloApresentacao" class="apresentacao-titulo">
+                Da descoberta à decisão, tudo organizado em um só lugar.
+            </h1>
+
+            <p class="apresentacao-resumo">
+                O sistema pesquisa imóveis em Sorocaba e Votorantim,
+                cruza fontes, evita duplicidades e preserva cada evidência
+                para sua análise.
+            </p>
+
+            <div class="apresentacao-etapas" aria-label="Como o sistema funciona">
+                <article class="apresentacao-etapa">
+                    <span class="apresentacao-numero">01</span>
+                    <h2>Descobrir</h2>
+                    <p>Leiloeiros integrados e editais oficiais são consultados automaticamente.</p>
+                </article>
+
+                <article class="apresentacao-etapa">
+                    <span class="apresentacao-numero">02</span>
+                    <h2>Analisar</h2>
+                    <p>Processo, localização, praças, valores e fontes ficam reunidos.</p>
+                </article>
+
+                <article class="apresentacao-etapa">
+                    <span class="apresentacao-numero">03</span>
+                    <h2>Acompanhar</h2>
+                    <p>Registre observações e decisões sem perder o histórico do imóvel.</p>
+                </article>
+            </div>
+
+            <div class="apresentacao-rodape">
+                <p>
+                    O sistema organiza as evidências. A aprovação de uma
+                    oportunidade continua sendo uma decisão humana.
+                </p>
+
+                <button
+                        id="botaoEntrarPainel"
+                        type="button"
+                        class="apresentacao-entrar"
+                >
+                    Entrar no painel
+                    <span aria-hidden="true">→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
 
 <header class="topbar py-4">
 
@@ -42,15 +121,26 @@
                     align-items-center
                     gap-3">
 
-            <div>
+            <div class="marca-topbar">
 
-                <h1 class="h3 mb-1">
-                    Pipeline Judicial
-                </h1>
+                <img
+                        th:src="@{/images/judicial-pipeline-logo.png}"
+                        src="/images/judicial-pipeline-logo.png"
+                        alt=""
+                        class="marca-topbar-logo"
+                >
 
-                <p class="mb-0 text-white-50">
-                    Monitoramento de imóveis judiciais
-                </p>
+                <div>
+
+                    <h1 class="h3 mb-1">
+                        Judicial Pipeline
+                    </h1>
+
+                    <p class="mb-0 text-white-50">
+                        Monitoramento de imóveis judiciais
+                    </p>
+
+                </div>
 
             </div>
 
@@ -64,6 +154,15 @@
                 <small class="text-white-50">
                     Sorocaba e Votorantim
                 </small>
+
+
+                <button
+                        id="botaoComoFunciona"
+                        type="button"
+                        class="link-auditoria link-apresentacao"
+                >
+                    Como funciona
+                </button>
 
 
                 <a

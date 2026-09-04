@@ -63,7 +63,7 @@ class SegurancaWebTest {
         assertThat(login.statusCode()).isEqualTo(200);
         assertThat(login.body())
                 .contains("Acesso protegido")
-                .contains("Pipeline Judicial")
+                .contains("Judicial Pipeline")
                 .contains("width=device-width");
     }
 

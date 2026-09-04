@@ -44,7 +44,7 @@ class HealthEndpointTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body())
-                .contains("Pipeline Judicial")
+                .contains("Judicial Pipeline")
                 .contains("Oportunidades aprovadas")
                 .contains("width=device-width");
     }

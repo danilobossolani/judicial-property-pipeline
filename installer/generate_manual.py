@@ -272,7 +272,7 @@ def build_manual():
         ], [
             Spacer(1, 2.8 * cm),
         ], [
-            p("Versão 1.2.0 - Setembro de 2026", "subtitle"),
+            p("Versão 1.3.0 - Setembro de 2026", "subtitle"),
         ]],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.4 * cm, 1.2 * cm, 0.8 * cm, 0.5 * cm, 1.4 * cm, 3 * cm, 0.8 * cm],
@@ -305,7 +305,8 @@ def build_manual():
             p("Uso diário", "h2"),
             step(1, "Clique no atalho", "Uma pequena janela mostrará que o sistema está sendo preparado."),
             step(2, "Espere o navegador abrir", "O painel abre automaticamente em <b>http://localhost:8080</b>."),
-            step(3, "Use normalmente", "Não há login ou configuração no computador do cliente."),
+            step(3, "Conheça o sistema", "Na primeira abertura, leia a apresentação e clique em <b>Entrar no painel</b>. Para revê-la depois, use <b>Como funciona</b> no topo."),
+            step(4, "Use normalmente", "Não há login ou configuração no computador do cliente."),
             Spacer(1, 0.2 * cm),
             callout(
                 "Se aparecer uma tela mencionando WSL, não digite comandos. O instalador leva o reparo oficial e corrige esse componente sozinho.",
@@ -322,7 +323,7 @@ def build_manual():
                 "O painel reúne somente os imóveis elegíveis que passaram pela triagem. Itens duplicados, descartados ou com falha ficam registrados na Central de Auditoria.",
             ),
             p(
-                "A busca automática consulta Sublime Leilões, Mega Leilões, SPY Leilões e editais do PublicJud. Casas, apartamentos, galpões e terrenos podem ser acompanhados quando atendem ao escopo.",
+                "A busca automática consulta Sublime Leilões, Mega Leilões, SPY Leilões, Portal Zuk, GL Leilões, PublicJud e o DJEN/CNJ. Casas, apartamentos, galpões e terrenos podem ser acompanhados quando atendem ao escopo.",
             ),
             screenshot("painel.png", "Painel principal com indicadores, filtros e imóveis monitorados."),
             Spacer(1, 0.25 * cm),

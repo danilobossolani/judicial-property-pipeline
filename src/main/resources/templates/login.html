@@ -5,7 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Acesso - Pipeline Judicial</title>
+    <title>Acesso - Judicial Pipeline</title>
+    <link rel="icon" th:href="@{/favicon.ico}" href="/favicon.ico">
     <script th:src="@{/js/tema.js}"></script>
     <link rel="stylesheet" th:href="@{/css/tema.css}">
     <link rel="stylesheet" th:href="@{/css/login.css}">
@@ -15,11 +16,16 @@
 
 <main class="login-container">
     <section class="login-card" aria-labelledby="tituloLogin">
-        <div class="login-marca" aria-hidden="true">JP</div>
+        <img
+                class="login-marca"
+                th:src="@{/images/judicial-pipeline-logo.png}"
+                src="/images/judicial-pipeline-logo.png"
+                alt=""
+        >
 
         <p class="login-sobretitulo">Acesso protegido</p>
 
-        <h1 id="tituloLogin">Pipeline Judicial</h1>
+        <h1 id="tituloLogin">Judicial Pipeline</h1>
 
         <p class="login-descricao">
             Entre com as credenciais do operador para acessar imóveis,
