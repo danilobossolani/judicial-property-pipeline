@@ -17,6 +17,8 @@ Descobrir, organizar e acompanhar lotes de imóveis judiciais com rastreabilidad
 ## Estado atual
 
 - Coleta da Sublime Leilões validada no site real.
+- Editais de leilão do TRT-15 e TRT-2 validados na API pública oficial do CNJ,
+  com separação de pautas por processo/lote e filtro pela localização do imóvel.
 - Descoberta automática e execução manual disponíveis.
 - Triagem por tipo de bem e cidade.
 - Deduplicação por URL e processo.

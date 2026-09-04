@@ -56,3 +56,6 @@ integracao:
   djen:
     janela-dias: 45
     max-paginas: 2
+  trt:
+    janela-dias: 45
+    max-paginas: 10

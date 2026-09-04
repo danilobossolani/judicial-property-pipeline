@@ -384,7 +384,7 @@ public record DetalheImovelDTO(
 
             return switch (tipo) {
                 case DATAJUD_CNJ -> "DataJud / CNJ";
-                case DJE_TJSP -> "DJE / TJSP";
+                case DJE_TJSP -> "Diário oficial / tribunal";
                 case LEILOEIRO_OFICIAL -> "Leiloeiro oficial";
                 case CORRETOR_JUDICIAL -> "Corretor judicial";
             };

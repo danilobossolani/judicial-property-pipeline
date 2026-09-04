@@ -22,8 +22,8 @@ USO NORMAL
 - Para rever depois, use o botão "Como funciona" no topo do painel.
 - O painel principal mostra somente os imóveis ainda ativos.
 - Use "Arquivados / inativos" para consultar leilões cujo prazo terminou.
-- A busca consulta Sublime, Mega, SPY, Portal Zuk, GL Leilões, PublicJud e
-  DJEN/CNJ automaticamente.
+- A busca consulta Sublime, Mega, SPY, Portal Zuk, GL Leilões, PublicJud,
+  DJEN/CNJ, TRT-15 e TRT-2 automaticamente.
 
 AO TERMINAR O USO
 

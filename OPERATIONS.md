@@ -13,6 +13,8 @@
 | Timeout por requisição | 15 segundos | `integracao.fontes.timeout-ms`. |
 | Retentativas | 3 | Espera progressiva a partir de 400 ms. |
 | Janela do DJEN/CNJ | 45 dias | `integracao.djen.janela-dias`; consulta pública de comunicações recentes. |
+| Janela dos TRTs | 45 dias | `integracao.trt.janela-dias`; TRT-15 e TRT-2 são consultados separadamente. |
+| Páginas por TRT | 10 | `integracao.trt.max-paginas`; limita o volume por tribunal e execução. |
 | Health check | `/actuator/health` | Não expõe detalhes internos. |
 | Métricas | `/actuator/prometheus` | Exige autenticação e não contém processos, URLs ou imóveis. |
 | Sessão | 8 horas | Encerrar manualmente ao terminar a operação. |
@@ -99,7 +101,7 @@ Em produção, prefira PostgreSQL gerenciado com backup automático, retenção 
 - [ ] acesso externo adicionalmente protegido por HTTPS, proxy ou VPN;
 - [ ] logs, monitoramento e alerta de indisponibilidade configurados;
 - [ ] CI verde no commit implantado;
-- [x] descoberta real supervisionada validada nas sete fontes habilitadas;
+- [x] descoberta real supervisionada validada nas nove fontes habilitadas;
 - [ ] responsável pela análise humana e rotina operacional definidos.
 
 Sem esses itens, a aplicação está preparada para piloto/local, mas não deve ser declarada em produção pública.

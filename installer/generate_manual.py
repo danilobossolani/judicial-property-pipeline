@@ -183,9 +183,13 @@ def p(text, style="body"):
 
 def section(number, title, introduction):
     return [
-        p(f"SEÇÃO {number}", "section_number"),
-        p(title, "h1"),
-        p(introduction, "lead"),
+        KeepTogether(
+            [
+                p(f"SEÇÃO {number}", "section_number"),
+                p(title, "h1"),
+                p(introduction, "lead"),
+            ]
+        ),
     ]
 
 
@@ -385,7 +389,7 @@ def build_manual():
             [p("Consulta e acompanhamento de imóveis judiciais", "cover_subtitle")],
             [Spacer(1, 2.2 * cm)],
             [p("Sorocaba e Votorantim", "cover_subtitle")],
-            [p("Versão 1.3.0  |  Setembro de 2026", "cover_subtitle")],
+            [p("Versão 1.4.0  |  Setembro de 2026", "cover_subtitle")],
         ],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.2 * cm, 0.7 * cm, 1.3 * cm, 1.0 * cm, 11.8 * cm, 0.65 * cm, 0.65 * cm],
@@ -414,7 +418,7 @@ def build_manual():
             Spacer(1, 0.35 * cm),
             p("O que o sistema faz", "h2"),
             p("O Judicial Pipeline procura imóveis em fontes integradas, aplica a triagem de Sorocaba e Votorantim, evita duplicidades e organiza os dados para acompanhamento. A aprovação de uma oportunidade é sempre feita por uma pessoa."),
-            p("As consultas incluem Sublime Leilões, Mega Leilões, SPY Leilões, Portal Zuk, GL Leilões, PublicJud e DJEN/CNJ. O DataJud complementa os dados do processo judicial."),
+            p("As consultas incluem Sublime Leilões, Mega Leilões, SPY Leilões, Portal Zuk, GL Leilões, PublicJud, DJEN/CNJ, TRT-15 e TRT-2. O DataJud complementa os dados do processo judicial."),
             note("Leilão sem lances não significa oportunidade aprovada.", RED, colors.HexColor("#FFF1F3")),
             PageBreak(),
         ]

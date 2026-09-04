@@ -5,6 +5,8 @@ import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobert
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.gl.GlLeiloesProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.publicjud.PublicJudProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.spy.SpyLeiloesProvider;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.trt.Trt15ComunicacaoProvider;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.trt.Trt2ComunicacaoProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.zuk.PortalZukProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -33,6 +35,26 @@ class FontesMultiplasLiveTest {
     @Test
     void deveDescobrirEColetarAoMenosUmLoteRealDoPortalZuk() throws Exception {
         validarFonteComLotes(new PortalZukProvider(RESILIENCIA, 30000));
+    }
+
+    @Test
+    void deveDescobrirEColetarAoMenosUmEditalRealDoTrt15() throws Exception {
+        validarFonteComLotes(new Trt15ComunicacaoProvider(
+                RESILIENCIA,
+                30000,
+                45,
+                10
+        ));
+    }
+
+    @Test
+    void deveDescobrirEColetarAoMenosUmEditalRealDoTrt2() throws Exception {
+        validarFonteComLotes(new Trt2ComunicacaoProvider(
+                RESILIENCIA,
+                30000,
+                45,
+                10
+        ));
     }
 
     @Test

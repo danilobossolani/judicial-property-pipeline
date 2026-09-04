@@ -21,6 +21,8 @@ Aplicação Spring Boot para descobrir, organizar e acompanhar imóveis de leil�
 - [GL Leilões](https://www.glleiloes.com.br/lotes/imovel): descoberta e coleta de lotes imobiliários judiciais;
 - [PublicJud](https://www.publicjud.com.br/): descoberta em editais judiciais;
 - [DJEN/CNJ](https://comunica.pje.jus.br/): consulta oficial de comunicações judiciais, com triagem estrita de editais de leilão imobiliário;
+- TRT-15, pela [Plataforma Nacional de Editais do CNJ](https://comunica.pje.jus.br/): editais trabalhistas unitários e pautas unificadas, separados por processo e lote;
+- TRT-2, pela [Plataforma Nacional de Editais do CNJ](https://comunica.pje.jus.br/): editais trabalhistas de leiloeiros oficiais, incluindo bens situados fora da sede do processo;
 - DataJud/CNJ: complemento processual, não fonte de lotes.
 
 Cada integração de descoberta implementa `LeiloeiroProvider`. Uma falha de fonte ou lote é registrada na Central de Auditoria e não interrompe as demais coletas.
