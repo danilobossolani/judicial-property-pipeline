@@ -2,11 +2,16 @@
 param(
     [string]$DataJudApiKey = $env:DATAJUD_API_KEY,
 
-    [string]$OutputPath = (Join-Path $PSScriptRoot "..\dist\Judicial-Pipeline-Instalador.exe")
+    [string]$OutputPath
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+
+if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+    $OutputPath = Join-Path $projectRoot "dist\Judicial-Pipeline-Instalador.exe"
+}
+
 $outputFullPath = [System.IO.Path]::GetFullPath($OutputPath)
 $temporaryDirectory = Join-Path $env:TEMP ("judicial-pipeline-installer-build-" + [Guid]::NewGuid().ToString("N"))
 $wslOfflineFileName = "wsl.2.7.12.0.x64.msi"
