@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from reportlab.lib import colors
@@ -18,7 +19,8 @@ from reportlab.platypus import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "output" / "pdf" / "Manual-do-Usuario-Judicial-Pipeline.pdf"
+DEFAULT_OUTPUT = ROOT / "output" / "pdf" / "Manual-do-Usuario-Judicial-Pipeline.pdf"
+OUTPUT = Path(os.getenv("JUDICIAL_PIPELINE_MANUAL_OUTPUT", str(DEFAULT_OUTPUT)))
 ASSETS = ROOT / "output" / "pdf" / "assets"
 ICON = ROOT / "installer" / "assets" / "judicial-pipeline-icon.png"
 
@@ -182,15 +184,27 @@ def p(text, style="body"):
 
 
 def section(number, title, introduction):
-    return [
-        KeepTogether(
+    header = Table(
+        [
+            [p(f"SEÇÃO {number}", "section_number")],
+            [p(title, "h1")],
+            [p(introduction, "lead")],
+        ],
+        colWidths=[16.8 * cm],
+        hAlign="LEFT",
+    )
+    header.setStyle(
+        TableStyle(
             [
-                p(f"SEÇÃO {number}", "section_number"),
-                p(title, "h1"),
-                p(introduction, "lead"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ]
-        ),
-    ]
+        )
+    )
+    return [header]
 
 
 def note(text, color=BLUE, background=LIGHT_BLUE):
@@ -322,6 +336,7 @@ def status_table():
 def situations_table():
     rows = [
         [p("Situação", "table_header"), p("O que fazer", "table_header")],
+        [p("O número de imóveis não aumentou", "table_body"), p("Confira a última execução na Central de Auditoria. Uma fonte nova pode localizar um imóvel já cadastrado, atualizar um registro, descartar um item fora dos critérios ou não ter publicação nova para a região naquele momento.", "table_body")],
         [p("O imóvel apareceu como sem lances", "table_body"), p("Confira a fonte e aguarde o resultado. Isso, sozinho, não transforma o imóvel em oportunidade.", "table_body")],
         [p("Os valores das fontes são diferentes", "table_body"), p("Não escolha um valor por aproximação. Abra as fontes e registre a divergência na observação.", "table_body")],
         [p("O imóvel sumiu do painel", "table_body"), p("Procure em Arquivados / inativos. O sistema retira da tela inicial os leilões cuja última praça terminou.", "table_body")],
@@ -419,6 +434,7 @@ def build_manual():
             p("O que o sistema faz", "h2"),
             p("O Judicial Pipeline procura imóveis em fontes integradas, aplica a triagem de Sorocaba e Votorantim, evita duplicidades e organiza os dados para acompanhamento. A aprovação de uma oportunidade é sempre feita por uma pessoa."),
             p("As consultas incluem Sublime Leilões, Mega Leilões, SPY Leilões, Portal Zuk, GL Leilões, PublicJud, DJEN/CNJ, TRT-15 e TRT-2. O DataJud complementa os dados do processo judicial."),
+            p("Ter mais fontes aumenta a cobertura, mas não garante um imóvel novo em toda execução. Só entra um novo cartão quando existe uma publicação de imóvel na região, o item passa pela triagem e ainda não está cadastrado."),
             note("Leilão sem lances não significa oportunidade aprovada.", RED, colors.HexColor("#FFF1F3")),
             PageBreak(),
         ]
@@ -511,7 +527,7 @@ def build_manual():
                 ]
             ),
             Spacer(1, 0.3 * cm),
-            note("A auditoria é o histórico técnico da coleta. A lista de oportunidades continua no painel e depende da aprovação humana.", BLUE),
+            note("A primeira busca agendada começa cerca de dois minutos após a abertura. Depois, o sistema busca novamente a cada seis horas. Para conferir imediatamente, use <b>Executar agora</b>; a Central de Auditoria mostrará o resultado de cada fonte.", BLUE),
             PageBreak(),
         ]
     )

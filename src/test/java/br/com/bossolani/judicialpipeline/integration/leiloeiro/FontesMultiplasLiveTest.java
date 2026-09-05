@@ -3,8 +3,13 @@ package br.com.bossolani.judicialpipeline.integration.leiloeiro;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.djen.DjenCnjProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.dto.LoteDescobertoDTO;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.gl.GlLeiloesProvider;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.mega.MegaLeiloesProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.publicjud.PublicJudProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.spy.SpyLeiloesProvider;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloeiroProvider;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesBrowser;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesDiscoveryBrowser;
+import br.com.bossolani.judicialpipeline.integration.leiloeiro.sublime.SublimeLeiloesScraper;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.trt.Trt15ComunicacaoProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.trt.Trt2ComunicacaoProvider;
 import br.com.bossolani.judicialpipeline.integration.leiloeiro.zuk.PortalZukProvider;
@@ -21,6 +26,21 @@ class FontesMultiplasLiveTest {
 
     private static final ResilienciaFonteService RESILIENCIA =
             new ResilienciaFonteService(2, 500);
+
+    @Test
+    void deveDescobrirEColetarAoMenosUmLoteRealDaSublime() throws Exception {
+        validarFonteComLotes(new SublimeLeiloeiroProvider(
+                new SublimeLeiloesDiscoveryBrowser(),
+                new SublimeLeiloesScraper(),
+                new SublimeLeiloesBrowser(),
+                RESILIENCIA
+        ));
+    }
+
+    @Test
+    void deveDescobrirEColetarAoMenosUmLoteRealDaMega() throws Exception {
+        validarFonteComLotes(new MegaLeiloesProvider(RESILIENCIA, 30000));
+    }
 
     @Test
     void deveDescobrirEColetarAoMenosUmLoteRealDaSpy() throws Exception {

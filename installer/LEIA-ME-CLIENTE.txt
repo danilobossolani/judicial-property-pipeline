@@ -24,6 +24,12 @@ USO NORMAL
 - Use "Arquivados / inativos" para consultar leilões cujo prazo terminou.
 - A busca consulta Sublime, Mega, SPY, Portal Zuk, GL Leilões, PublicJud,
   DJEN/CNJ, TRT-15 e TRT-2 automaticamente.
+- A primeira busca começa cerca de dois minutos depois que o sistema abre. As
+  próximas acontecem a cada seis horas. Para conferir na hora, abra a Central
+  de Auditoria e clique em "Executar agora".
+- Mais fontes aumentam a cobertura, mas não garantem um imóvel novo em toda
+  busca. Um item também pode ser atualizado, reconhecido como já cadastrado ou
+  descartado por não atender à região e ao tipo de bem.
 
 AO TERMINAR O USO
 
