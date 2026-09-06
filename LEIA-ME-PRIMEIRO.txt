@@ -16,6 +16,14 @@ USO NORMAL
 - O painel abrira automaticamente no navegador.
 - Nao existe usuario, senha ou configuracao para preencher.
 
+AO TERMINAR O USO
+
+- Fechar o navegador nao encerra o mecanismo local.
+- Clique duas vezes no atalho Encerrar Judicial Pipeline para liberar a memoria.
+- Os imoveis, as observacoes e o historico serao preservados.
+- Enquanto estiver encerrado, as buscas automaticas ficam pausadas.
+- Para usar novamente, clique no atalho Judicial Pipeline.
+
 AJUDA
 
 Se o painel nao abrir, reinicie o computador e tente novamente. Se continuar,
@@ -23,7 +31,8 @@ envie ao responsavel tecnico:
 
 - instalacao.log e preparacao-docker.log de
   C:\ProgramData\JudicialPipeline;
-- preparacao-windows.log, reparo-wsl-msi.log, inicializacao.log e inicio.log de
+- preparacao-windows.log, reparo-wsl-msi.log, inicializacao.log,
+  encerramento.log e inicio.log de
   %LOCALAPPDATA%\JudicialPipeline.
 
 IMPORTANTE

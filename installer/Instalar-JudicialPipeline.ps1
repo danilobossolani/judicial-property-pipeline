@@ -328,7 +328,8 @@ function New-Shortcut {
         [string]$Target,
         [string]$WorkingDirectory,
         [string]$Description,
-        [string]$Icon
+        [string]$Icon,
+        [string]$Arguments = ""
     )
 
     $shell = New-Object -ComObject WScript.Shell
@@ -336,6 +337,7 @@ function New-Shortcut {
     $shortcut.TargetPath = $Target
     $shortcut.WorkingDirectory = $WorkingDirectory
     $shortcut.Description = $Description
+    $shortcut.Arguments = $Arguments
     if ($Icon -and (Test-Path -LiteralPath $Icon)) {
         $shortcut.IconLocation = "$Icon,0"
     }
@@ -354,8 +356,12 @@ function Install-Shortcuts {
     $userStartMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
     $iconPath = Join-Path $Destino "installer\assets\judicial-pipeline-icon.ico"
     $launcherPath = Join-Path $Destino "Judicial Pipeline.exe"
+    $stopTarget = $launcherPath
+    $stopArguments = "--stop"
     if (-not (Test-Path -LiteralPath $launcherPath)) {
         $launcherPath = Join-Path $Destino "INICIAR.bat"
+        $stopTarget = Join-Path $Destino "PARAR.bat"
+        $stopArguments = ""
     }
     $manualPath = Join-Path $Destino "output\pdf\Manual-do-Usuario-Judicial-Pipeline.pdf"
     if (-not (Test-Path -LiteralPath $manualPath)) {
@@ -367,7 +373,9 @@ function Install-Shortcuts {
     # trabalho após a atualização. Removemos apenas esses atalhos legados.
     @(
         (Join-Path $userDesktop "Judicial Pipeline.lnk"),
+        (Join-Path $userDesktop "Encerrar Judicial Pipeline.lnk"),
         (Join-Path $userStartMenu "Judicial Pipeline.lnk"),
+        (Join-Path $userStartMenu "Encerrar Judicial Pipeline.lnk"),
         (Join-Path $userStartMenu "Judicial Pipeline - Ajuda.lnk")
     ) | Where-Object {
         $_ -ne (Join-Path $desktop "Judicial Pipeline.lnk") -and
@@ -391,6 +399,22 @@ function Install-Shortcuts {
         -WorkingDirectory $Destino `
         -Description "Iniciar o Judicial Pipeline" `
         -Icon $iconPath
+
+    New-Shortcut `
+        -Path (Join-Path $desktop "Encerrar Judicial Pipeline.lnk") `
+        -Target $stopTarget `
+        -WorkingDirectory $Destino `
+        -Description "Encerrar o Judicial Pipeline e liberar a memória" `
+        -Icon $iconPath `
+        -Arguments $stopArguments
+
+    New-Shortcut `
+        -Path (Join-Path $startMenu "Encerrar Judicial Pipeline.lnk") `
+        -Target $stopTarget `
+        -WorkingDirectory $Destino `
+        -Description "Encerrar o Judicial Pipeline e liberar a memória" `
+        -Icon $iconPath `
+        -Arguments $stopArguments
 
     New-Shortcut `
         -Path (Join-Path $startMenu "Judicial Pipeline - Manual.lnk") `

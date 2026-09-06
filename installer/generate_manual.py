@@ -342,6 +342,7 @@ def situations_table():
         [p("O imóvel sumiu do painel", "table_body"), p("Procure em Arquivados / inativos. O sistema retira da tela inicial os leilões cuja última praça terminou.", "table_body")],
         [p("Preciso conferir uma mudança agora", "table_body"), p("Abra o imóvel e use Atualizar dados agora. A atualização automática continuará funcionando.", "table_body")],
         [p("Uma fonte falhou", "table_body"), p("Veja a execução na Central de Auditoria. As outras fontes continuam sendo processadas.", "table_body")],
+        [p("O computador ficou lento depois de fechar o navegador", "table_body"), p("Clique no atalho Encerrar Judicial Pipeline. Ele fecha o mecanismo local, libera a memória e preserva todos os dados.", "table_body")],
     ]
     table = Table(rows, colWidths=[5.2 * cm, 11.6 * cm], repeatRows=1)
     table.setStyle(
@@ -404,7 +405,7 @@ def build_manual():
             [p("Consulta e acompanhamento de imóveis judiciais", "cover_subtitle")],
             [Spacer(1, 2.2 * cm)],
             [p("Sorocaba e Votorantim", "cover_subtitle")],
-            [p("Versão 1.4.0  |  Setembro de 2026", "cover_subtitle")],
+            [p("Versão 1.4.1  |  Setembro de 2026", "cover_subtitle")],
         ],
         colWidths=[17 * cm],
         rowHeights=[1.2 * cm, 4.2 * cm, 0.7 * cm, 1.3 * cm, 1.0 * cm, 11.8 * cm, 0.65 * cm, 0.65 * cm],
@@ -527,7 +528,7 @@ def build_manual():
                 ]
             ),
             Spacer(1, 0.3 * cm),
-            note("A primeira busca agendada começa cerca de dois minutos após a abertura. Depois, o sistema busca novamente a cada seis horas. Para conferir imediatamente, use <b>Executar agora</b>; a Central de Auditoria mostrará o resultado de cada fonte.", BLUE),
+            note("A primeira busca agendada começa cerca de dois minutos após a abertura. Depois, o sistema busca novamente a cada seis horas enquanto estiver ligado. Para conferir imediatamente, use <b>Executar agora</b>; a Central de Auditoria mostrará o resultado de cada fonte.", BLUE),
             PageBreak(),
         ]
     )
@@ -542,7 +543,8 @@ def build_manual():
             note("Processos de despejo tratam de locação e não entram como oportunidade imobiliária deste produto.", RED, colors.HexColor("#FFF1F3")),
             Spacer(1, 0.3 * cm),
             p("Ao terminar o uso", "h2"),
-            p("Fechar a aba do navegador não desliga o mecanismo local. Se quiser liberar memória, clique com o botão direito no ícone do Docker perto do relógio e escolha <b>Quit Docker Desktop</b>. No próximo uso, abra novamente pelo atalho Judicial Pipeline."),
+            p("Fechar a aba do navegador não desliga o mecanismo local. Para liberar a memória, clique duas vezes no atalho <b>Encerrar Judicial Pipeline</b> que fica na área de trabalho. Aguarde a confirmação antes de fechar a tela."),
+            note("O encerramento preserva imóveis, observações e histórico. Enquanto estiver encerrado, as buscas automáticas ficam pausadas. Para retomar tudo, clique no atalho <b>Judicial Pipeline</b>.", GREEN, colors.HexColor("#EEF8F4")),
             PageBreak(),
         ]
     )
@@ -557,7 +559,7 @@ def build_manual():
             note("Se aparecer uma mensagem sobre WSL, não execute <b>wsl --update</b> manualmente. Use o instalador atualizado, que já contém o reparo oficial.", GOLD, colors.HexColor("#FFF8E9")),
             Spacer(1, 0.4 * cm),
             p("O que enviar ao suporte", "h2"),
-            p("Envie uma captura da mensagem e, se existirem, os arquivos <b>instalacao.log</b>, <b>preparacao-docker.log</b>, <b>preparacao-windows.log</b> e <b>inicializacao.log</b>. Eles ficam nas pastas de dados do Judicial Pipeline."),
+            p("Envie uma captura da mensagem e, se existirem, os arquivos <b>instalacao.log</b>, <b>preparacao-docker.log</b>, <b>preparacao-windows.log</b>, <b>inicializacao.log</b> e <b>encerramento.log</b>. Eles ficam nas pastas de dados do Judicial Pipeline."),
             p("Esses registros servem para diagnóstico. Não publique os arquivos em redes sociais ou repositórios abertos."),
             Spacer(1, 0.45 * cm),
             note("Rotina normal: clique no atalho Judicial Pipeline, aguarde o navegador abrir e trabalhe pelo painel.", GREEN, colors.HexColor("#EEF8F4")),

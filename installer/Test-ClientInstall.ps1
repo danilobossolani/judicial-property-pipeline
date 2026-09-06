@@ -161,6 +161,44 @@ try {
         throw "O inicializador visual não gerou o log esperado."
     }
 
+    $previousKeepEngine = $env:JUDICIAL_PIPELINE_KEEP_ENGINE
+    $previousNoDialog = $env:JUDICIAL_PIPELINE_NO_DIALOG
+    try {
+        $env:JUDICIAL_PIPELINE_KEEP_ENGINE = "1"
+        $env:JUDICIAL_PIPELINE_NO_DIALOG = "1"
+        $stopProcess = Start-Process `
+            -FilePath $launcher `
+            -ArgumentList "--stop" `
+            -Wait `
+            -PassThru
+        if ($stopProcess.ExitCode -ne 0) {
+            throw "O encerramento visual falhou. Código: $($stopProcess.ExitCode)."
+        }
+    } finally {
+        $env:JUDICIAL_PIPELINE_KEEP_ENGINE = $previousKeepEngine
+        $env:JUDICIAL_PIPELINE_NO_DIALOG = $previousNoDialog
+    }
+
+    if (-not (Test-Path -LiteralPath "$localAppData\JudicialPipeline\encerramento.log")) {
+        throw "O encerramento visual não gerou o log esperado."
+    }
+    if (-not (Test-Path -LiteralPath "$localAppData\JudicialPipeline\encerramento-launcher.log")) {
+        throw "O inicializador não registrou o encerramento esperado."
+    }
+
+    $applicationStopped = $false
+    try {
+        Invoke-WebRequest `
+            -Uri "http://127.0.0.1:$Porta/actuator/health" `
+            -UseBasicParsing `
+            -TimeoutSec 3 | Out-Null
+    } catch {
+        $applicationStopped = $true
+    }
+    if (-not $applicationStopped) {
+        throw "A aplicação continuou respondendo após o encerramento."
+    }
+
     & powershell.exe `
         -NoProfile `
         -ExecutionPolicy Bypass `
@@ -186,6 +224,8 @@ try {
     Write-Output "HEALTH_STATUS=$($health.StatusCode)"
     Write-Output "LOGIN_DISABLED=True"
     Write-Output "LAUNCHER_LOG=True"
+    Write-Output "STOPPER_LOG=True"
+    Write-Output "APPLICATION_STOPPED=True"
     Write-Output "PASSWORD_PRESERVED=True"
     $completed = $true
 } finally {

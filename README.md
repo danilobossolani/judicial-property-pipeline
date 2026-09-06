@@ -91,7 +91,8 @@ No Windows, o pacote local também fornece `INICIAR.bat`, `PARAR.bat` e
 deve ser incluído no ZIP ou enviado por mensagens.
 
 Para um cliente leigo, existe também um instalador personalizado que baixa os
-componentes, configura o ambiente sem login e cria o atalho do programa. O
+componentes, configura o ambiente sem login e cria atalhos para iniciar e
+encerrar o programa. O encerramento libera o Docker/WSL sem apagar os dados. O
 processo de build e suas limitações de segurança estão documentados em
 [installer/README.md](installer/README.md). O instalador limita a porta ao
 próprio computador (`127.0.0.1`) porque o acesso local não exige senha.

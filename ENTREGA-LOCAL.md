@@ -24,10 +24,13 @@ monta os componentes. Ao terminar, o navegador abrirá
 ## Uso normal
 
 - iniciar e abrir o sistema: `INICIAR.bat`;
-- parar sem apagar os dados: `PARAR.bat`;
+- parar sem apagar os dados e liberar os recursos do Docker/WSL: use o atalho
+  `Encerrar Judicial Pipeline` ou, para suporte técnico, `PARAR.bat`;
 - consultar estado e erros recentes: `VER-STATUS.bat`.
 
 O Docker Desktop precisa estar aberto enquanto o sistema estiver sendo usado.
+Quando o atalho de encerramento for acionado, as buscas automáticas ficam
+pausadas até a próxima abertura, sem perda do banco ou do histórico.
 Nunca envie o arquivo `.env` por e-mail ou aplicativo de mensagens, pois ele
 contém credenciais.
 
@@ -36,4 +39,3 @@ contém credenciais.
 O endereço `localhost` funciona somente no computador onde o pacote está
 rodando. Para acesso por vários computadores ou fora da residência/escritório,
 use a implantação online com domínio, HTTPS, PostgreSQL gerenciado e backup.
-

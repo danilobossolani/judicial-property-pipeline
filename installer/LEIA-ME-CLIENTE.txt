@@ -34,8 +34,11 @@ USO NORMAL
 AO TERMINAR O USO
 
 - Fechar apenas o navegador não encerra o mecanismo local.
-- Se quiser liberar a memória usada pelo Docker, clique com o botão direito no
-  ícone do Docker perto do relógio do Windows e escolha "Quit Docker Desktop".
+- Clique duas vezes no atalho Encerrar Judicial Pipeline para fechar o
+  mecanismo local e liberar a memória.
+- Aguarde a mensagem de confirmação. Os imóveis, as observações e o histórico
+  serão preservados.
+- Enquanto o sistema estiver encerrado, as buscas automáticas ficarão pausadas.
 - No próximo uso, clique normalmente no atalho Judicial Pipeline; ele iniciará
   o mecanismo outra vez.
 
@@ -52,7 +55,8 @@ SE O SISTEMA NAO ABRIR
 2. Se continuar, envie ao responsável técnico:
    - instalacao.log e preparacao-docker.log da pasta
      C:\ProgramData\JudicialPipeline;
-   - preparacao-windows.log, reparo-wsl-msi.log, inicializacao.log e inicio.log da pasta
+   - preparacao-windows.log, reparo-wsl-msi.log, inicializacao.log,
+     encerramento.log e inicio.log da pasta
      %LOCALAPPDATA%\JudicialPipeline.
 3. O cliente não precisa editar configurações nem executar comandos.
 

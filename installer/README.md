@@ -6,9 +6,10 @@ PostgreSQL e imagens necessárias na primeira execução. O arquivo é maior por
 carregar o reparo do Windows, mas essa etapa funciona mesmo quando o computador
 do cliente não consegue baixar arquivos do GitHub.
 
-A versão 1.4.0 habilita descoberta em Sublime, Mega, SPY, Portal Zuk,
+A versão 1.4.1 habilita descoberta em Sublime, Mega, SPY, Portal Zuk,
 GL Leilões, PublicJud, DJEN/CNJ, TRT-15 e TRT-2, além do arquivamento
-automático de leilões após o último prazo publicado.
+automático de leilões após o último prazo publicado e um encerramento visual
+que libera os recursos do Docker/WSL sem apagar os dados.
 
 ## Gerar
 
@@ -40,7 +41,8 @@ if ($LASTEXITCODE -ne 0) { throw "Instalador inválido" }
 - cria `C:\ProgramData\JudicialPipeline`;
 - gera senhas internas aleatórias e desabilita o login somente no ambiente
   local, que fica limitado a `127.0.0.1`;
-- cria um inicializador visual e atalhos na área de trabalho e no menu Iniciar;
+- cria atalhos visuais para iniciar e encerrar o sistema na área de trabalho e
+  no menu Iniciar;
 - remove atalhos legados duplicados durante a atualização;
 - inicia PostgreSQL e aplicação via Docker Compose;
 - abre `http://localhost:8080` quando o health check estiver `UP`;

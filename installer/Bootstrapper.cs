@@ -14,8 +14,8 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Judicial Pipeline")]
 [assembly: AssemblyProduct("Judicial Pipeline")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.4.0.0")]
-[assembly: AssemblyFileVersion("1.4.0.0")]
+[assembly: AssemblyVersion("1.4.1.0")]
+[assembly: AssemblyFileVersion("1.4.1.0")]
 
 namespace JudicialPipelineInstaller
 {

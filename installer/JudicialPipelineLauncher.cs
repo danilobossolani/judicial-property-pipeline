@@ -12,19 +12,29 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Judicial Pipeline")]
 [assembly: AssemblyProduct("Judicial Pipeline")]
 [assembly: AssemblyCopyright("Copyright © 2026")]
-[assembly: AssemblyVersion("1.4.0.0")]
-[assembly: AssemblyFileVersion("1.4.0.0")]
+[assembly: AssemblyVersion("1.4.1.0")]
+[assembly: AssemblyFileVersion("1.4.1.0")]
 
 namespace JudicialPipelineLauncher
 {
     internal static class Program
     {
         [STAThread]
-        private static int Main()
+        private static int Main(string[] arguments)
         {
+            bool shutdownRequested = false;
+            foreach (string argument in arguments)
+            {
+                if (string.Equals(argument, "--stop", StringComparison.OrdinalIgnoreCase))
+                {
+                    shutdownRequested = true;
+                    break;
+                }
+            }
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            using (var form = new StartupForm())
+            using (var form = new OperationForm(shutdownRequested))
             {
                 Application.Run(form);
                 return form.ExitCode;
@@ -32,16 +42,18 @@ namespace JudicialPipelineLauncher
         }
     }
 
-    internal sealed class StartupForm : Form
+    internal sealed class OperationForm : Form
     {
+        private readonly bool shutdownRequested;
         private readonly Label statusLabel;
         private readonly ProgressBar progressBar;
 
         internal int ExitCode { get; private set; }
 
-        internal StartupForm()
+        internal OperationForm(bool shutdownRequested)
         {
-            Text = "Judicial Pipeline";
+            this.shutdownRequested = shutdownRequested;
+            Text = shutdownRequested ? "Encerrar Judicial Pipeline" : "Judicial Pipeline";
             ClientSize = new Size(460, 165);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -66,7 +78,7 @@ namespace JudicialPipelineLauncher
                 Bounds = new Rectangle(28, 24, 404, 32),
                 Font = new Font("Segoe UI", 15F, FontStyle.Bold),
                 ForeColor = Color.White,
-                Text = "Judicial Pipeline"
+                Text = shutdownRequested ? "Encerrar Judicial Pipeline" : "Judicial Pipeline"
             };
 
             statusLabel = new Label
@@ -75,7 +87,9 @@ namespace JudicialPipelineLauncher
                 Bounds = new Rectangle(30, 68, 400, 28),
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
                 ForeColor = Color.FromArgb(196, 219, 242),
-                Text = "Preparando o sistema. Aguarde um momento..."
+                Text = shutdownRequested
+                    ? "Encerrando o sistema e liberando a memória..."
+                    : "Preparando o sistema. Aguarde um momento..."
             };
 
             progressBar = new ProgressBar
@@ -93,17 +107,18 @@ namespace JudicialPipelineLauncher
 
         private void OnShown(object sender, EventArgs eventArgs)
         {
-            Task<StartupResult> startupTask = Task.Factory.StartNew<StartupResult>(
-                new Func<StartupResult>(StartApplication));
-            startupTask.ContinueWith(
-                new Action<Task<StartupResult>>(HandleResult),
+            Task<OperationResult> operationTask = Task.Factory.StartNew<OperationResult>(
+                new Func<OperationResult>(RunOperation));
+            operationTask.ContinueWith(
+                new Action<Task<OperationResult>>(HandleResult),
                 TaskScheduler.FromCurrentSynchronizationContext());
         }
 
-        private StartupResult StartApplication()
+        private OperationResult RunOperation()
         {
             string installationDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string startScript = Path.Combine(installationDirectory, "INICIAR.bat");
+            string scriptName = shutdownRequested ? "PARAR.bat" : "INICIAR.bat";
+            string scriptPath = Path.Combine(installationDirectory, scriptName);
             string logDirectory = Environment.GetEnvironmentVariable(
                 "JUDICIAL_PIPELINE_LOG_DIR");
             if (string.IsNullOrWhiteSpace(logDirectory))
@@ -113,11 +128,13 @@ namespace JudicialPipelineLauncher
                     "JudicialPipeline");
             }
             Directory.CreateDirectory(logDirectory);
-            string launcherLog = Path.Combine(logDirectory, "inicializacao.log");
+            string launcherLog = Path.Combine(
+                logDirectory,
+                shutdownRequested ? "encerramento-launcher.log" : "inicializacao.log");
 
-            if (!File.Exists(startScript))
+            if (!File.Exists(scriptPath))
             {
-                return new StartupResult(2, "O arquivo de inicialização não foi encontrado.");
+                return new OperationResult(2, "O arquivo necessário não foi encontrado.");
             }
 
             try
@@ -125,7 +142,7 @@ namespace JudicialPipelineLauncher
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
-                    Arguments = "/d /c \"\"" + startScript + "\" --automatico\"",
+                    Arguments = "/d /c \"\"" + scriptPath + "\" --automatico\"",
                     WorkingDirectory = installationDirectory,
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -137,7 +154,7 @@ namespace JudicialPipelineLauncher
                 {
                     if (process == null)
                     {
-                        return new StartupResult(3, "O inicializador do Windows não respondeu.");
+                        return new OperationResult(3, "O Windows não respondeu.");
                     }
 
                     string standardOutput = process.StandardOutput.ReadToEnd();
@@ -153,16 +170,19 @@ namespace JudicialPipelineLauncher
                     }
 
                     File.AppendAllText(launcherLog, log.ToString(), Encoding.UTF8);
-                    return new StartupResult(process.ExitCode, standardError);
+                    string details = string.IsNullOrWhiteSpace(standardError)
+                        ? standardOutput
+                        : standardError;
+                    return new OperationResult(process.ExitCode, details);
                 }
             }
             catch (Exception exception)
             {
-                return new StartupResult(4, exception.Message);
+                return new OperationResult(4, exception.Message);
             }
         }
 
-        private void HandleResult(Task<StartupResult> task)
+        private void HandleResult(Task<OperationResult> task)
         {
             progressBar.Style = ProgressBarStyle.Blocks;
 
@@ -173,10 +193,26 @@ namespace JudicialPipelineLauncher
                 return;
             }
 
-            StartupResult result = task.Result;
+            OperationResult result = task.Result;
             if (result.ExitCode == 0)
             {
                 ExitCode = 0;
+                if (shutdownRequested &&
+                    !string.Equals(
+                        Environment.GetEnvironmentVariable("JUDICIAL_PIPELINE_NO_DIALOG"),
+                        "1",
+                        StringComparison.Ordinal))
+                {
+                    statusLabel.Text = "Sistema encerrado. A memória foi liberada.";
+                    MessageBox.Show(
+                        this,
+                        "O Judicial Pipeline foi encerrado por completo.\n\n" +
+                        "Os imóveis, as anotações e o histórico foram preservados. " +
+                        "Para usar novamente, clique no atalho Judicial Pipeline.",
+                        "Judicial Pipeline",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
                 Close();
                 return;
             }
@@ -187,15 +223,34 @@ namespace JudicialPipelineLauncher
 
         private void ShowFailure(string details)
         {
-            statusLabel.Text = "Não foi possível abrir o sistema.";
-            string message =
-                "Não foi possível iniciar o Judicial Pipeline.\n\n" +
-                "Reinicie o computador e clique novamente no atalho. " +
-                "Se continuar, envie inicializacao.log ao responsável técnico.";
+            statusLabel.Text = shutdownRequested
+                ? "Não foi possível encerrar o sistema."
+                : "Não foi possível abrir o sistema.";
+
+            string message;
+            if (shutdownRequested)
+            {
+                message =
+                    "Não foi possível encerrar completamente o Judicial Pipeline.\n\n" +
+                    "Reinicie o computador. Se continuar, envie encerramento.log " +
+                    "ao responsável técnico.";
+            }
+            else
+            {
+                message =
+                    "Não foi possível iniciar o Judicial Pipeline.\n\n" +
+                    "Reinicie o computador e clique novamente no atalho. " +
+                    "Se continuar, envie inicializacao.log ao responsável técnico.";
+            }
 
             if (!string.IsNullOrWhiteSpace(details))
             {
-                message += "\n\nDetalhe: " + details.Trim();
+                string compactDetails = details.Trim();
+                if (compactDetails.Length > 600)
+                {
+                    compactDetails = compactDetails.Substring(compactDetails.Length - 600);
+                }
+                message += "\n\nDetalhe: " + compactDetails;
             }
 
             MessageBox.Show(
@@ -207,9 +262,9 @@ namespace JudicialPipelineLauncher
             Close();
         }
 
-        private sealed class StartupResult
+        private sealed class OperationResult
         {
-            internal StartupResult(int exitCode, string details)
+            internal OperationResult(int exitCode, string details)
             {
                 ExitCode = exitCode;
                 Details = details;
